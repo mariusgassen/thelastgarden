@@ -90,6 +90,10 @@ export interface NpcPlacementDef {
   /** Feet position in tiles. */
   at: TilePoint;
   radius?: number;
+  /** Only shown & interactable while this flag is set. */
+  showWhenFlag?: string;
+  /** Hidden & non-interactable once this flag is set. */
+  hideWhenFlag?: string;
 }
 
 /**
@@ -112,6 +116,18 @@ interface InteractableSpecBase {
   label: string;
   /** Interaction radius in pixels (default 56). */
   radius?: number;
+  /** Only interactable while this flag is set. */
+  showWhenFlag?: string;
+  /** Non-interactable once this flag is set. */
+  hideWhenFlag?: string;
+}
+
+export interface DialogueVariant {
+  dialogueId: string;
+  requires?: string[];
+  forbids?: string[];
+  setFlags?: string[];
+  giveItems?: { itemId: string; count: number }[];
 }
 
 /** Shows a dialogue from content/dialogues.ts. */
@@ -120,6 +136,8 @@ export interface DialogueInteractableSpec extends InteractableSpecBase {
   dialogueId: string;
   /** Flag set when the dialogue is shown (e.g. for "read the notice" quest objectives). */
   setFlag?: string;
+  /** Evaluated top to bottom before falling back to `dialogueId`. */
+  variants?: DialogueVariant[];
 }
 
 /**
@@ -138,8 +156,21 @@ export interface DoorInteractableSpec extends InteractableSpecBase {
   unlockedDialogueId?: string;
 }
 
+/**
+ * Repairs or activates something in the world by spending resource/material items once.
+ */
+export interface RepairInteractableSpec extends InteractableSpecBase {
+  type: 'repair';
+  doneFlag: string;
+  cost: { itemId: string; count: number }[];
+  missingDialogueId: string;
+  repairedDialogueId: string;
+  doneDialogueId: string;
+  giveItems?: { itemId: string; count: number }[];
+}
+
 /** Built-in data-driven interactables. Add new variants here + a handler in systems/interaction.ts. */
-export type InteractableSpec = DialogueInteractableSpec | DoorInteractableSpec;
+export type InteractableSpec = DialogueInteractableSpec | DoorInteractableSpec | RepairInteractableSpec;
 
 export interface MapDef {
   id: string;

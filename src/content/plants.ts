@@ -32,4 +32,14 @@ export const PLANTS: PlantDef[] = [
     abilityId: 'calm-animals',
     color: 0x9b84d6,
   },
+  {
+    id: 'moon-fern',
+    name: 'Mondfarn',
+    description: 'Ein uralter Farn aus dem Herzraum, dessen Wedel wie stilles Wasser im Mondlicht schimmern.',
+    seedItemId: 'seed-moon-fern',
+    growthStages: 3,
+    abilityId: 'awaken-heart',
+    color: 0x7ae7c7,
+    lightRadius: 180,
+  },
 ];

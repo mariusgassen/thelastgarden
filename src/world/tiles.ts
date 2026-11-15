@@ -10,7 +10,7 @@ export interface TileDef {
   detail: number;
   solid: boolean;
   /** Visual style used by the tileset generator. */
-  style: 'grass' | 'canopy' | 'dirt' | 'stone' | 'water' | 'glass' | 'planks' | 'wall' | 'asphalt' | 'soil';
+  style: 'grass' | 'canopy' | 'dirt' | 'stone' | 'water' | 'glass' | 'planks' | 'wall' | 'asphalt' | 'soil' | 'rails' | 'brick';
   /** Number of visual variants (randomly chosen per cell). */
   variants: number;
 }
@@ -30,6 +30,8 @@ export const TILES = {
   hutWall: { color: 0x8a5a3b, detail: 0x6e4529, solid: true, style: 'planks', variants: 1 },
   woodWall: { color: 0x5e3d29, detail: 0x4b2f1f, solid: true, style: 'wall', variants: 1 },
   floor: { color: 0xb88a5a, detail: 0xa47849, solid: false, style: 'planks', variants: 2 },
+  rails: { color: 0x8d836f, detail: 0x5c4734, solid: false, style: 'rails', variants: 2 },
+  brickWall: { color: 0x7d4537, detail: 0x5c3026, solid: true, style: 'brick', variants: 1 },
 } satisfies Record<string, TileDef>;
 
 export type TileId = keyof typeof TILES;

@@ -127,13 +127,13 @@ export class PlantLayer {
     if (mature && def.lightRadius) {
       if (!entry.glow) {
         entry.glow = this.scene.add
-          .image(entry.cx, entry.cy - 16, 'pickup-orb')
+          .image(entry.cx, entry.cy - 16, 'light-halo')
           .setBlendMode(Phaser.BlendModes.ADD)
-          .setAlpha(0.35)
+          .setAlpha(0.45)
           .setTint(def.color)
           .setDisplaySize(def.lightRadius * 2, def.lightRadius * 2)
           .setDepth(entry.cy - 1);
-        this.scene.tweens.add({ targets: entry.glow, alpha: 0.2, duration: 1400, yoyo: true, repeat: -1 });
+        this.scene.tweens.add({ targets: entry.glow, alpha: 0.25, duration: 1400, yoyo: true, repeat: -1 });
       }
       if (!entry.fireflies) {
         entry.fireflies = this.scene.add

@@ -1,16 +1,22 @@
 import { GARDEN_MAP } from './maps/garden';
+import { GREENHOUSE_HEART_MAP } from './maps/greenhouseHeart';
 import { GREENHOUSE_VESTIBULE_MAP } from './maps/greenhouseVestibule';
+import { TRAMLINE_MAP } from './maps/tramline';
+import { WATER_TOWER_MAP } from './maps/waterTower';
 import { WORKSHOP_MAP } from './maps/workshop';
 import type { JournalPageDef, MapDef, ObstacleDef, PlantingBedDef, ResourceNodeDef } from './types';
 
 export * from './types';
 export { TILE_SIZE } from './tiles';
 
-/** All maps by id. Register new maps (e.g. the greenhouse proper) here. */
+/** All maps by id. Register new maps here. */
 export const MAPS: Record<string, MapDef> = {
   [GARDEN_MAP.id]: GARDEN_MAP,
   [WORKSHOP_MAP.id]: WORKSHOP_MAP,
   [GREENHOUSE_VESTIBULE_MAP.id]: GREENHOUSE_VESTIBULE_MAP,
+  [TRAMLINE_MAP.id]: TRAMLINE_MAP,
+  [WATER_TOWER_MAP.id]: WATER_TOWER_MAP,
+  [GREENHOUSE_HEART_MAP.id]: GREENHOUSE_HEART_MAP,
 };
 
 export const START_MAP_ID = GARDEN_MAP.id;

@@ -100,4 +100,132 @@ export const QUESTS: QuestDef[] = [
     ],
     rewardFlags: ['episode-1-complete'],
   },
+  // ── Episode 2: Linie 3, Wasserturm & Das Herz des Gewächshauses ─────────
+  {
+    id: 'q-canal-path',
+    title: 'Der versperrte Uferweg',
+    summary: 'Am Kanal liegt ein alter Stamm quer über dem Pfad. Vielleicht liegt in der Werkstatt noch Werkzeug.',
+    startsWhen: ['episode-1-complete'],
+    objectives: [
+      {
+        type: 'flag',
+        flag: 'saw-found',
+        description: 'Sieh in der Werkstatt nach einem Werkzeug für den umgestürzten Baum.',
+        markers: ['workshop-door', 'workbench'],
+      },
+      {
+        type: 'unblock',
+        obstacleId: 'fallen-tree-canal',
+        description: 'Räume den umgestürzten Baum am Kanal aus dem Weg.',
+        markers: ['obstacle:fallen-tree-canal'],
+      },
+    ],
+    rewardItems: [
+      { itemId: 'resource-curio', count: 1 },
+      { itemId: 'seed-glow-lily', count: 1 },
+    ],
+  },
+  {
+    id: 'q-tramline',
+    title: 'Linie 3',
+    summary: 'Die Spur auf dem Stadtplan führt nach Osten: über die alte Straßenbahntrasse bis zum Wasserturm. Die Krähe ist schon vorausgeflogen.',
+    startsWhen: ['episode-1-complete'],
+    objectives: [
+      {
+        type: 'visitZone',
+        zoneId: 'tram-tracks',
+        description: 'Folge der Straße östlich der Bushaltestelle zur alten Trasse.',
+        markers: ['tramline-exit'],
+      },
+      {
+        type: 'unblock',
+        obstacleId: 'bramble-tram-switch',
+        description: 'Öffne einen Weg durch das Dornengestrüpp auf den Gleisen.',
+        markers: ['obstacle:bramble-tram-switch', 'bed:bed-tram-bramble', 'resource:tram-seed-bramble'],
+      },
+      {
+        type: 'visitZone',
+        zoneId: 'water-tower-plaza',
+        description: 'Gehe die Trasse weiter nach Osten bis zum Wasserturm.',
+        markers: ['tramline-to-tower'],
+      },
+    ],
+  },
+  {
+    id: 'q-water-tower',
+    title: 'Der Wasserturm am Stadtrand',
+    summary: 'Hier endet Linie 3. Finde heraus, was M. am Wasserturm über die Stadt und die alte Wasserleitung erfahren hat.',
+    startsWhen: ['quest-completed:q-tramline'],
+    objectives: [
+      {
+        type: 'flag',
+        flag: 'water-tower-crow-met',
+        description: 'Sprich am Wasserturm mit der Krähe.',
+        markers: ['npc:crow'],
+      },
+      {
+        type: 'flag',
+        flag: 'owl-met',
+        description: 'Sprich mit der Turmeule auf der Mauer.',
+        markers: ['npc:owl'],
+      },
+      {
+        type: 'flag',
+        flag: 'journal-read:page-tower',
+        description: 'Lies M.s Notiz am Aussichtsgeländer.',
+        markers: ['journal:page-tower'],
+      },
+      {
+        type: 'flag',
+        flag: 'tower-cistern-repaired',
+        description: 'Repariere das Zisternen-Ventil (3 Sonnenlicht, 3 Tau, 1 Fundstück).',
+        markers: ['tower-cistern'],
+      },
+      {
+        type: 'flag',
+        flag: 'bed-restored:bed-tower-lily',
+        description: 'Pflanze eine Leuchtlilie am Wasserturm und lass sie erblühen.',
+        markers: ['bed:bed-tower-lily', 'resource:tower-seed-lily'],
+      },
+      {
+        type: 'flag',
+        flag: 'owl-gave-vial',
+        description: 'Berichte der Turmeule vom fließenden Wasser und dem Licht.',
+        markers: ['npc:owl'],
+      },
+    ],
+  },
+  {
+    id: 'q-inner-greenhouse',
+    title: 'Das Herz des Gewächshauses',
+    summary: 'Mit dem Quellwasser vom Wasserturm geben die Ranken im Gewächshaus vielleicht den Weg in den inneren Raum frei.',
+    startsWhen: ['quest-completed:q-water-tower'],
+    objectives: [
+      {
+        type: 'flag',
+        flag: 'greenhouse-inner-unlocked',
+        description: 'Öffne die verwachsene Innentür im Vorraum des Gewächshauses.',
+        markers: ['greenhouse-door', 'greenhouse-inner-door'],
+      },
+      {
+        type: 'flag',
+        flag: 'journal-read:page-heart',
+        description: 'Lies M.s Brief auf dem Schreibtisch im Herzraum.',
+        markers: ['journal:page-heart'],
+      },
+      {
+        type: 'flag',
+        flag: 'bed-restored:bed-heart-fern',
+        description: 'Pflanze die Mondfarn-Sporen ins Herzbeet und lass sie erblühen.',
+        markers: ['bed:bed-heart-fern', 'resource:heart-seed-moon-fern'],
+      },
+      {
+        type: 'flag',
+        flag: 'crow-heart-talked',
+        description: 'Sprich im Herzraum mit der Krähe.',
+        markers: ['npc:crow'],
+      },
+    ],
+    rewardFlags: ['episode-2-complete'],
+  },
 ];

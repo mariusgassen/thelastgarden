@@ -12,19 +12,25 @@ const DAY_LENGTH_MS = 4 * 60_000;
  * while the app is open and plants remain the source of persistent light through `plants.ts`.
  */
 export class AtmosphereLayer {
-  private readonly shade: Phaser.GameObjects.Graphics;
+  private readonly shade: Phaser.GameObjects.RenderTexture;
+  private readonly eraser: Phaser.GameObjects.Image;
   private readonly motes: Phaser.GameObjects.Particles.ParticleEmitter;
   private elapsed = 0;
+  private lastAlpha = -1;
+  private lastSourcesKey = '';
 
   constructor(
     scene: Phaser.Scene,
     private readonly map: MapDef,
   ) {
-    this.shade = scene.add.graphics().setDepth(90_000);
+    const width = map.width * TILE_SIZE;
+    const height = map.height * TILE_SIZE;
+    this.shade = scene.add.renderTexture(0, 0, width, height).setOrigin(0, 0).setDepth(90_000);
+    this.eraser = scene.make.image({ key: 'light-halo', add: false }).setOrigin(0.5, 0.5);
     this.motes = scene.add
       .particles(0, 0, 'sparkle', {
-        x: { min: 0, max: map.width * TILE_SIZE },
-        y: { min: 0, max: map.height * TILE_SIZE },
+        x: { min: 0, max: width },
+        y: { min: 0, max: height },
         angle: { min: 165, max: 195 },
         speed: { min: 5, max: 13 },
         lifespan: { min: 2600, max: 4600 },
@@ -38,6 +44,7 @@ export class AtmosphereLayer {
 
     scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.shade.destroy();
+      this.eraser.destroy();
       this.motes.destroy();
     });
   }
@@ -52,23 +59,23 @@ export class AtmosphereLayer {
   }
 
   private drawShade(alpha: number): void {
-    const width = this.map.width * TILE_SIZE;
-    const height = this.map.height * TILE_SIZE;
-    this.shade.clear();
-    this.shade.setBlendMode(Phaser.BlendModes.NORMAL);
-    this.shade.fillStyle(0x101936, alpha).fillRect(0, 0, width, height);
+    const sources = getLightSources().filter((source) => source.mapId === this.map.id);
+    const sourcesKey = sources.map((s) => s.bedId).join(',');
+    if (Math.abs(alpha - this.lastAlpha) < 0.01 && sourcesKey === this.lastSourcesKey) return;
+    this.lastAlpha = alpha;
+    this.lastSourcesKey = sourcesKey;
 
-    // Mature glow lilies punch soft-feeling clear circles into the night veil. The plant
-    // renderer supplies the additive halo; this makes the surrounding world genuinely lighter.
-    this.shade.setBlendMode(Phaser.BlendModes.ERASE);
-    for (const source of getLightSources()) {
-      if (source.mapId !== this.map.id) continue;
+    this.shade.clear();
+    this.shade.fill(0x101936, alpha);
+
+    // Mature light plants punch soft-edged clear halos into the night veil.
+    for (const source of sources) {
       const bed = findPlantingBed(source.bedId);
       if (!bed) continue;
       const x = (bed.rect.x + bed.rect.w / 2) * TILE_SIZE;
       const y = (bed.rect.y + bed.rect.h / 2) * TILE_SIZE - 16;
-      this.shade.fillStyle(0xffffff, 0.76).fillCircle(x, y, source.lightRadius);
+      this.eraser.setDisplaySize(source.lightRadius * 2, source.lightRadius * 2);
+      this.shade.erase(this.eraser, x, y);
     }
-    this.shade.setBlendMode(Phaser.BlendModes.NORMAL);
   }
 }

@@ -258,6 +258,64 @@ export function generateTextures(scene: Phaser.Scene): void {
     for (let i = 0; i < 4; i++) g.fillEllipse(20, 14 + i * 3, 4, 2.6);
   });
 
+  make('light-halo', 128, 128, (g) => {
+    for (let i = 16; i >= 1; i--) {
+      const r = (i / 16) * 64;
+      g.fillStyle(0xffffff, 0.08);
+      g.fillCircle(64, 64, r);
+    }
+  });
+
+  make('plant-moon-fern-sprout', 18, 18, (g) => {
+    g.fillStyle(0x2d6b5e, 1);
+    g.fillRect(8, 8, 2, 9);
+    g.fillStyle(0x7ae7c7, 1);
+    g.fillCircle(9, 7, 3.2);
+    g.fillStyle(0xdffcf4, 1);
+    g.fillCircle(10, 6, 1.4);
+  });
+  make('plant-moon-fern-growing', 30, 36, (g) => {
+    g.fillStyle(0x265c52, 1);
+    g.fillEllipse(15, 29, 14, 7);
+    g.lineStyle(2.5, 0x439c88, 1);
+    g.lineBetween(15, 31, 6, 15);
+    g.lineBetween(15, 31, 15, 8);
+    g.lineBetween(15, 31, 24, 15);
+    g.fillStyle(0x7ae7c7, 1);
+    g.fillCircle(6, 14, 3);
+    g.fillCircle(15, 7, 3.2);
+    g.fillCircle(24, 14, 3);
+    g.fillStyle(0xdffcf4, 0.9);
+    g.fillCircle(15, 7, 1.4);
+  });
+  make('plant-moon-fern-mature', 40, 46, (g) => {
+    g.fillStyle(0x000000, 0.2);
+    g.fillEllipse(20, 42, 26, 7);
+    g.fillStyle(0x265c52, 1);
+    g.fillEllipse(20, 34, 24, 12);
+    g.lineStyle(3, 0x439c88, 1);
+    g.lineBetween(20, 36, 5, 22);
+    g.lineBetween(20, 36, 10, 10);
+    g.lineBetween(20, 36, 20, 6);
+    g.lineBetween(20, 36, 30, 10);
+    g.lineBetween(20, 36, 35, 22);
+    g.fillStyle(0x7ae7c7, 1);
+    for (const [fx, fy] of [
+      [5, 22],
+      [10, 10],
+      [20, 6],
+      [30, 10],
+      [35, 22],
+    ]) {
+      g.fillCircle(fx, fy, 3.6);
+    }
+    g.fillStyle(0xdffcf4, 0.95);
+    g.fillCircle(20, 23, 5);
+    g.fillCircle(10, 10, 1.5);
+    g.fillCircle(20, 6, 1.8);
+    g.fillCircle(30, 10, 1.5);
+  });
+
   // Buildings & props
   make('greenhouse-door', 64, 44, (g) => {
     g.fillStyle(0x4d6b66, 1);
@@ -606,6 +664,257 @@ export function generateTextures(scene: Phaser.Scene): void {
     g.fillEllipse(12, 6, 10, 4);
   });
 
+  // Episode 2: owl, tramline, water tower, greenhouse heart
+  make('owl', 34, 38, (g) => {
+    g.fillStyle(0x000000, 0.22);
+    g.fillEllipse(17, 35, 22, 6);
+    g.fillStyle(0x8e6b4c, 1); // tawny cloak & wings
+    g.fillEllipse(17, 23, 24, 22);
+    g.fillStyle(0xe8dcc4, 1); // cream speckled breast
+    g.fillEllipse(17, 25, 14, 16);
+    g.fillStyle(0xa8825c, 1); // wing feather accents
+    g.fillCircle(8, 22, 2);
+    g.fillCircle(26, 22, 2);
+    g.fillCircle(17, 27, 1.2);
+    g.fillCircle(14, 24, 1.2);
+    g.fillCircle(20, 24, 1.2);
+    g.fillStyle(0xb8946e, 1); // head outline
+    g.fillCircle(17, 11, 10);
+    g.fillStyle(0xf5ebd6, 1); // barn-owl heart face disc
+    g.fillCircle(13, 10, 5.2);
+    g.fillCircle(21, 10, 5.2);
+    g.fillTriangle(9, 12, 25, 12, 17, 19);
+    g.fillStyle(0x1e1815, 1); // dark eyes
+    g.fillCircle(13.5, 10.5, 2);
+    g.fillCircle(20.5, 10.5, 2);
+    g.fillStyle(0xffffff, 0.8);
+    g.fillCircle(14, 9.8, 0.7);
+    g.fillCircle(21, 9.8, 0.7);
+    g.fillStyle(0xc99c58, 1); // small beak
+    g.fillTriangle(15.5, 12, 18.5, 12, 17, 15.5);
+    g.lineStyle(2, 0xc99c58, 1); // claws
+    g.lineBetween(13, 33, 12, 36);
+    g.lineBetween(21, 33, 22, 36);
+  });
+  make('portrait-owl', 64, 64, (g) => {
+    g.fillStyle(0x243442, 1);
+    g.fillRoundedRect(0, 0, 64, 64, 10);
+    g.fillStyle(0xd8e8f2, 0.3); // faint moon
+    g.fillCircle(50, 14, 10);
+    g.fillStyle(0x8e6b4c, 1); // shoulders
+    g.fillEllipse(32, 54, 46, 26);
+    g.fillStyle(0xe8dcc4, 1); // cream chest
+    g.fillEllipse(32, 54, 26, 20);
+    g.fillStyle(0xa8825c, 1); // head rim
+    g.fillCircle(32, 27, 18);
+    g.fillStyle(0xf5ebd6, 1); // heart disc
+    g.fillCircle(25, 25, 9);
+    g.fillCircle(39, 25, 9);
+    g.fillTriangle(17, 29, 47, 29, 32, 41);
+    g.fillStyle(0x1e1815, 1); // expressive dark eyes
+    g.fillCircle(25, 25, 3.6);
+    g.fillCircle(39, 25, 3.6);
+    g.fillStyle(0xffffff, 0.9);
+    g.fillCircle(26, 23.8, 1.2);
+    g.fillCircle(40, 23.8, 1.2);
+    g.fillStyle(0xd29c4e, 1); // beak
+    g.fillTriangle(29, 29, 35, 29, 32, 35);
+  });
+  make('signpost-east', 36, 48, (g) => {
+    g.fillStyle(0x000000, 0.2);
+    g.fillEllipse(14, 45, 18, 6);
+    g.fillStyle(0x5c3b25, 1);
+    g.fillRect(11, 10, 5, 36);
+    g.fillStyle(0xc49a6c, 1);
+    g.fillRect(7, 12, 20, 11);
+    g.fillTriangle(27, 10, 35, 17.5, 27, 25);
+    g.lineStyle(1.5, 0x8a603d, 1);
+    g.lineBetween(7, 12, 27, 12);
+    g.lineBetween(7, 23, 27, 23);
+    g.fillStyle(0xd84a5f, 1); // Linie 3 red stripe
+    g.fillRect(10, 16, 14, 3);
+  });
+  make('tram-stop', 112, 64, (g) => {
+    g.fillStyle(0x000000, 0.22);
+    g.fillRect(6, 54, 100, 9);
+    g.fillStyle(0x3e5449, 1); // metal uprights
+    g.fillRect(10, 14, 5, 42);
+    g.fillRect(88, 14, 5, 42);
+    g.fillStyle(0xd8cfb8, 0.9); // weathered back panel
+    g.fillRect(15, 18, 73, 30);
+    g.fillStyle(0x9fc5c9, 0.55); // glass pane
+    g.fillRect(20, 21, 36, 20);
+    g.fillStyle(0x6e4529, 1); // wooden bench inside
+    g.fillRect(22, 42, 60, 6);
+    g.fillStyle(0x2d4036, 1); // shelter roof
+    g.fillRoundedRect(4, 6, 94, 12, 3);
+    g.fillStyle(0x6a9a4e, 1); // moss tufts
+    g.fillCircle(18, 8, 5);
+    g.fillCircle(80, 9, 4);
+    g.fillStyle(0x52575b, 1); // H tram pole
+    g.fillRect(101, 12, 3, 44);
+    g.fillStyle(0xe6c34a, 1);
+    g.fillCircle(102.5, 10, 8);
+    g.fillStyle(0x2f6b3a, 1);
+    g.fillCircle(102.5, 10, 5.5);
+  });
+  make('signal-box', 96, 76, (g) => {
+    g.fillStyle(0x000000, 0.22);
+    g.fillRect(6, 66, 84, 9);
+    g.fillStyle(0x7d4c45, 1); // weathered brick walls
+    g.fillRect(10, 24, 76, 46);
+    g.lineStyle(1, 0x5c3630, 1);
+    for (let y = 32; y < 70; y += 8) g.lineBetween(10, y, 86, y);
+    g.fillStyle(0x3a2a1e, 1); // shuttered window + door
+    g.fillRect(20, 32, 24, 18);
+    g.fillRect(54, 34, 20, 36);
+    g.fillStyle(0xd8b04a, 1);
+    g.fillCircle(58, 52, 2);
+    g.fillStyle(0x3c454a, 1); // slate roof
+    g.fillTriangle(4, 26, 92, 26, 48, 4);
+    g.fillStyle(0x5d8a45, 1); // ivy on roof edge
+    g.fillCircle(18, 25, 6);
+    g.fillCircle(26, 22, 4);
+  });
+  make('water-tower', 120, 110, (g) => {
+    g.fillStyle(0x000000, 0.24);
+    g.fillEllipse(60, 103, 106, 14);
+    g.fillStyle(0x7d4c45, 1); // brick base
+    g.fillRoundedRect(20, 48, 80, 56, 6);
+    g.lineStyle(1, 0x5c3630, 0.9);
+    for (let y = 56; y < 100; y += 8) g.lineBetween(22, y, 98, y);
+    g.fillStyle(0x3a2a1e, 1); // arched tower door
+    g.fillRoundedRect(49, 76, 22, 28, { tl: 10, tr: 10, bl: 0, br: 0 });
+    g.fillStyle(0x496570, 1); // upper water tank
+    g.fillRoundedRect(14, 22, 92, 32, 6);
+    g.lineStyle(2.5, 0x35464d, 1); // iron hoops
+    g.lineBetween(14, 30, 106, 30);
+    g.lineBetween(14, 44, 106, 44);
+    g.fillStyle(0x35464d, 1); // conical slate roof
+    g.fillTriangle(8, 24, 112, 24, 60, 2);
+    g.fillStyle(0x5d8a45, 1); // moss & climbing vine
+    g.fillCircle(24, 52, 6);
+    g.fillCircle(28, 66, 5);
+    g.fillCircle(92, 24, 5);
+  });
+  make('tower-cistern', 64, 46, (g) => {
+    g.fillStyle(0x000000, 0.22);
+    g.fillEllipse(32, 42, 58, 9);
+    g.fillStyle(0x6f7678, 1); // stone cistern
+    g.fillRoundedRect(6, 12, 52, 30, 5);
+    g.fillStyle(0x4c5254, 1); // dry basin interior
+    g.fillEllipse(32, 13, 44, 12);
+    g.lineStyle(2, 0x3a2a1e, 1); // crack line
+    g.lineBetween(24, 18, 29, 32);
+    g.lineBetween(29, 32, 25, 40);
+    g.fillStyle(0x8a4836, 1); // rusted valve wheel
+    g.fillCircle(46, 28, 6);
+    g.fillStyle(0x4f8fa6, 0.6); // leaking trickle puddle
+    g.fillEllipse(26, 43, 16, 4);
+  });
+  make('tower-cistern-fixed', 64, 46, (g) => {
+    g.fillStyle(0x000000, 0.22);
+    g.fillEllipse(32, 42, 58, 9);
+    g.fillStyle(0x788588, 1);
+    g.fillRoundedRect(6, 12, 52, 30, 5);
+    g.fillStyle(0x64b5d1, 1); // filled clear spring water
+    g.fillEllipse(32, 13, 44, 12);
+    g.fillStyle(0xdff6ff, 0.7);
+    g.fillEllipse(26, 12, 14, 4);
+    g.fillStyle(0xe6c34a, 1); // gleaming brass valve
+    g.fillCircle(46, 28, 6);
+    g.fillStyle(0x6a9a4e, 1);
+    g.fillCircle(12, 38, 4);
+  });
+  make('railing', 92, 28, (g) => {
+    g.fillStyle(0x000000, 0.16);
+    g.fillRect(4, 22, 84, 5);
+    g.fillStyle(0x787670, 1); // stone end posts
+    g.fillRect(2, 4, 10, 22);
+    g.fillRect(80, 4, 10, 22);
+    g.fillStyle(0x353c40, 1); // wrought-iron rail & bars
+    g.fillRect(10, 6, 72, 3);
+    g.fillRect(10, 18, 72, 2);
+    for (let x = 18; x < 78; x += 12) g.fillRect(x, 8, 2, 12);
+    g.fillStyle(0x5d8a45, 1);
+    g.fillCircle(6, 6, 3.5);
+  });
+  make('inner-door-open', 48, 40, (g) => {
+    g.fillStyle(0x4d6b66, 1);
+    g.fillRect(4, 0, 40, 40);
+    g.fillStyle(0x1b3d38, 1); // deep moonlit sanctuary opening
+    g.fillRoundedRect(9, 4, 30, 36, { tl: 12, tr: 12, bl: 0, br: 0 });
+    g.fillStyle(0x7ae7c7, 0.45); // soft fern glow inside
+    g.fillCircle(24, 22, 10);
+    g.fillStyle(0x3f6b35, 1); // vines parted neatly to sides
+    g.fillCircle(9, 14, 4);
+    g.fillCircle(39, 16, 4);
+    g.fillCircle(10, 32, 3.5);
+    g.fillCircle(38, 30, 3.5);
+  });
+  make('fountain-basin', 86, 56, (g) => {
+    g.fillStyle(0x000000, 0.22);
+    g.fillEllipse(43, 49, 78, 12);
+    g.fillStyle(0x828988, 1); // carved stone rim
+    g.fillEllipse(43, 34, 76, 36);
+    g.fillStyle(0x4ca3b8, 1); // clear turquoise water
+    g.fillEllipse(43, 31, 60, 24);
+    g.fillStyle(0x9ce8f5, 0.6); // ripple sheen
+    g.fillEllipse(37, 29, 26, 8);
+    g.fillStyle(0x6b7270, 1); // central pedestal spout
+    g.fillRoundedRect(38, 14, 10, 18, 3);
+    g.fillStyle(0xdffcf4, 0.8);
+    g.fillCircle(43, 14, 3);
+    g.fillStyle(0x5d8a45, 1); // moss spots
+    g.fillCircle(14, 38, 5);
+    g.fillCircle(70, 40, 4);
+  });
+  make('seed-archive', 104, 68, (g) => {
+    g.fillStyle(0x000000, 0.2);
+    g.fillRect(4, 60, 96, 7);
+    g.fillStyle(0x5e3d29, 1); // walnut frame
+    g.fillRoundedRect(2, 2, 100, 62, 4);
+    g.fillStyle(0x7a5236, 1); // drawer grid
+    for (let r = 0; r < 2; r++) {
+      for (let c = 0; c < 4; c++) {
+        const dx = 8 + c * 23;
+        const dy = 30 + r * 15;
+        g.fillRect(dx, dy, 19, 12);
+        g.fillStyle(0xd8b04a, 1);
+        g.fillCircle(dx + 9.5, dy + 6, 1.8);
+        g.fillStyle(0x7a5236, 1);
+      }
+    }
+    g.fillStyle(0x3f291c, 1); // upper jar shelf
+    g.fillRect(8, 7, 88, 18);
+    const jarColors = [0x7ae7c7, 0x9b84d6, 0xf3e38a, 0xd86b7a, 0xa8d48c];
+    for (let i = 0; i < 5; i++) {
+      g.fillStyle(jarColors[i], 0.9);
+      g.fillRoundedRect(14 + i * 16, 11, 10, 13, 3);
+    }
+  });
+  make('moon-desk', 92, 52, (g) => {
+    g.fillStyle(0x000000, 0.2);
+    g.fillRect(4, 44, 84, 7);
+    g.fillStyle(0x5e3d29, 1); // legs
+    g.fillRect(10, 26, 7, 22);
+    g.fillRect(75, 26, 7, 22);
+    g.fillStyle(0x8f6239, 1); // tabletop
+    g.fillRoundedRect(4, 14, 84, 16, 3);
+    g.fillStyle(0xf1e6c8, 1); // open moon chart
+    g.fillRect(28, 16, 32, 12);
+    g.fillStyle(0x3a4d66, 1);
+    g.fillCircle(44, 22, 4);
+    g.fillStyle(0xd8b04a, 1); // brass lamp
+    g.fillRect(14, 10, 4, 10);
+    g.fillStyle(0xf6d878, 1);
+    g.fillTriangle(10, 12, 22, 12, 16, 4);
+    g.fillStyle(0xb5633c, 1); // small pot
+    g.fillRect(68, 12, 10, 9);
+    g.fillStyle(0x7ae7c7, 1);
+    g.fillCircle(73, 10, 4);
+  });
+
   g.destroy();
 }
 
@@ -723,6 +1032,23 @@ function drawTile(g: G, ox: number, def: TileDef, rnd: () => number): void {
       for (let y = 5; y < S; y += 9) g.lineBetween(ox + 1, y, ox + S - 1, y);
       g.fillStyle(0x6a9a4e, 1);
       g.fillCircle(ox + r(S), r(S), 2);
+      break;
+    case 'rails':
+      g.fillStyle(def.detail, 1); // wooden sleepers
+      for (let x = 2; x < S; x += 10) g.fillRect(ox + x, 4, 4, S - 8);
+      g.fillStyle(0x52575b, 1); // twin steel rails
+      g.fillRect(ox, 8, S, 3);
+      g.fillRect(ox, S - 11, S, 3);
+      g.fillStyle(0x6a9a4e, 0.75); // wild grass tufts on ballast
+      g.fillCircle(ox + r(S), r(S), 2.2);
+      break;
+    case 'brick':
+      g.lineStyle(1, def.detail, 1);
+      for (let y = 0; y < S; y += 8) {
+        g.lineBetween(ox, y + 0.5, ox + S, y + 0.5);
+        const offset = (y / 8) % 2 === 0 ? 0 : 8;
+        for (let x = offset; x < S; x += 16) g.lineBetween(ox + x + 0.5, y, ox + x + 0.5, y + 8);
+      }
       break;
   }
 }

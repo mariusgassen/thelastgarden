@@ -121,6 +121,8 @@ export const GARDEN_MAP: MapDef = {
     { texture: 'lily-pad', at: { x: 43, y: 33.6 }, scale: 0.9, ground: true },
     { texture: 'bus-shelter', at: { x: 20, y: 61.6 }, solid: { x: 18.1, y: 60.3, w: 3.8, h: 1.3 } },
     { texture: 'bus-sign', at: { x: 23.4, y: 62 }, solid: { x: 23.2, y: 61.6, w: 0.4, h: 0.4 } },
+    { texture: 'signpost-east', at: { x: 48.8, y: 65.8 } },
+    { texture: 'feather', at: { x: 11.5, y: 34.3 }, showWhenFlag: 'episode-1-complete', hideWhenFlag: 'water-tower-crow-met' },
   ],
   interactables: [
     { id: 'sign-garden', type: 'dialogue', at: { x: 28.2, y: 33.4 }, label: 'Lesen', dialogueId: 'sign-garden' },
@@ -146,6 +148,27 @@ export const GARDEN_MAP: MapDef = {
     { id: 'pond-edge', type: 'dialogue', at: { x: 38.6, y: 36.5 }, label: 'Ansehen', dialogueId: 'pond-edge' },
     { id: 'old-well', type: 'dialogue', at: { x: 41.5, y: 15.8 }, label: 'Ansehen', dialogueId: 'old-well' },
     { id: 'bus-stop-sign', type: 'dialogue', at: { x: 23.4, y: 62.2 }, label: 'Lesen', dialogueId: 'bus-stop-sign' },
+    {
+      id: 'crow-stump-note',
+      type: 'dialogue',
+      at: { x: 11.5, y: 34.5 },
+      label: 'Ansehen',
+      dialogueId: 'crow-stump-note',
+      showWhenFlag: 'episode-1-complete',
+      hideWhenFlag: 'water-tower-crow-met',
+      radius: 66,
+    },
+    {
+      id: 'tramline-exit',
+      type: 'door',
+      at: { x: 48.5, y: 67.5 },
+      label: 'Zur Trasse',
+      locked: true,
+      unlockFlag: 'episode-1-complete',
+      lockedDialogueId: 'tramline-locked',
+      target: { mapId: 'tramline', spawn: 'west' },
+      radius: 64,
+    },
   ],
   // The 3 "verwilderte Beete" Quest 3 (Wave 3) restores, plus one open bed. See
   // ARCHITECTURE.md § Plant Abilities for how Wave 3 should check restoration.
@@ -176,8 +199,8 @@ export const GARDEN_MAP: MapDef = {
     { id: 'seed-lavender-1', itemId: 'seed-lavender', at: { x: 9, y: 33 }, label: 'Samen einsammeln' },
     { id: 'seed-lavender-2', itemId: 'seed-lavender', at: { x: 3, y: 36 }, label: 'Samen einsammeln' },
   ],
-  // The crow perches on the stump at the hut-yard entrance, where the path from the main garden arrives.
-  npcs: [{ npcId: 'crow', at: { x: 11.5, y: 34.3 }, radius: 70 }],
+  // The crow perches on the stump at the hut-yard entrance until flying ahead at the end of Episode 1.
+  npcs: [{ npcId: 'crow', at: { x: 11.5, y: 34.3 }, radius: 70, hideWhenFlag: 'episode-1-complete' }],
   // One journal page per restored bed, lying right next to it (see systems/journal.ts).
   journalPages: [
     {
@@ -206,5 +229,6 @@ export const GARDEN_MAP: MapDef = {
     default: { x: 25.5, y: 31 },
     'workshop-door': { x: 7, y: 33.4 },
     'greenhouse-door': { x: 25, y: 21.6 },
+    tramline: { x: 47.2, y: 67.5 },
   },
 };

@@ -2,7 +2,8 @@ import Phaser from 'phaser';
 import { content } from '../content';
 import type { NpcDef, NpcDialogueRule } from '../content/types';
 import { TILE_SIZE } from '../world/tiles';
-import type { MapDef } from '../world/types';
+import type { MapDef, NpcPlacementDef } from '../world/types';
+import { bus } from './events';
 import { onDialogueClosed, type InteractionSystem } from './interaction';
 import { gameState } from './state';
 
@@ -17,9 +18,12 @@ export function pickNpcDialogue(def: NpcDef): NpcDialogueRule | undefined {
 
 interface LiveNpc {
   def: NpcDef;
+  placement: NpcPlacementDef;
   sprite: Phaser.GameObjects.Image;
   x: number;
   y: number;
+  radius: number;
+  visible: boolean;
 }
 
 /**
@@ -41,12 +45,40 @@ export class NpcLayer {
       const x = placement.at.x * TILE_SIZE;
       const y = placement.at.y * TILE_SIZE;
       const sprite = scene.add.image(x, y, def.id).setOrigin(0.5, 1).setDepth(y);
-      this.live.push({ def, sprite, x, y });
+      const entry: LiveNpc = {
+        def,
+        placement,
+        sprite,
+        x,
+        y,
+        radius: placement.radius ?? 64,
+        visible: false,
+      };
+      this.live.push(entry);
       this.scheduleHop(sprite, y);
-      this.register(def, placement.radius ?? 64, x, y);
+      this.syncVisibility(entry);
     }
+    bus.onScene(scene, 'flag-changed', () => {
+      for (const entry of this.live) this.syncVisibility(entry);
+    });
     scene.events.on(Phaser.Scenes.Events.UPDATE, this.update, this);
     scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => scene.events.off(Phaser.Scenes.Events.UPDATE, this.update, this));
+  }
+
+  private isVisible(placement: NpcPlacementDef): boolean {
+    return (
+      (!placement.showWhenFlag || gameState.hasFlag(placement.showWhenFlag)) &&
+      (!placement.hideWhenFlag || !gameState.hasFlag(placement.hideWhenFlag))
+    );
+  }
+
+  private syncVisibility(entry: LiveNpc): void {
+    const next = this.isVisible(entry.placement);
+    entry.sprite.setVisible(next);
+    if (next === entry.visible) return;
+    entry.visible = next;
+    if (next) this.register(entry.def, entry.radius, entry.x, entry.y);
+    else this.interaction.unregister(`npc:${entry.def.id}`);
   }
 
   private register(def: NpcDef, radius: number, x: number, y: number): void {

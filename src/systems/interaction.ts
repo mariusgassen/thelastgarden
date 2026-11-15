@@ -1,3 +1,4 @@
+import { content } from '../content';
 import type { DialogueLine } from '../content/types';
 import type { InteractableSpec } from '../world/types';
 import { TILE_SIZE } from '../world/tiles';
@@ -157,8 +158,30 @@ export function onDialogueClosed(id: string, fn: () => void): void {
 
 const specHandlers: { [K in InteractableSpec['type']]: SpecHandler<K> } = {
   dialogue: (spec, ctx) => {
+    const variant = spec.variants?.find(
+      (v) =>
+        (v.requires ?? []).every((f) => gameState.hasFlag(f)) &&
+        !(v.forbids ?? []).some((f) => gameState.hasFlag(f)),
+    );
+    if (variant) {
+      ctx.world.showDialogue(variant.dialogueId);
+      if (variant.setFlags?.length || variant.giveItems?.length) {
+        onDialogueClosed(variant.dialogueId, () => {
+          for (const item of variant.giveItems ?? []) {
+            gameState.addItem(item.itemId, item.count);
+            ctx.world.toast(`+${item.count} ${content.items.get(item.itemId).name}`);
+          }
+          for (const flag of variant.setFlags ?? []) gameState.setFlag(flag);
+          gameState.save();
+        });
+      }
+      return;
+    }
     ctx.world.showDialogue(spec.dialogueId);
-    if (spec.setFlag) gameState.setFlag(spec.setFlag);
+    if (spec.setFlag) {
+      gameState.setFlag(spec.setFlag);
+      gameState.save();
+    }
   },
   door: (spec, ctx) => {
     const unlocked = !spec.locked || (spec.unlockFlag !== undefined && gameState.hasFlag(spec.unlockFlag));
@@ -183,6 +206,25 @@ const specHandlers: { [K in InteractableSpec['type']]: SpecHandler<K> } = {
     }
     if (spec.target) ctx.world.changeMap(spec.target.mapId, spec.target.spawn);
   },
+  repair: (spec, ctx) => {
+    if (gameState.hasFlag(spec.doneFlag)) {
+      ctx.world.showDialogue(spec.doneDialogueId);
+      return;
+    }
+    const missing = spec.cost.filter((c) => gameState.getItemCount(c.itemId) < c.count);
+    if (missing.length > 0) {
+      ctx.world.showDialogue(spec.missingDialogueId);
+      return;
+    }
+    for (const c of spec.cost) gameState.removeItem(c.itemId, c.count);
+    gameState.setFlag(spec.doneFlag);
+    for (const item of spec.giveItems ?? []) {
+      gameState.addItem(item.itemId, item.count);
+      ctx.world.toast(`+${item.count} ${content.items.get(item.itemId).name}`);
+    }
+    gameState.save();
+    ctx.world.showDialogue(spec.repairedDialogueId);
+  },
 };
 
 /** Replace the behavior of a built-in spec type (e.g. Wave 3 adds key checks to doors). */
@@ -197,6 +239,9 @@ export function createSpecInteractable(spec: InteractableSpec): Interactable {
     label: spec.label,
     radius: spec.radius ?? 56,
     getPosition: () => pos,
+    canInteract: () =>
+      (!spec.showWhenFlag || gameState.hasFlag(spec.showWhenFlag)) &&
+      (!spec.hideWhenFlag || !gameState.hasFlag(spec.hideWhenFlag)),
     onInteract: (ctx) => (specHandlers[spec.type] as SpecHandler<typeof spec.type>)(spec as never, ctx),
   };
 }

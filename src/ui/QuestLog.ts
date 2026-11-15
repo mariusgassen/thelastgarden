@@ -116,7 +116,7 @@ export class QuestLog {
   /** Pointer (CSS px) hit-test for the HUD button. */
   buttonContains(x: number, y: number): boolean {
     const b = this.button;
-    return x >= b.x - 108 && x <= b.x + 6 && y >= b.y - BUTTON_H / 2 - 6 && y <= b.y + BUTTON_H / 2 + 6;
+    return x >= b.x - 118 && x <= b.x + 6 && y >= b.y - BUTTON_H / 2 - 6 && y <= b.y + BUTTON_H / 2 + 6;
   }
 
   toggle(): void {
@@ -174,11 +174,11 @@ export class QuestLog {
     this.badge.setVisible(openCount > 0);
     this.badgeText.setText(String(openCount));
     this.buttonBg.clear();
-    const w = 108;
+    const w = 118;
     this.buttonBg.fillStyle(THEME.panel, THEME.panelAlpha * 0.85);
     this.buttonBg.fillRoundedRect(-w, -BUTTON_H / 2, w + 4, BUTTON_H, BUTTON_H / 2);
     this.buttonText.setPosition(-14, 0);
-    this.badge.setPosition(-w + 16, 0);
+    this.badge.setPosition(-w + 17, 0);
   }
 
   private refreshTracker(): void {
@@ -234,7 +234,7 @@ export class QuestLog {
       y += 18;
       add('Erledigt', { fontSize: '13px', fontStyle: 'bold', color: '#9fb98a' });
       y += 4;
-      for (const quest of completed.slice(-6).reverse()) {
+      for (const quest of completed.slice().reverse()) {
         add(`✓  ${quest.title}`, { fontSize: '14px', color: '#b8c7a6' });
         y += 3;
       }

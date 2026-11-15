@@ -135,6 +135,13 @@ addObstacleInteractHandler((obstacle, ctx) => {
   return true;
 });
 
+addObstacleInteractHandler((obstacle, ctx) => {
+  if (obstacle.blockedBy !== 'fallenTree' || gameState.getItemCount('garden-saw') <= 0) return false;
+  unblockPath(obstacle.id);
+  ctx.world.toast('Mit der Astsäge räumst du den umgestürzten Stamm Stück für Stück aus dem Weg.');
+  return true;
+});
+
 let tickerStarted = false;
 /** Flips `bed-restored:<bedId>` / `ability:<abilityId>` flags as beds mature, even off-screen. Call once at boot. */
 export function startGrowthTicker(): void {

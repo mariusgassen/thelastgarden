@@ -21,7 +21,8 @@ export const GREENHOUSE_VESTIBULE_MAP: MapDef = {
   obstacles: [],
   props: [
     { texture: 'map-board', at: { x: 4, y: 2.7 }, solid: { x: 3, y: 2, w: 2, h: 0.5 } },
-    { texture: 'inner-door', at: { x: 10, y: 2.6 }, solid: { x: 9.2, y: 2, w: 1.6, h: 0.4 } },
+    { texture: 'inner-door', at: { x: 10, y: 2.6 }, solid: { x: 9.2, y: 2, w: 1.6, h: 0.4 }, hideWhenFlag: 'greenhouse-inner-unlocked' },
+    { texture: 'inner-door-open', at: { x: 10, y: 2.6 }, showWhenFlag: 'greenhouse-inner-unlocked' },
     { texture: 'planter-table', at: { x: 3.4, y: 7.3 }, solid: { x: 2.1, y: 6.3, w: 2.6, h: 0.8 } },
     { texture: 'pots', at: { x: 12, y: 8.2 }, solid: { x: 11.3, y: 7.5, w: 1.4, h: 0.6 } },
     { texture: 'bush', at: { x: 1.8, y: 4.4 } },
@@ -45,6 +46,9 @@ export const GREENHOUSE_VESTIBULE_MAP: MapDef = {
       locked: true,
       unlockFlag: 'greenhouse-inner-unlocked',
       lockedDialogueId: 'greenhouse-inner-locked',
+      keyItemId: 'tower-water-vial',
+      unlockedDialogueId: 'greenhouse-inner-unlock',
+      target: { mapId: 'greenhouse-heart', spawn: 'entrance' },
     },
     { id: 'planter-table', type: 'dialogue', at: { x: 3.4, y: 7.5 }, label: 'Ansehen', dialogueId: 'planter-table' },
     {
@@ -55,6 +59,7 @@ export const GREENHOUSE_VESTIBULE_MAP: MapDef = {
       target: { mapId: 'garden', spawn: 'greenhouse-door' },
     },
   ],
+  plantingBeds: [{ id: 'bed-vestibule', rect: { x: 8, y: 6, w: 4, h: 2 } }],
   resourceNodes: [
     { id: 'vestibule-seed-lavender', itemId: 'seed-lavender', at: { x: 5.4, y: 7.2 }, label: 'Samen einsammeln' },
     { id: 'vestibule-seed-lily', itemId: 'seed-glow-lily', at: { x: 10, y: 7.6 }, label: 'Samen einsammeln' },
@@ -62,5 +67,6 @@ export const GREENHOUSE_VESTIBULE_MAP: MapDef = {
   spawns: {
     default: { x: 7, y: 8.2 },
     entrance: { x: 7, y: 8.2 },
+    'inner-door': { x: 10, y: 3.8 },
   },
 };
