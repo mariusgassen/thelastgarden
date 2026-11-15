@@ -1,0 +1,44 @@
+import type { ItemDef } from './types';
+
+export const ITEMS: ItemDef[] = [
+  {
+    id: 'seed-bramble-vine',
+    name: 'Brombeerranken-Samen',
+    description: 'Kleine, dunkle Samen in einer Papiertüte.',
+    category: 'seed',
+    stackable: true,
+    color: 0x6b2e4a,
+  },
+  {
+    id: 'seed-glow-lily',
+    name: 'Leuchtlilien-Zwiebel',
+    description: 'Eine Zwiebel, die schwach warm ist.',
+    category: 'seed',
+    stackable: true,
+    color: 0xf3e38a,
+  },
+  {
+    id: 'seed-lavender',
+    name: 'Lavendel-Samen',
+    description: 'Duftet selbst trocken noch.',
+    category: 'seed',
+    stackable: true,
+    color: 0x9b84d6,
+  },
+  {
+    id: 'trowel',
+    name: 'Alte Pflanzkelle',
+    description: 'Der Griff ist vom vielen Gebrauch glattgeschliffen.',
+    category: 'tool',
+    stackable: false,
+    color: 0x8a8f96,
+  },
+  {
+    id: 'greenhouse-key',
+    name: 'Gewächshausschlüssel',
+    description: 'Ein schwerer, angelaufener Messingschlüssel.',
+    category: 'key',
+    stackable: false,
+    color: 0xc9a227,
+  },
+];

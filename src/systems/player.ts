@@ -1,0 +1,90 @@
+import Phaser from 'phaser';
+import { inputState } from './input';
+import type { Facing } from './save';
+
+const SPEED = 140;
+/** Feet (collision circle center) offset from the sprite center, in px. */
+export const FEET_OFFSET_Y = 12;
+
+type Keys = Record<'up' | 'down' | 'left' | 'right' | 'w' | 'a' | 's' | 'd', Phaser.Input.Keyboard.Key>;
+
+/** Player sprite + movement. Reads keyboard and the virtual joystick (inputState). */
+export class PlayerController {
+  readonly sprite: Phaser.Physics.Arcade.Sprite;
+  private readonly shadow: Phaser.GameObjects.Image;
+  private readonly keys: Keys | null;
+  private walkTime = 0;
+  facing: Facing;
+
+  /** x/y = feet position in px. */
+  constructor(scene: Phaser.Scene, x: number, y: number, facing: Facing) {
+    this.facing = facing;
+    this.shadow = scene.add.image(x, y + 4, 'shadow').setScale(0.75);
+    this.sprite = scene.physics.add.sprite(x, y - FEET_OFFSET_Y, 'player');
+    const body = this.sprite.body as Phaser.Physics.Arcade.Body;
+    body.setCircle(8, 6, 24);
+    body.setCollideWorldBounds(true);
+    this.sprite.setFlipX(facing === 'left');
+
+    const kb = scene.input.keyboard;
+    this.keys = kb
+      ? (kb.addKeys({
+          up: Phaser.Input.Keyboard.KeyCodes.UP,
+          down: Phaser.Input.Keyboard.KeyCodes.DOWN,
+          left: Phaser.Input.Keyboard.KeyCodes.LEFT,
+          right: Phaser.Input.Keyboard.KeyCodes.RIGHT,
+          w: Phaser.Input.Keyboard.KeyCodes.W,
+          a: Phaser.Input.Keyboard.KeyCodes.A,
+          s: Phaser.Input.Keyboard.KeyCodes.S,
+          d: Phaser.Input.Keyboard.KeyCodes.D,
+        }) as Keys)
+      : null;
+  }
+
+  get feetX(): number {
+    return this.sprite.x;
+  }
+
+  get feetY(): number {
+    return this.sprite.y + FEET_OFFSET_Y;
+  }
+
+  update(deltaMs: number, frozen: boolean): void {
+    let dx = 0;
+    let dy = 0;
+    if (!frozen) {
+      const k = this.keys;
+      if (k) {
+        dx = (k.right.isDown || k.d.isDown ? 1 : 0) - (k.left.isDown || k.a.isDown ? 1 : 0);
+        dy = (k.down.isDown || k.s.isDown ? 1 : 0) - (k.up.isDown || k.w.isDown ? 1 : 0);
+      }
+      if (dx !== 0 || dy !== 0) {
+        const len = Math.hypot(dx, dy);
+        dx /= len;
+        dy /= len;
+      } else {
+        dx = inputState.moveX;
+        dy = inputState.moveY;
+      }
+    }
+
+    this.sprite.setVelocity(dx * SPEED, dy * SPEED);
+    const moving = Math.hypot(dx, dy) > 0.05;
+    if (dx < -0.1) this.facing = 'left';
+    else if (dx > 0.1) this.facing = 'right';
+    this.sprite.setFlipX(this.facing === 'left');
+
+    if (moving) {
+      this.walkTime += deltaMs * (0.012 + Math.hypot(dx, dy) * 0.006);
+      this.sprite.setAngle(Math.sin(this.walkTime) * 5);
+      this.sprite.setScale(1, 1 + Math.abs(Math.sin(this.walkTime)) * 0.05);
+    } else {
+      this.walkTime = 0;
+      this.sprite.setAngle(0);
+      this.sprite.setScale(1, 1);
+    }
+
+    this.sprite.setDepth(this.feetY);
+    this.shadow.setPosition(this.feetX, this.feetY + 4).setDepth(this.feetY - 1);
+  }
+}
