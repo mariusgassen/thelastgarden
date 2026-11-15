@@ -3,7 +3,7 @@ import type { MapDef } from '../types';
 /**
  * The outdoor world (50 × 72 tiles). Layout (tile coords):
  *
- *   greenhouse clearing (15..34, 5..20) ─ bramble ─ hidden yard (37..45, 6..14)
+ *   greenhouse clearing (15..34, 10..25) ─ bramble ─ hidden yard (37..45, 11..19)
  *          │
  *   hut yard (2..12) ── main garden (14..35, 27..44) ── pond (37..47, 29..45)
  *      │ tall grass             │ overgrown path            │ fallen tree (canal bank)
@@ -28,13 +28,13 @@ export const GARDEN_MAP: MapDef = {
     { op: 'ellipse', tile: 'paving', cx: 25.5, cy: 36, rx: 2.6, ry: 2.2 },
 
     // Greenhouse clearing + building
-    { op: 'rect', tile: 'grass', rect: { x: 15, y: 5, w: 20, h: 16 } },
-    { op: 'rect', tile: 'greenhouse', rect: { x: 19, y: 7, w: 12, h: 8 } },
-    { op: 'rect', tile: 'path', rect: { x: 24, y: 15, w: 3, h: 13 } },
+    { op: 'rect', tile: 'grass', rect: { x: 15, y: 10, w: 20, h: 16 } },
+    { op: 'rect', tile: 'greenhouse', rect: { x: 19, y: 12, w: 12, h: 8 } },
+    { op: 'rect', tile: 'path', rect: { x: 24, y: 20, w: 3, h: 8 } },
 
     // Hidden yard behind the bramble
-    { op: 'rect', tile: 'wildGrass', rect: { x: 37, y: 6, w: 9, h: 9 } },
-    { op: 'rect', tile: 'overgrownPath', rect: { x: 33, y: 9, w: 5, h: 3 } },
+    { op: 'rect', tile: 'wildGrass', rect: { x: 37, y: 11, w: 9, h: 9 } },
+    { op: 'rect', tile: 'overgrownPath', rect: { x: 33, y: 14, w: 5, h: 3 } },
 
     // Pond + canal
     { op: 'rect', tile: 'grass', rect: { x: 37, y: 29, w: 11, h: 17 } },
@@ -71,8 +71,8 @@ export const GARDEN_MAP: MapDef = {
   ],
   zones: [
     { id: 'garden', name: 'Hauptgarten', rect: { x: 14, y: 27, w: 22, h: 18 } },
-    { id: 'greenhouse', name: 'Altes Gewächshaus', rect: { x: 15, y: 5, w: 20, h: 16 } },
-    { id: 'greenhouse-yard', name: 'Verborgener Winkel', rect: { x: 35, y: 6, w: 11, h: 9 } },
+    { id: 'greenhouse', name: 'Altes Gewächshaus', rect: { x: 15, y: 10, w: 20, h: 17 } },
+    { id: 'greenhouse-yard', name: 'Verborgener Winkel', rect: { x: 35, y: 11, w: 11, h: 9 } },
     { id: 'pond', name: 'Teich', rect: { x: 35, y: 29, w: 13, h: 17 } },
     { id: 'canal', name: 'Am Kanal', rect: { x: 38, y: 46, w: 6, h: 12 } },
     { id: 'overgrown-path', name: 'Überwucherter Pfad', rect: { x: 15, y: 45, w: 10, h: 13 } },
@@ -85,7 +85,7 @@ export const GARDEN_MAP: MapDef = {
       id: 'bramble-greenhouse-yard',
       blockedBy: 'bramble',
       removable: true,
-      rect: { x: 34.5, y: 8.6, w: 2.4, h: 3.6 },
+      rect: { x: 34.5, y: 13.6, w: 2.4, h: 3.6 },
       name: 'Dornengestrüpp',
       hint: 'Undurchdringliche Brombeerranken. Vielleicht könnte eine andere Pflanze sich hindurchwinden …',
     },
@@ -107,13 +107,13 @@ export const GARDEN_MAP: MapDef = {
     },
   ],
   props: [
-    { texture: 'greenhouse-door', at: { x: 25, y: 15 } },
+    { texture: 'greenhouse-door', at: { x: 25, y: 20 } },
     { texture: 'hut-roof', at: { x: 7, y: 30.4 } },
     { texture: 'hut-door', at: { x: 7, y: 32 } },
     { texture: 'sign', at: { x: 28.2, y: 33.2 }, solid: { x: 27.9, y: 32.8, w: 0.6, h: 0.4 } },
     { texture: 'bench', at: { x: 21, y: 32.4 }, solid: { x: 19.9, y: 31.6, w: 2.2, h: 0.8 } },
     { texture: 'bench', at: { x: 30, y: 39.6 }, solid: { x: 28.9, y: 38.8, w: 2.2, h: 0.8 }, flipX: true },
-    { texture: 'well', at: { x: 41.5, y: 10.6 }, solid: { x: 40.7, y: 9.6, w: 1.6, h: 1 } },
+    { texture: 'well', at: { x: 41.5, y: 15.6 }, solid: { x: 40.7, y: 14.6, w: 1.6, h: 1 } },
     { texture: 'lily-pad', at: { x: 40.8, y: 35.2 }, ground: true },
     { texture: 'lily-pad', at: { x: 44, y: 37.4 }, scale: 0.8, ground: true },
     { texture: 'lily-pad', at: { x: 43, y: 33.6 }, scale: 0.9, ground: true },
@@ -125,7 +125,7 @@ export const GARDEN_MAP: MapDef = {
     {
       id: 'greenhouse-door',
       type: 'door',
-      at: { x: 25, y: 15.3 },
+      at: { x: 25, y: 20.3 },
       label: 'Öffnen',
       locked: true,
       unlockFlag: 'greenhouse-unlocked',
@@ -139,12 +139,12 @@ export const GARDEN_MAP: MapDef = {
       target: { mapId: 'workshop', spawn: 'entrance' },
     },
     { id: 'pond-edge', type: 'dialogue', at: { x: 38.6, y: 36.5 }, label: 'Ansehen', dialogueId: 'pond-edge' },
-    { id: 'old-well', type: 'dialogue', at: { x: 41.5, y: 10.8 }, label: 'Ansehen', dialogueId: 'old-well' },
+    { id: 'old-well', type: 'dialogue', at: { x: 41.5, y: 15.8 }, label: 'Ansehen', dialogueId: 'old-well' },
     { id: 'bus-stop-sign', type: 'dialogue', at: { x: 23.4, y: 62.2 }, label: 'Lesen', dialogueId: 'bus-stop-sign' },
   ],
   spawns: {
-    default: { x: 25.5, y: 38.5 },
+    default: { x: 25.5, y: 31 },
     'workshop-door': { x: 7, y: 33.4 },
-    'greenhouse-door': { x: 25, y: 16.6 },
+    'greenhouse-door': { x: 25, y: 21.6 },
   },
 };

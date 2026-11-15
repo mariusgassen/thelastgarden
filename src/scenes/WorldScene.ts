@@ -242,8 +242,8 @@ export class WorldScene extends Phaser.Scene implements WorldApi {
         const cx = (x + 0.5) * TILE_SIZE;
         const r = rnd();
         if (tile === 'forest' && deco.trees) {
-          // Canopies reach ~2 tiles upward: only plant where that area is forest, so trees never hide walkable ground.
-          const canopyFree = solidAt(x, y - 1) && solidAt(x, y - 2);
+          // Canopies reach ~2 tiles up and ~1 sideways: only plant where that area is forest, so trees never hide walkable ground.
+          const canopyFree = [-1, 0, 1].every((dx) => solidAt(x + dx, y - 1) && solidAt(x + dx, y - 2));
           const edge = !solidAt(x, y + 1) || !solidAt(x - 1, y) || !solidAt(x + 1, y);
           if (canopyFree && ((edge && r < 0.6) || r < 0.05)) {
             const by = (y + 1) * TILE_SIZE + rnd() * 8;
