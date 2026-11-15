@@ -283,6 +283,6 @@ __tlg.teleport(35, 16);              // walk up to the bramble obstacle, then pr
   - Crow NPC as an interactable.
   - Greenhouse interior map; set the `greenhouse-unlocked` flag and add a `target` to the door.
 - **Wave 4 (atmosphere / PWA):**
-  - Day/night cycle and particles: add a new scene or layers in `WorldScene`; depth `-10` is the ground.
-  - Use `getLightSources()` (see "Plant Abilities" above) as light cutouts in that layer.
+  - `systems/atmosphere.ts` supplies a four-minute visual day/night cycle, wind-borne sparkle motes and a dimming veil. It is scene-bound and has no save data.
+  - Mature glow lilies are queried through `getLightSources()` and erase circular light cutouts from the night veil; their additive halo/fireflies remain in `PlantLayer`.
   - Full offline support and an update flow in `sw.js`.
