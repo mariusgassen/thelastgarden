@@ -68,10 +68,24 @@ export interface QuestDef {
   rewardItems?: { itemId: string; count: number }[];
 }
 
+export interface DialogueChoice {
+  label: string;
+  /** Optional next DialogueDef id; omit to close after applying effects. */
+  nextDialogueId?: string;
+  setFlags?: string[];
+  giveItems?: { itemId: string; count: number }[];
+  /** All of these flags must be set for this choice to appear. */
+  requires?: string[];
+  /** None of these flags may be set for this choice to appear. */
+  forbids?: string[];
+}
+
 export interface DialogueLine {
   /** NPC id (resolved to its name + portrait) or free display name; omit for narration. */
   speaker?: string;
   text: string;
+  /** Optional branching choices presented on this line. */
+  choices?: DialogueChoice[];
 }
 
 export type DialogueStyle = 'speech' | 'page';

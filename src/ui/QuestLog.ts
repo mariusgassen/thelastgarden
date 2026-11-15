@@ -257,7 +257,7 @@ export class QuestLog {
       y += 18;
       add('Erledigt', { fontSize: '13px', fontStyle: 'bold', color: '#9fb98a' });
       y += 4;
-      for (const quest of completed.slice(-6).reverse()) {
+      for (const quest of completed.slice().reverse()) {
         add(`✓  ${quest.title}`, { fontSize: '14px', color: '#b8c7a6' });
         y += 3;
       }

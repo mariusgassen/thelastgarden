@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { content } from '../content';
-import type { DialogueLine, DialogueStyle } from '../content/types';
+import type { DialogueChoice, DialogueLine, DialogueStyle } from '../content/types';
 import { THEME } from './theme';
 
 const PAD = 20;
@@ -22,11 +22,19 @@ const PALETTES: Record<DialogueStyle, Palette> = {
   page: { fill: 0xf1e6c8, fillAlpha: 0.97, stroke: 0x8a603d, text: THEME.inkCss, accent: '#6e4529', muted: '#8a7a5c' },
 };
 
+interface ChoiceButton {
+  choice: DialogueChoice;
+  bg: Phaser.GameObjects.Graphics;
+  text: Phaser.GameObjects.Text;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
 /**
- * Large bottom dialogue panel. Linear sequencing: one line at a time, `advance()` returns
- * false once the last line was dismissed. `speech` style shows a speaker name and, if the
- * speaker is an NPC with a `portrait-<id>` texture, its portrait; `page` style renders a
- * parchment note with a title (journal pages).
+ * Large bottom dialogue panel. Linear sequencing plus optional branching choices on any line.
+ * `speech` style shows a speaker name and NPC portrait; `page` style renders a parchment note.
  */
 export class DialoguePanel {
   private readonly container: Phaser.GameObjects.Container;
@@ -47,11 +55,15 @@ export class DialoguePanel {
   private safeBottom = 0;
   private safeLeft = 0;
   private safeRight = 0;
+  private choiceButtons: ChoiceButton[] = [];
+  private selectedChoice = 0;
+  private rootId: string | null = null;
   id: string | null = null;
 
   constructor(
     private readonly scene: Phaser.Scene,
     private readonly touch: boolean,
+    private readonly isChoiceVisible: (choice: DialogueChoice) => boolean = () => true,
   ) {
     this.bg = scene.add.graphics();
     this.portrait = scene.add.image(PAD, PAD, 'portrait-crow').setOrigin(0).setDisplaySize(PORTRAIT, PORTRAIT).setVisible(false);
@@ -70,6 +82,14 @@ export class DialoguePanel {
     return this.id !== null;
   }
 
+  get hasChoices(): boolean {
+    return this.choiceButtons.length > 0;
+  }
+
+  getRootId(): string | null {
+    return this.rootId;
+  }
+
   layout(viewW: number, viewH: number, safeBottom: number, safeLeft = 0, safeRight = 0): void {
     this.viewW = viewW;
     this.viewH = viewH;
@@ -82,20 +102,39 @@ export class DialoguePanel {
 
   open(id: string, lines: DialogueLine[], style: DialogueStyle = 'speech', title?: string): void {
     if (lines.length === 0) return;
+    this.rootId = id;
+    this.openInternal(id, lines, style, title, true);
+  }
+
+  openBranch(id: string, lines: DialogueLine[], style: DialogueStyle = 'speech', title?: string): void {
+    if (lines.length === 0) return;
+    this.openInternal(id, lines, style, title, false);
+  }
+
+  private openInternal(id: string, lines: DialogueLine[], style: DialogueStyle, title: string | undefined, slideIn: boolean): void {
     this.id = id;
     this.lines = lines;
     this.index = 0;
+    this.selectedChoice = 0;
     this.style = style;
     this.title = title;
-    this.container.setVisible(true).setAlpha(0).setY(this.container.y + 12);
-    this.scene.tweens.add({ targets: this.container, alpha: 1, y: '-=12', duration: 180, ease: 'Sine.easeOut' });
-    this.showLine(false);
+    this.container.setVisible(true);
+    if (slideIn) {
+      this.container.setAlpha(0);
+      this.showLine(false);
+      this.container.setY(this.container.y + 12);
+      this.scene.tweens.add({ targets: this.container, alpha: 1, y: '-=12', duration: 180, ease: 'Sine.easeOut' });
+    } else {
+      this.container.setAlpha(1);
+      this.showLine(true);
+    }
   }
 
   /** Returns false when the dialogue has ended (panel closed). */
   advance(): boolean {
     if (!this.isOpen) return false;
     this.index++;
+    this.selectedChoice = 0;
     if (this.index >= this.lines.length) {
       this.close();
       return false;
@@ -104,12 +143,58 @@ export class DialoguePanel {
     return true;
   }
 
+  moveChoice(delta: number): void {
+    if (this.choiceButtons.length === 0) return;
+    const len = this.choiceButtons.length;
+    this.selectedChoice = (this.selectedChoice + delta + len) % len;
+    this.redrawChoices();
+  }
+
+  pickChoiceAt(cssX: number, cssY: number): DialogueChoice | null {
+    const lx = cssX - this.container.x;
+    const ly = cssY - this.container.y;
+    const hit = this.choiceButtons.find((b) => lx >= b.x && lx <= b.x + b.w && ly >= b.y && ly <= b.y + b.h);
+    return hit?.choice ?? null;
+  }
+
+  pickChoiceIndex(idx: number): DialogueChoice | null {
+    return this.choiceButtons[idx]?.choice ?? null;
+  }
+
+  pickSelectedChoice(): DialogueChoice | null {
+    return this.choiceButtons[this.selectedChoice]?.choice ?? null;
+  }
+
   close(): void {
+    this.clearChoices();
     this.id = null;
+    this.rootId = null;
     this.container.setVisible(false);
   }
 
+  private clearChoices(): void {
+    for (const btn of this.choiceButtons) {
+      btn.bg.destroy();
+      btn.text.destroy();
+    }
+    this.choiceButtons = [];
+  }
+
+  private redrawChoices(): void {
+    const pal = PALETTES[this.style];
+    this.choiceButtons.forEach((btn, i) => {
+      const selected = !this.touch && i === this.selectedChoice;
+      btn.bg.clear();
+      btn.bg.fillStyle(selected ? THEME.sun : THEME.moss, selected ? 0.25 : 0.72);
+      btn.bg.fillRoundedRect(btn.x, btn.y, btn.w, btn.h, 10);
+      btn.bg.lineStyle(1.5, pal.stroke, selected ? 0.95 : 0.45);
+      btn.bg.strokeRoundedRect(btn.x, btn.y, btn.w, btn.h, 10);
+      btn.text.setColor(selected ? pal.accent : pal.text);
+    });
+  }
+
   private showLine(animate: boolean): void {
+    this.clearChoices();
     const line = this.lines[this.index];
     const pal = PALETTES[this.style];
     const isPage = this.style === 'page';
@@ -135,16 +220,51 @@ export class DialoguePanel {
       .setPosition(textX, bodyY)
       .setText(line.text);
 
-    const contentBottom = Math.max(this.body.y + this.body.height, portraitKey ? PAD + PORTRAIT : 0);
+    let contentBottom = Math.max(this.body.y + this.body.height, portraitKey ? PAD + PORTRAIT : 0);
+
+    const visibleChoices = (line.choices ?? []).filter((c) => this.isChoiceVisible(c));
+    if (visibleChoices.length > 0) {
+      this.selectedChoice = Phaser.Math.Clamp(this.selectedChoice, 0, visibleChoices.length - 1);
+      let cy = contentBottom + 14;
+      const btnW = this.width - PAD * 2;
+      visibleChoices.forEach((choice, i) => {
+        const prefix = this.touch ? '▸ ' : `${i + 1}. `;
+        const t = this.scene.add
+          .text(PAD + 14, cy + 9, prefix + choice.label, {
+            fontFamily: THEME.font,
+            fontSize: '15px',
+            fontStyle: 'bold',
+            color: pal.text,
+            wordWrap: { width: btnW - 28, useAdvancedWrap: true },
+          })
+          .setOrigin(0, 0);
+        const btnH = Math.max(38, Math.ceil(t.height) + 18);
+        t.setY(cy + (btnH - t.height) / 2);
+        const bg = this.scene.add.graphics();
+        this.container.add([bg, t]);
+        this.choiceButtons.push({ choice, bg, text: t, x: PAD, y: cy, w: btnW, h: btnH });
+        cy += btnH + 8;
+      });
+      this.redrawChoices();
+      contentBottom = cy - 4;
+    }
+
     this.height = Math.max(112, contentBottom + PAD + 20);
 
     const last = this.index === this.lines.length - 1;
     this.progress.setText(`${this.index + 1} / ${this.lines.length}`).setColor(pal.muted).setPosition(PAD, this.height - PAD - 6);
-    const hint = this.touch ? '' : '  (E)';
-    this.next
-      .setText((last ? 'Schließen' : 'Weiter ▸') + hint)
-      .setColor(pal.accent)
-      .setPosition(this.width - PAD, this.height - PAD - 7);
+    if (visibleChoices.length > 0) {
+      this.next
+        .setText(this.touch ? 'Antwort antippen' : `1–${visibleChoices.length} oder E`)
+        .setColor(pal.muted)
+        .setPosition(this.width - PAD, this.height - PAD - 7);
+    } else {
+      const hint = this.touch ? '' : '  (E)';
+      this.next
+        .setText((last ? 'Schließen' : 'Weiter ▸') + hint)
+        .setColor(pal.accent)
+        .setPosition(this.width - PAD, this.height - PAD - 7);
+    }
 
     this.bg.clear();
     this.bg.fillStyle(0x000000, 0.28);

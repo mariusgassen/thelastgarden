@@ -21,7 +21,21 @@ export const WORKSHOP_MAP: MapDef = {
     { texture: 'rug', at: { x: 6, y: 7.4 }, ground: true },
   ],
   interactables: [
-    { id: 'workbench', type: 'dialogue', at: { x: 3.2, y: 4.1 }, label: 'Ansehen', dialogueId: 'workbench' },
+    {
+      id: 'workbench',
+      type: 'dialogue',
+      at: { x: 3.2, y: 4.1 },
+      label: 'Ansehen',
+      dialogueId: 'workbench',
+      variants: [
+        {
+          dialogueId: 'workbench-saw',
+          forbids: ['saw-found'],
+          setFlags: ['saw-found'],
+          giveItems: [{ itemId: 'garden-saw', count: 1 }],
+        },
+      ],
+    },
     { id: 'workshop-shelf', type: 'dialogue', at: { x: 9, y: 3.7 }, label: 'Ansehen', dialogueId: 'workshop-shelf' },
     {
       id: 'workshop-exit',

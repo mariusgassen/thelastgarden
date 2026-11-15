@@ -1,6 +1,8 @@
 import Phaser from 'phaser';
+import { content, type DialogueChoice } from '../content';
 import { bus } from '../systems/events';
 import { inputState } from '../systems/input';
+import { gameState } from '../systems/state';
 import { Banner } from '../ui/Banner';
 import { ContextButton } from '../ui/ContextButton';
 import { DialoguePanel } from '../ui/DialoguePanel';
@@ -45,7 +47,13 @@ export class UIScene extends Phaser.Scene {
     const touch = isTouchDevice();
     this.joystick = new Joystick(this, touch);
     this.button = new ContextButton(this, !touch, () => inputState.requestInteract());
-    this.dialogue = new DialoguePanel(this, touch);
+    this.dialogue = new DialoguePanel(
+      this,
+      touch,
+      (choice) =>
+        (choice.requires ?? []).every((f) => gameState.hasFlag(f)) &&
+        !(choice.forbids ?? []).some((f) => gameState.hasFlag(f)),
+    );
     this.areaBanner = new Banner(this, 17, () => this.layoutTopStack());
     this.toast = new Banner(this, 14, () => this.layoutTopStack());
     this.resourceBar = new ResourceBar(this);
@@ -69,6 +77,25 @@ export class UIScene extends Phaser.Scene {
       this.toggleQuestLog();
     });
     kb?.on('keydown-ESC', () => this.questLog.setOpen(false));
+    kb?.on('keydown-UP', () => {
+      if (this.dialogue.isOpen && this.dialogue.hasChoices) this.dialogue.moveChoice(-1);
+    });
+    kb?.on('keydown-W', () => {
+      if (this.dialogue.isOpen && this.dialogue.hasChoices) this.dialogue.moveChoice(-1);
+    });
+    kb?.on('keydown-DOWN', () => {
+      if (this.dialogue.isOpen && this.dialogue.hasChoices) this.dialogue.moveChoice(1);
+    });
+    kb?.on('keydown-S', () => {
+      if (this.dialogue.isOpen && this.dialogue.hasChoices) this.dialogue.moveChoice(1);
+    });
+    ['ONE', 'TWO', 'THREE', 'FOUR'].forEach((key, idx) => {
+      kb?.on(`keydown-${key}`, () => {
+        if (!this.dialogue.isOpen || !this.dialogue.hasChoices) return;
+        const picked = this.dialogue.pickChoiceIndex(idx);
+        if (picked) this.applyDialogueChoice(picked);
+      });
+    });
 
     bus.onScene(this, 'interaction-focus', (f) => (f ? this.button.show(f.label) : this.button.hide()));
     bus.onScene(this, 'area-changed', ({ name }) => this.areaBanner.show(name));
@@ -81,7 +108,10 @@ export class UIScene extends Phaser.Scene {
     });
     bus.onScene(this, 'dialogue-advance', () => {
       if (this.questLog.isOpen) this.questLog.setOpen(false);
-      else this.advanceDialogue();
+      else if (this.dialogue.isOpen && this.dialogue.hasChoices) {
+        const picked = this.dialogue.pickSelectedChoice();
+        if (picked) this.applyDialogueChoice(picked);
+      } else this.advanceDialogue();
     });
     bus.onScene(this, 'inventory-changed', () => {
       this.resourceBar.refresh();
@@ -178,12 +208,34 @@ export class UIScene extends Phaser.Scene {
     this.questLog.toggle();
   }
 
+  private applyDialogueChoice(choice: DialogueChoice): void {
+    for (const item of choice.giveItems ?? []) {
+      gameState.addItem(item.itemId, item.count);
+      this.enqueueToast(`+${item.count} ${content.items.get(item.itemId).name}`);
+    }
+    for (const flag of choice.setFlags ?? []) gameState.setFlag(flag);
+    gameState.save();
+    if (choice.nextDialogueId) {
+      const next = content.dialogues.get(choice.nextDialogueId);
+      this.dialogue.openBranch(next.id, next.lines, next.style, next.title);
+      return;
+    }
+    const rootId = this.dialogue.getRootId();
+    const id = this.dialogue.id;
+    this.dialogue.close();
+    inputState.modal = this.questLog.isOpen;
+    if (id) bus.emit('dialogue-closed', { id });
+    if (rootId && rootId !== id) bus.emit('dialogue-closed', { id: rootId });
+  }
+
   private advanceDialogue(): void {
+    const rootId = this.dialogue.getRootId();
     const id = this.dialogue.id;
     if (id === null) return;
     if (!this.dialogue.advance()) {
       inputState.modal = this.questLog.isOpen;
       bus.emit('dialogue-closed', { id });
+      if (rootId && rootId !== id) bus.emit('dialogue-closed', { id: rootId });
     }
   }
 
@@ -198,7 +250,12 @@ export class UIScene extends Phaser.Scene {
   private onPointerDown(pointer: Phaser.Input.Pointer): void {
     const p = this.toCss(pointer);
     if (this.dialogue.isOpen) {
-      this.advanceDialogue();
+      if (this.dialogue.hasChoices) {
+        const picked = this.dialogue.pickChoiceAt(p.x, p.y);
+        if (picked) this.applyDialogueChoice(picked);
+      } else {
+        this.advanceDialogue();
+      }
       return;
     }
     if (this.questLog.pointerDown(p.x, p.y)) return;
