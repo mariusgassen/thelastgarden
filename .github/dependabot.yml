@@ -1,0 +1,68 @@
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "07:00"
+      timezone: "Europe/Berlin"
+    open-pull-requests-limit: 10
+    cooldown:
+      default-days: 3
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+    groups:
+      production-dependencies:
+        dependency-type: "production"
+        update-types:
+          - "minor"
+          - "patch"
+      development-dependencies:
+        dependency-type: "development"
+        update-types:
+          - "minor"
+          - "patch"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "07:00"
+      timezone: "Europe/Berlin"
+    open-pull-requests-limit: 5
+    cooldown:
+      default-days: 3
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "07:00"
+      timezone: "Europe/Berlin"
+    open-pull-requests-limit: 5
+    cooldown:
+      default-days: 3
+    commit-message:
+      prefix: "build"
+      include: "scope"
+    groups:
+      docker:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
