@@ -155,6 +155,23 @@ export function startGrowthTicker(): void {
   }, 2000);
 }
 
+/**
+ * Moves one bed's growth clock: negative ms = growth advances (rain), positive = setback
+ * (pests). A setback never goes below "just planted", and a mature bed is never touched
+ * (its `bed-restored` flag stays truthful). Returns false if nothing changed.
+ */
+export function shiftGrowth(bedId: string, ms: number): boolean {
+  const state = readState();
+  const bed = state.beds[bedId];
+  if (!bed || isBedMature(bedId)) return false;
+  const next = Math.min(Date.now(), bed.plantedAt + ms);
+  if (next === bed.plantedAt) return false;
+  bed.plantedAt = next;
+  writeState(state);
+  gameState.save();
+  return true;
+}
+
 /** Dev-only: rewinds every planted bed's clock so growth advances immediately (see window.__tlg). */
 export function debugRewindGrowth(ms: number): void {
   const state = readState();

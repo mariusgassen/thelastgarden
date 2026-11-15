@@ -3,14 +3,17 @@ import { bus } from '../systems/events';
 import { inputState } from '../systems/input';
 import { Banner } from '../ui/Banner';
 import { ContextButton } from '../ui/ContextButton';
-import { DialogueBox } from '../ui/DialogueBox';
+import { DialoguePanel } from '../ui/DialoguePanel';
 import { Joystick } from '../ui/Joystick';
+import { QuestLog } from '../ui/QuestLog';
 import { ResourceBar } from '../ui/ResourceBar';
+import { TutorialHints } from '../ui/TutorialHints';
 import { DPR, isTouchDevice, readSafeArea, type SafeArea } from '../ui/viewport';
 import { SCENES } from './keys';
 
 const TAP_MAX_MS = 280;
 const TAP_MAX_MOVE = 12;
+const TOAST_MS = 1900;
 
 /**
  * HUD overlay above WorldScene. Works in CSS pixels (camera zoom = DPR).
@@ -19,12 +22,16 @@ const TAP_MAX_MOVE = 12;
 export class UIScene extends Phaser.Scene {
   private joystick!: Joystick;
   private button!: ContextButton;
-  private dialogue!: DialogueBox;
+  private dialogue!: DialoguePanel;
   private areaBanner!: Banner;
   private toast!: Banner;
   private resourceBar!: ResourceBar;
+  private questLog!: QuestLog;
+  private tutorial!: TutorialHints;
   private safe: SafeArea = { top: 0, right: 0, bottom: 0, left: 0 };
   private downAt = new Map<number, { x: number; y: number; t: number }>();
+  private toastQueue: string[] = [];
+  private toastBusyUntil = 0;
 
   constructor() {
     super(SCENES.ui);
@@ -37,35 +44,62 @@ export class UIScene extends Phaser.Scene {
     const touch = isTouchDevice();
     this.joystick = new Joystick(this, touch);
     this.button = new ContextButton(this, !touch, () => inputState.requestInteract());
-    this.dialogue = new DialogueBox(this);
+    this.dialogue = new DialoguePanel(this, touch);
     this.areaBanner = new Banner(this, 17);
     this.toast = new Banner(this, 14);
     this.resourceBar = new ResourceBar(this);
+    this.questLog = new QuestLog(this, (open) => {
+      inputState.modal = open || this.dialogue.isOpen;
+      if (open) this.releaseJoystick();
+    });
+    this.tutorial = new TutorialHints(this, touch);
 
     this.input.on(Phaser.Input.Events.POINTER_DOWN, this.onPointerDown, this);
     this.input.on(Phaser.Input.Events.POINTER_MOVE, this.onPointerMove, this);
     this.input.on(Phaser.Input.Events.POINTER_UP, this.onPointerUp, this);
     this.input.on(Phaser.Input.Events.POINTER_UP_OUTSIDE, this.onPointerUp, this);
+    this.input.on('wheel', (_p: Phaser.Input.Pointer, _o: unknown, _dx: number, dy: number) => this.questLog.scrollBy(dy * 0.5));
+
+    const kb = this.input.keyboard;
+    kb?.on('keydown-Q', () => this.toggleQuestLog());
+    kb?.on('keydown-TAB', (e: KeyboardEvent) => {
+      e.preventDefault();
+      this.toggleQuestLog();
+    });
+    kb?.on('keydown-ESC', () => this.questLog.setOpen(false));
 
     bus.onScene(this, 'interaction-focus', (f) => (f ? this.button.show(f.label) : this.button.hide()));
     bus.onScene(this, 'area-changed', ({ name }) => this.areaBanner.show(name));
-    bus.onScene(this, 'toast', ({ text }) => this.toast.show(text, 1800));
-    bus.onScene(this, 'dialogue-show', ({ id, lines }) => {
-      this.dialogue.open(id, lines);
+    bus.onScene(this, 'toast', ({ text }) => this.enqueueToast(text));
+    bus.onScene(this, 'dialogue-show', ({ id, lines, style, title }) => {
+      this.questLog.setOpen(false);
+      this.dialogue.open(id, lines, style, title);
       inputState.modal = this.dialogue.isOpen;
       if (inputState.modal) this.releaseJoystick();
     });
-    bus.onScene(this, 'dialogue-advance', () => this.advanceDialogue());
+    bus.onScene(this, 'dialogue-advance', () => {
+      if (this.questLog.isOpen) this.questLog.setOpen(false);
+      else this.advanceDialogue();
+    });
     bus.onScene(this, 'inventory-changed', () => this.resourceBar.refresh());
-    bus.onScene(this, 'save-loaded', () => this.resourceBar.refresh());
+    bus.onScene(this, 'save-loaded', () => {
+      this.resourceBar.refresh();
+      this.questLog.refresh();
+    });
+    bus.onScene(this, 'quest-updated', () => this.questLog.refresh());
 
     this.layout();
     this.scale.on(Phaser.Scale.Events.RESIZE, this.layout, this);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.scale.off(Phaser.Scale.Events.RESIZE, this.layout, this));
   }
 
-  override update(): void {
+  override update(_time: number, delta: number): void {
     inputState.setMove(this.joystick.vectorX, this.joystick.vectorY);
+    this.tutorial.update(delta);
+    if (this.toastQueue.length > 0 && this.time.now >= this.toastBusyUntil) {
+      this.toast.show(this.toastQueue.shift() as string, TOAST_MS);
+      this.toastBusyUntil = this.time.now + TOAST_MS + 300;
+    }
   }
 
   private get viewW(): number {
@@ -82,17 +116,29 @@ export class UIScene extends Phaser.Scene {
     const r = this.button.radius;
     this.button.setPosition(w - safe.right - r - 22, h - safe.bottom - r - 34);
     this.joystick.setRestPosition(safe.left + 92, h - safe.bottom - 100);
-    this.dialogue.layout(w, h, safe.bottom);
+    this.dialogue.layout(w, h, safe.bottom, safe.left, safe.right);
     this.areaBanner.setPosition(w / 2, safe.top + 34);
-    this.toast.setPosition(w / 2, safe.top + 78);
+    this.toast.setPosition(w / 2, safe.top + 100);
     this.resourceBar.setPosition(safe.left + 18, safe.top + 26);
+    this.questLog.layout(w, h, safe);
+    this.tutorial.layout(w, safe.top + 165);
+  }
+
+  private enqueueToast(text: string): void {
+    if (this.toastQueue.length > 4) this.toastQueue.shift();
+    this.toastQueue.push(text);
+  }
+
+  private toggleQuestLog(): void {
+    if (this.dialogue.isOpen) return;
+    this.questLog.toggle();
   }
 
   private advanceDialogue(): void {
     const id = this.dialogue.id;
     if (id === null) return;
     if (!this.dialogue.advance()) {
-      inputState.modal = false;
+      inputState.modal = this.questLog.isOpen;
       bus.emit('dialogue-closed', { id });
     }
   }
@@ -111,6 +157,11 @@ export class UIScene extends Phaser.Scene {
       this.advanceDialogue();
       return;
     }
+    if (this.questLog.pointerDown(p.x, p.y)) return;
+    if (this.questLog.buttonContains(p.x, p.y)) {
+      this.questLog.toggle();
+      return;
+    }
     if (this.button.contains(p.x, p.y)) return;
     this.downAt.set(pointer.id, { ...p, t: this.time.now });
     if (!this.joystick.active) this.joystick.start(pointer.id, p.x, p.y);
@@ -119,10 +170,15 @@ export class UIScene extends Phaser.Scene {
   private onPointerMove(pointer: Phaser.Input.Pointer): void {
     if (!pointer.isDown) return;
     const p = this.toCss(pointer);
+    if (this.questLog.isOpen) {
+      this.questLog.pointerMove(p.y);
+      return;
+    }
     this.joystick.move(pointer.id, p.x, p.y);
   }
 
   private onPointerUp(pointer: Phaser.Input.Pointer): void {
+    this.questLog.pointerUp();
     const down = this.downAt.get(pointer.id);
     this.downAt.delete(pointer.id);
     this.joystick.end(pointer.id);

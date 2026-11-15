@@ -3,9 +3,13 @@ import { content, type DialogueLine } from '../content';
 import { bus } from '../systems/events';
 import { inputState } from '../systems/input';
 import { createSpecInteractable, InteractionSystem, type WorldApi } from '../systems/interaction';
+import { JournalLayer } from '../systems/journal';
+import { NightEventLayer } from '../systems/nightEvents';
+import { NpcLayer } from '../systems/npcs';
 import { ObstacleLayer } from '../systems/obstacles';
 import { PlantLayer } from '../systems/plantLayer';
 import { PlayerController } from '../systems/player';
+import { QuestMarkerLayer } from '../systems/questMarkers';
 import { ResourceLayer } from '../systems/resources';
 import { AtmosphereLayer } from '../systems/atmosphere';
 import { gameState } from '../systems/state';
@@ -36,9 +40,14 @@ export class WorldScene extends Phaser.Scene implements WorldApi {
   plants!: PlantLayer;
   resources!: ResourceLayer;
   atmosphere!: AtmosphereLayer;
+  npcs!: NpcLayer;
+  journal!: JournalLayer;
+  questMarkers!: QuestMarkerLayer;
+  night!: NightEventLayer;
   /** Static colliders (props, obstacles). Add your own solid bodies here. */
   solids!: Phaser.Physics.Arcade.StaticGroup;
   private marker!: Phaser.GameObjects.Image;
+  private flagProps: { image: Phaser.GameObjects.Image; showWhenFlag?: string; hideWhenFlag?: string }[] = [];
   private currentZone: ZoneDef | null = null;
   private transitioning = false;
 
@@ -86,6 +95,10 @@ export class WorldScene extends Phaser.Scene implements WorldApi {
     this.plants = new PlantLayer(this, this.map.id, this.interaction);
     this.resources = new ResourceLayer(this, this.map.id, this.interaction);
     this.atmosphere = new AtmosphereLayer(this, this.map);
+    this.npcs = new NpcLayer(this, this.map, this.interaction, () => this.player.feetX);
+    this.journal = new JournalLayer(this, this.map.id, this.interaction);
+    this.questMarkers = new QuestMarkerLayer(this, this.interaction);
+    this.night = new NightEventLayer(this, this);
 
     const spawn = this.resolveSpawn(data.spawn);
     this.player = new PlayerController(this, spawn.x, spawn.y, gameState.data.player.facing);
@@ -162,7 +175,7 @@ export class WorldScene extends Phaser.Scene implements WorldApi {
 
   showDialogue(dialogueId: string): void {
     const dialogue = content.dialogues.get(dialogueId);
-    this.showLines(dialogue.id, dialogue.lines);
+    bus.emit('dialogue-show', { id: dialogue.id, lines: dialogue.lines, style: dialogue.style, title: dialogue.title });
   }
 
   showLines(id: string, lines: DialogueLine[]): void {
@@ -220,20 +233,34 @@ export class WorldScene extends Phaser.Scene implements WorldApi {
   }
 
   private placeProps(): void {
+    this.flagProps = [];
     for (const prop of this.map.props) {
       const x = prop.at.x * TILE_SIZE;
       const y = prop.at.y * TILE_SIZE;
-      this.add
+      const image = this.add
         .image(x, y, prop.texture)
         .setOrigin(0.5, 1)
         .setScale(prop.scale ?? 1)
         .setFlipX(prop.flipX ?? false)
         .setDepth(prop.ground ? -5 : y);
+      if (prop.showWhenFlag || prop.hideWhenFlag) {
+        this.flagProps.push({ image, showWhenFlag: prop.showWhenFlag, hideWhenFlag: prop.hideWhenFlag });
+      }
       if (prop.solid) {
         const r = prop.solid;
         const zone = this.add.zone((r.x + r.w / 2) * TILE_SIZE, (r.y + r.h / 2) * TILE_SIZE, r.w * TILE_SIZE, r.h * TILE_SIZE);
         this.solids.add(zone);
       }
+    }
+    this.applyPropFlags();
+    bus.onScene(this, 'flag-changed', () => this.applyPropFlags());
+  }
+
+  private applyPropFlags(): void {
+    for (const p of this.flagProps) {
+      const visible =
+        (!p.showWhenFlag || gameState.hasFlag(p.showWhenFlag)) && (!p.hideWhenFlag || !gameState.hasFlag(p.hideWhenFlag));
+      p.image.setVisible(visible);
     }
   }
 

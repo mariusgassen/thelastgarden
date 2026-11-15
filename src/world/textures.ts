@@ -430,6 +430,182 @@ export function generateTextures(scene: Phaser.Scene): void {
     g.fillCircle(52, 30, 6);
   });
 
+  // Story (Wave 3): crow, journal pages, quest pins, greenhouse vestibule, night remnants
+  make('crow', 34, 30, (g) => {
+    g.fillStyle(0x000000, 0.2);
+    g.fillEllipse(17, 28, 24, 5);
+    g.fillStyle(0x2b2b33, 1);
+    g.fillEllipse(15, 18, 22, 14); // body
+    g.fillTriangle(4, 16, 0, 26, 10, 22); // tail
+    g.fillCircle(24, 10, 7); // head
+    g.fillStyle(0x3a3a46, 1);
+    g.fillEllipse(13, 17, 14, 8); // wing
+    g.fillStyle(0x4a4a56, 1);
+    g.fillTriangle(29, 9, 34, 11, 29, 13); // beak
+    g.fillStyle(0xf4f0e6, 1);
+    g.fillCircle(26, 9, 2);
+    g.fillStyle(0x1a1a22, 1);
+    g.fillCircle(26.6, 9, 1.1);
+    g.lineStyle(2, 0x4a4a56, 1); // legs
+    g.lineBetween(13, 24, 12, 29);
+    g.lineBetween(19, 24, 20, 29);
+  });
+  make('portrait-crow', 64, 64, (g) => {
+    g.fillStyle(0x3f5f3a, 1);
+    g.fillRoundedRect(0, 0, 64, 64, 10);
+    g.fillStyle(0x5b8a45, 0.5);
+    g.fillCircle(48, 14, 14);
+    g.fillStyle(0x2b2b33, 1);
+    g.fillEllipse(30, 44, 40, 26);
+    g.fillCircle(42, 24, 13);
+    g.fillStyle(0x4a4a56, 1);
+    g.fillTriangle(52, 22, 64, 26, 52, 30);
+    g.fillStyle(0xf4f0e6, 1);
+    g.fillCircle(45, 22, 4);
+    g.fillStyle(0x1a1a22, 1);
+    g.fillCircle(46, 22, 2.2);
+    g.fillStyle(0x3a3a46, 1);
+    g.fillEllipse(22, 44, 24, 12);
+  });
+  make('stump', 36, 28, (g) => {
+    g.fillStyle(0x000000, 0.2);
+    g.fillEllipse(18, 25, 32, 7);
+    g.fillStyle(0x5c3b25, 1);
+    g.fillRoundedRect(4, 8, 28, 18, 4);
+    g.fillStyle(0x8a603d, 1);
+    g.fillEllipse(18, 9, 28, 12);
+    g.lineStyle(1, 0xa8753f, 1);
+    g.strokeEllipse(18, 9, 18, 7);
+    g.strokeEllipse(18, 9, 9, 3.5);
+    g.fillStyle(0x6a9a4e, 1);
+    g.fillCircle(7, 22, 4);
+  });
+  make('journal-page', 24, 26, (g) => {
+    g.fillStyle(0x000000, 0.18);
+    g.fillEllipse(12, 24, 22, 5);
+    g.fillStyle(0xf1e6c8, 1);
+    g.fillRoundedRect(3, 2, 18, 22, 2);
+    g.fillStyle(0xd8c9a0, 1);
+    g.fillTriangle(21, 2, 21, 7, 16, 2);
+    g.fillStyle(0x6e5a3c, 0.8);
+    for (let i = 0; i < 5; i++) g.fillRect(6, 7 + i * 3.4, 11 - (i % 2) * 3, 1.2);
+    g.fillStyle(0x8f877a, 1);
+    g.fillEllipse(8, 20, 7, 5); // pebble weight
+  });
+  make('quest-pin', 26, 34, (g) => {
+    g.fillStyle(0x000000, 0.25);
+    g.fillEllipse(13, 32, 14, 4);
+    g.fillStyle(0xe9a23b, 1);
+    g.fillCircle(13, 12, 11);
+    g.fillTriangle(4, 18, 22, 18, 13, 30);
+    g.fillStyle(0xfff6d8, 1);
+    g.fillCircle(13, 12, 8);
+    g.fillStyle(0x2c2418, 1);
+    g.fillRoundedRect(11.5, 6, 3, 8, 1.5);
+    g.fillCircle(13, 17, 1.7);
+  });
+  make('greenhouse-door-open', 64, 44, (g) => {
+    g.fillStyle(0x4d6b66, 1);
+    g.fillRoundedRect(4, 0, 56, 44, { tl: 18, tr: 18, bl: 0, br: 0 });
+    g.fillStyle(0x1f3a30, 1); // dark opening
+    g.fillRoundedRect(14, 8, 36, 36, { tl: 14, tr: 14, bl: 0, br: 0 });
+    g.fillStyle(0x7fb2ac, 1); // door leaves swung inward
+    g.fillRect(9, 10, 7, 34);
+    g.fillRect(48, 10, 7, 34);
+    g.fillStyle(0x6a9a4e, 1);
+    g.fillCircle(22, 36, 5);
+    g.fillCircle(40, 30, 4);
+    g.fillStyle(0xf3e38a, 0.6);
+    g.fillCircle(32, 22, 5);
+  });
+  make('map-board', 72, 52, (g) => {
+    g.fillStyle(0x4b2f1f, 1);
+    g.fillRoundedRect(0, 0, 72, 48, 3);
+    g.fillStyle(0xf1e6c8, 1);
+    g.fillRect(5, 5, 62, 38);
+    g.lineStyle(1.5, 0x8f877a, 1); // streets
+    g.lineBetween(8, 30, 64, 30);
+    g.lineBetween(30, 8, 30, 40);
+    g.lineBetween(44, 8, 50, 40);
+    g.fillStyle(0x6a9a4e, 1); // the garden
+    g.fillCircle(16, 20, 6);
+    g.lineStyle(2.5, 0xd84a5f, 1); // pencil line along line 3
+    g.lineBetween(16, 20, 30, 30);
+    g.lineBetween(30, 30, 58, 14);
+    g.fillStyle(0x5a6a6e, 1); // water tower
+    g.fillRect(56, 10, 5, 9);
+    g.fillCircle(58.5, 10, 4);
+    g.fillStyle(0x4b2f1f, 1);
+    g.fillRect(34, 48, 4, 4);
+  });
+  make('inner-door', 48, 40, (g) => {
+    g.fillStyle(0x4d6b66, 1);
+    g.fillRect(4, 0, 40, 40);
+    g.fillStyle(0x2a4a3c, 1);
+    g.fillRoundedRect(9, 4, 30, 36, { tl: 12, tr: 12, bl: 0, br: 0 });
+    g.lineStyle(3, 0x3f6b35, 1); // vines across
+    g.lineBetween(8, 12, 40, 20);
+    g.lineBetween(10, 30, 38, 24);
+    g.lineBetween(20, 4, 26, 40);
+    g.fillStyle(0x6a9a4e, 1);
+    g.fillCircle(14, 13, 3);
+    g.fillCircle(36, 22, 3);
+    g.fillCircle(24, 36, 3);
+  });
+  make('planter-table', 90, 50, (g) => {
+    g.fillStyle(0x000000, 0.2);
+    g.fillRect(4, 42, 82, 8);
+    g.fillStyle(0x5e3d29, 1);
+    g.fillRect(8, 22, 6, 24);
+    g.fillRect(76, 22, 6, 24);
+    g.fillStyle(0xa8753f, 1);
+    g.fillRect(2, 14, 86, 12);
+    g.fillStyle(0x7a5a3c, 1); // soil trays
+    g.fillRect(8, 6, 26, 10);
+    g.fillRect(40, 6, 26, 10);
+    g.fillStyle(0x6a9a4e, 1);
+    g.fillCircle(14, 6, 3);
+    g.fillCircle(24, 5, 3);
+    g.fillStyle(0x9b84d6, 1);
+    g.fillCircle(48, 5, 2.5);
+    g.fillCircle(58, 6, 2.5);
+    g.fillStyle(0xf1e6c8, 1); // seed packets
+    g.fillRect(70, 8, 10, 7);
+  });
+  make('snail', 18, 14, (g) => {
+    g.fillStyle(0xc9b48a, 1);
+    g.fillEllipse(8, 11, 15, 5);
+    g.fillStyle(0x8a603d, 1);
+    g.fillCircle(11, 7, 5.5);
+    g.lineStyle(1.2, 0x5c3b25, 1);
+    g.strokeCircle(11, 7, 3);
+    g.lineStyle(1, 0xc9b48a, 1);
+    g.lineBetween(3, 9, 1, 4);
+    g.lineBetween(4, 9, 4, 4);
+  });
+  make('mole-mound', 30, 18, (g) => {
+    g.fillStyle(0x000000, 0.15);
+    g.fillEllipse(15, 16, 28, 5);
+    g.fillStyle(0x5a4028, 1);
+    g.fillEllipse(15, 11, 28, 12);
+    g.fillStyle(0x7a5a3c, 1);
+    g.fillEllipse(14, 8, 18, 8);
+    g.fillStyle(0x3a2a1e, 1);
+    g.fillEllipse(15, 10, 7, 3);
+  });
+  make('feather', 10, 18, (g) => {
+    g.fillStyle(0x2b2b33, 1);
+    g.fillEllipse(5, 7, 7, 13);
+    g.lineStyle(1, 0x6a6a78, 1);
+    g.lineBetween(5, 1, 5, 17);
+  });
+  make('puddle', 34, 16, (g) => {
+    g.fillStyle(0x4f8fa6, 0.45);
+    g.fillEllipse(17, 8, 32, 13);
+    g.fillStyle(0xffffff, 0.25);
+    g.fillEllipse(12, 6, 10, 4);
+  });
+
   g.destroy();
 }
 

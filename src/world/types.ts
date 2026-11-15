@@ -78,6 +78,31 @@ export interface PropDef {
   flipX?: boolean;
   /** Flat on the ground (rugs, lily pads): always drawn below actors. */
   ground?: boolean;
+  /** Only shown while this flag is set (re-evaluated on `flag-changed`). */
+  showWhenFlag?: string;
+  /** Hidden once this flag is set (re-evaluated on `flag-changed`). */
+  hideWhenFlag?: string;
+}
+
+/** An NPC from content/npcs.ts standing on this map (src/systems/npcs.ts). */
+export interface NpcPlacementDef {
+  npcId: string;
+  /** Feet position in tiles. */
+  at: TilePoint;
+  radius?: number;
+}
+
+/**
+ * A readable note that appears in the world once `appearsWhenFlag` is set
+ * (src/systems/journal.ts). Reading it shows `dialogueId`, sets `journal-read:<id>` and
+ * adds `itemId` (if given) to the inventory. Its interactable id is `journal:<id>`.
+ */
+export interface JournalPageDef {
+  id: string;
+  at: TilePoint;
+  dialogueId: string;
+  appearsWhenFlag: string;
+  itemId?: string;
 }
 
 interface InteractableSpecBase {
@@ -93,11 +118,15 @@ interface InteractableSpecBase {
 export interface DialogueInteractableSpec extends InteractableSpecBase {
   type: 'dialogue';
   dialogueId: string;
+  /** Flag set when the dialogue is shown (e.g. for "read the notice" quest objectives). */
+  setFlag?: string;
 }
 
 /**
  * Moves the player to another map. If `locked` is true, the door stays shut until
- * `unlockFlag` is set in the save (`gameState.setFlag(unlockFlag, true)`).
+ * `unlockFlag` is set in the save (`gameState.setFlag(unlockFlag, true)`). With
+ * `keyItemId`, interacting while holding that item sets `unlockFlag`, consumes the key,
+ * shows `unlockedDialogueId` and then walks through.
  */
 export interface DoorInteractableSpec extends InteractableSpecBase {
   type: 'door';
@@ -105,6 +134,8 @@ export interface DoorInteractableSpec extends InteractableSpecBase {
   locked?: boolean;
   unlockFlag?: string;
   lockedDialogueId?: string;
+  keyItemId?: string;
+  unlockedDialogueId?: string;
 }
 
 /** Built-in data-driven interactables. Add new variants here + a handler in systems/interaction.ts. */
@@ -126,6 +157,10 @@ export interface MapDef {
   plantingBeds?: PlantingBedDef[];
   /** Collectible resources/seeds (Wave 2). Optional: maps without it simply have no pickups. */
   resourceNodes?: ResourceNodeDef[];
+  /** NPCs standing on this map (Wave 3). */
+  npcs?: NpcPlacementDef[];
+  /** Flag-gated readable notes (Wave 3). */
+  journalPages?: JournalPageDef[];
   /** Named spawn points (tiles). `default` is required. */
   spawns: Record<string, TilePoint> & { default: TilePoint };
   /** Scatter decorative trees along forest edges. */

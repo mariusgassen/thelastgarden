@@ -90,6 +90,24 @@ class GameState {
     return true;
   }
 
+  // ── Quests (use systems/quests.ts as the public API; these only touch the save) ──
+  isQuestActive(questId: string): boolean {
+    return this.data.quests.active.includes(questId);
+  }
+
+  isQuestCompleted(questId: string): boolean {
+    return this.data.quests.completed.includes(questId);
+  }
+
+  markQuestActive(questId: string): void {
+    if (!this.isQuestActive(questId) && !this.isQuestCompleted(questId)) this.data.quests.active.push(questId);
+  }
+
+  markQuestCompleted(questId: string): void {
+    this.data.quests.active = this.data.quests.active.filter((id) => id !== questId);
+    if (!this.isQuestCompleted(questId)) this.data.quests.completed.push(questId);
+  }
+
   // ── Extension slots for later waves ──────────────────────
   getExt<T>(key: string, fallback: T): T {
     return (this.data.ext[key] as T | undefined) ?? fallback;

@@ -145,11 +145,38 @@ type SpecHandler<K extends InteractableSpec['type']> = (
   ctx: InteractionContext,
 ) => void;
 
+/** Runs `fn` once, when the dialogue with this id closes. */
+export function onDialogueClosed(id: string, fn: () => void): void {
+  const handler = (payload: { id: string }) => {
+    if (payload.id !== id) return;
+    bus.off('dialogue-closed', handler);
+    fn();
+  };
+  bus.on('dialogue-closed', handler);
+}
+
 const specHandlers: { [K in InteractableSpec['type']]: SpecHandler<K> } = {
-  dialogue: (spec, ctx) => ctx.world.showDialogue(spec.dialogueId),
+  dialogue: (spec, ctx) => {
+    ctx.world.showDialogue(spec.dialogueId);
+    if (spec.setFlag) gameState.setFlag(spec.setFlag);
+  },
   door: (spec, ctx) => {
     const unlocked = !spec.locked || (spec.unlockFlag !== undefined && gameState.hasFlag(spec.unlockFlag));
     if (!unlocked) {
+      const hasKey = spec.keyItemId !== undefined && gameState.getItemCount(spec.keyItemId) > 0;
+      if (hasKey && spec.unlockFlag) {
+        gameState.removeItem(spec.keyItemId as string, 1);
+        gameState.setFlag(spec.unlockFlag);
+        gameState.save();
+        const target = spec.target;
+        if (spec.unlockedDialogueId) {
+          ctx.world.showDialogue(spec.unlockedDialogueId);
+          if (target) onDialogueClosed(spec.unlockedDialogueId, () => ctx.world.changeMap(target.mapId, target.spawn));
+        } else if (target) {
+          ctx.world.changeMap(target.mapId, target.spawn);
+        }
+        return;
+      }
       if (spec.lockedDialogueId) ctx.world.showDialogue(spec.lockedDialogueId);
       else ctx.world.toast('Verschlossen.');
       return;

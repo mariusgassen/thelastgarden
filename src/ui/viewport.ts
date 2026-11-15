@@ -7,8 +7,8 @@ export const DPR = Math.min(window.devicePixelRatio || 1, 2);
 export function cssViewportSize(): { width: number; height: number } {
   const vv = window.visualViewport;
   return {
-    width: Math.round(vv?.width ?? window.innerWidth),
-    height: Math.round(vv?.height ?? window.innerHeight),
+    width: Math.max(1, Math.round(vv?.width ?? window.innerWidth)),
+    height: Math.max(1, Math.round(vv?.height ?? window.innerHeight)),
   };
 }
 
