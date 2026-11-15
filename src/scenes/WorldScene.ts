@@ -7,6 +7,7 @@ import { ObstacleLayer } from '../systems/obstacles';
 import { PlantLayer } from '../systems/plantLayer';
 import { PlayerController } from '../systems/player';
 import { ResourceLayer } from '../systems/resources';
+import { AtmosphereLayer } from '../systems/atmosphere';
 import { gameState } from '../systems/state';
 import { DPR } from '../ui/viewport';
 import { getMap, MAPS, START_MAP_ID, type MapDef, type ZoneDef } from '../world';
@@ -34,6 +35,7 @@ export class WorldScene extends Phaser.Scene implements WorldApi {
   obstacles!: ObstacleLayer;
   plants!: PlantLayer;
   resources!: ResourceLayer;
+  atmosphere!: AtmosphereLayer;
   /** Static colliders (props, obstacles). Add your own solid bodies here. */
   solids!: Phaser.Physics.Arcade.StaticGroup;
   private marker!: Phaser.GameObjects.Image;
@@ -83,6 +85,7 @@ export class WorldScene extends Phaser.Scene implements WorldApi {
     this.obstacles = new ObstacleLayer(this, this.map, this.solids, this.interaction);
     this.plants = new PlantLayer(this, this.map.id, this.interaction);
     this.resources = new ResourceLayer(this, this.map.id, this.interaction);
+    this.atmosphere = new AtmosphereLayer(this, this.map);
 
     const spawn = this.resolveSpawn(data.spawn);
     this.player = new PlayerController(this, spawn.x, spawn.y, gameState.data.player.facing);
@@ -129,6 +132,7 @@ export class WorldScene extends Phaser.Scene implements WorldApi {
 
     const frozen = inputState.modal || this.transitioning;
     this.player.update(delta, frozen);
+    this.atmosphere.update(delta);
     this.interaction.update(!frozen);
     this.updateMarker();
     this.updateZone();
