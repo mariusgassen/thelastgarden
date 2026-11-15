@@ -516,4 +516,348 @@ export const DIALOGUES: DialogueDef[] = [
       { speaker: 'crow', text: 'Draußen im Garten, an der Linie 3 und am Wasserturm gehört jetzt alles dir. Ruh dich aus oder pflanze weiter — der Garten läuft nicht weg. Krah.' },
     ],
   },
+
+  // ── Episode 3: Wasserturm-Nordpfad & Hügelpfad im Nebel ──────────────────
+  {
+    id: 'tower-sign-north',
+    lines: [
+      { text: 'Ein wettergegerbter Holzpfeil zeigt bergauf in den Wald: „Hügelkamm · Obstwiesen ↑“.' },
+      { text: 'Darunter hängt ein kleines Messingglöckchen, das im Wind kaum hörbar klingelt.' },
+    ],
+  },
+  {
+    id: 'hill-path-locked',
+    lines: [
+      { text: 'Ein schmaler Waldweg steigt hinter dem Wasserturm den Hang hinauf, doch dichter grauer Nebel schluckt jeden Schritt.' },
+      { text: 'Lass zuerst den Mondfarn im Herzraum des Gewächshauses erblühen — erst mit seinem Licht findest du über den Hügel.' },
+    ],
+  },
+  {
+    id: 'owl-hill-hint',
+    lines: [
+      { speaker: 'owl', text: 'Hinter mir den Pfad hinauf zieht der Herbstnebel besonders tief über den Kamm.' },
+      { speaker: 'owl', text: 'Aber ich spüre das silberne Licht deines Mondfarns bis hier herauf. Geh den Nordpfad entlang — die Obstwiesen warten hinter dem Rücken des Hügels.' },
+    ],
+  },
+  {
+    id: 'owl-episode3-after',
+    lines: [
+      { speaker: 'owl', text: 'Selbst bis hier oben auf den Turm weht heute ein Duft von Apfelblüten und Nachtviolen herüber.' },
+      { speaker: 'owl', text: 'Du und M. habt Erlenbrück etwas zurückgegeben, das kein Fahrplan mehr versprechen konnte.' },
+    ],
+  },
+  {
+    id: 'crow-hill-intro',
+    lines: [
+      { speaker: 'crow', text: 'Hu, ganz schön frisch hier oben auf dem Kamm! Aber du hast es bis zum Hügelpfad geschafft.' },
+      { speaker: 'crow', text: 'Siehst du die weiße Nebelwand dort vorne im Engpass? Ohne Führung verläuft man sich in ihr stundenlang.' },
+      { speaker: 'crow', text: 'Geh nah an den Nebel heran — dein Mondfarn drüben im Herzraum kennt dieses Tal seit hundert Jahren. Sein Licht zeigt dir den Durchgang. Krah!' },
+    ],
+  },
+  {
+    id: 'crow-hill-waiting',
+    lines: [
+      { speaker: 'crow', text: 'Immer noch neblig? Geh dicht an die Nebelbank auf dem Kamm — das Licht des Mondfarns trägt weiter, als du denkst.' },
+    ],
+  },
+  {
+    id: 'hill-lantern',
+    lines: [
+      { text: 'Eine kleine steinerne Weglaterne am Wegesrand. Moos wächst auf dem Dach, aber das Glas im Inneren ist blitzsauber gewischt.' },
+      { text: 'Jemand hat ein getrocknetes Farnblatt auf den Sockel gelegt.' },
+    ],
+  },
+  {
+    id: 'hill-cairn',
+    lines: [
+      { text: 'Ein alter Grenzstein aus Sandstein: „Erlenbrücker Obsthänge · gest. 1924“.' },
+      { text: 'Von hier oben öffnet sich der Blick in ein windgeschütztes Tal voll alter Baumkronen.' },
+    ],
+  },
+
+  // ── Episode 3: Die alten Obstwiesen & M.s Gartenhaus ─────────────────────
+  {
+    id: 'crow-orchard-intro',
+    lines: [
+      { speaker: 'crow', text: 'Geschafft! Willkommen hinter dem Hügel — hier hängen noch die alten Holzleitern in den Kirschbäumen.' },
+      { speaker: 'crow', text: 'M. wohnt dort drüben in dem kleinen Gartenhaus am Bach. Aber eben habe ich sie den Hang hinaufgehen sehen, zum großen Mutterbaum.' },
+      { speaker: 'crow', text: 'Eine Brombeerhecke hat den Aufstieg überwuchert. Gut, dass deine Brombeerranke im Garten weiß, wie man höflich Platz macht. Krah!' },
+    ],
+  },
+  {
+    id: 'crow-orchard-waiting',
+    lines: [
+      { speaker: 'crow', text: 'M. steht oben auf der Terrasse am Mutterbaum. Überquere den Bach auf der Holzbrücke und teile die Brombeerhecke am Hang.' },
+    ],
+  },
+  {
+    id: 'crow-orchard-after',
+    lines: [
+      { speaker: 'crow', text: 'Weißt du, wie lange diese alten Bäume keine einzige Blüte mehr gezeigt haben? Sogar die Wildbienen sind ganz aufgeregt.' },
+      { speaker: 'crow', text: 'Und M. lächelt wieder. Das war jeden einzelnen Samen wert. Krah.' },
+    ],
+  },
+  {
+    id: 'orchard-sluice-missing',
+    lines: [
+      { text: 'Die hölzerne Bewässerungsrinne am Hang ist ausgetrocknet. Ein Keil im Sperrschieber fehlt, und das Holz ist spröde.' },
+      { text: 'Mit 2× Sonnenlicht, 2× Tau und 1× Fundstück als Metallkeil lässt sich das Wasser wieder auf die Obstwiese leiten.' },
+    ],
+  },
+  {
+    id: 'orchard-sluice-repaired',
+    lines: [
+      { text: 'Du klemmst das Fundstück als Keil in das Wehr, feuchtest die trockenen Fugen mit Tau an und löst das harzige Holz mit warmem Sonnenlicht.' },
+      { text: 'Mit einem fröhlichen Glucksen schießt klares Bergwasser in die alte Rinne und sickert bis unter die Wurzeln der Apfelbäume!' },
+    ],
+  },
+  {
+    id: 'orchard-sluice-done',
+    lines: [
+      { text: 'Klares Wasser plätschert stetig durch die Rinne bergab zur Bienenwiese.' },
+    ],
+  },
+  {
+    id: 'orchard-beehive-quiet',
+    lines: [
+      { text: 'Zwei verwitterte Bienenkästen aus Lärchenholz am Rand der Obstwiese. Alles darin schläft noch still.' },
+      { text: 'Wenn hier wieder Nachtviolen blühen, kehren vielleicht auch die Bestäuber zurück.' },
+    ],
+  },
+  {
+    id: 'orchard-beehive-active',
+    lines: [
+      { text: 'Ein sanftes, zufriedenes Brummen erfüllt den Bienenstand. Goldene Wildbienen fliegen zwischen den blauen Nachtviolen und den Obstbäumen hin und her.' },
+    ],
+  },
+  {
+    id: 'orchard-cider-press',
+    lines: [
+      { text: 'Eine alte hölzerne Spindelpresse unter einem Wetterdach. Daneben stehen sorgfältig gestapelte Weidenkörbe für die nächste Ernte.' },
+    ],
+  },
+  {
+    id: 'mother-tree-dormant',
+    lines: [
+      { text: 'Ein gewaltiger, knorriger Apfelbaum — älter als alle Häuser unten in Erlenbrück. Seine Zweige tragen dichte Knospen, die nur auf Wasser und Wärme warten.' },
+    ],
+  },
+  {
+    id: 'mother-tree-bloom',
+    lines: [
+      { text: 'Über und über bedeckt mit rosaweißen Blüten summt der alte Mutterbaum im Sonnenlicht. Zarte Blütenblätter tanzen bis in den Bach hinab.' },
+    ],
+  },
+
+  // ── M.s Gartenhaus ───────────────────────────────────────────────────────
+  {
+    id: 'cottage-stove',
+    lines: [
+      { text: 'Ein grüner Kachelofen mit einer Messingkanne darauf. Es riecht nach Apfelholz, Kamille und trockenem Moos.' },
+    ],
+  },
+  {
+    id: 'cottage-valley-map',
+    lines: [
+      { text: 'Eine handgezeichnete Karte des ganzen Tals: Erlenbrück liegt westlich des Hügels, die Obstwiesen im Windschatten — und dahinter führen gestrichelte Linien weiter zu einer alten Mühle und zu drei stillen Höfen am Fluss.' },
+      { text: 'An den Rand hat M. geschrieben: „So viele verlassene Gärten warten noch darauf, dass man ihre Namen nicht vergisst.“' },
+    ],
+  },
+  {
+    id: 'cottage-herb-rack',
+    lines: [
+      { text: 'Bündel von Lavendel, Salbei und Schafgarbe hängen sauber beschriftet an kleinen Holzhaken zum Trocknen.' },
+    ],
+  },
+  {
+    id: 'cottage-tea-table',
+    lines: [
+      { text: 'Auf dem runden Holztisch stehen bereits zwei Tassen — eine mit einem frischen Minzblatt, als hätte M. dich erwartet.' },
+    ],
+  },
+  {
+    id: 'cottage-seed-chest',
+    lines: [
+      { text: 'Eine hübsch bemalte Holztruhe voller Papiertütchen mit handgeschriebenen Sortennamen: „Goldreinette“, „Winterprinzen“ und ganz oben noch ein Tütchen Nachtviolen-Samen.' },
+    ],
+  },
+  {
+    id: 'cottage-seed-chest-done',
+    lines: [
+      { text: 'Die Samen-Truhe duftet nach getrockneten Kräutern und sauberem Papier.' },
+    ],
+  },
+  {
+    id: 'journal-page-orchard',
+    style: 'page',
+    title: 'Notizbuch · Die Obstwiesen',
+    lines: [
+      { text: 'Als die Menschen aus Erlenbrück fortgingen, habe ich nicht nur die Beete im Botanischen Garten gepflegt. Jede Woche stieg ich über den Hügel hierher.' },
+      { text: 'Die alten Obstbäume tragen die Erinnerung ganzer Generationen in ihrer Rinde. Solange man ihre Wasserader offen hält und im Frühjahr Nachtviolen für die Wildbienen sät, überdauern sie jedes Schweigen.' },
+      { text: 'Doch allein reichten meine Hände irgendwann nicht mehr bis ganz ans Ende der Wiese. Deshalb habe ich den Schlüssel im Garten hinterlassen.' },
+      { text: 'Falls du heute hier stehst und diese Zeilen liest: Jetzt gibt es wieder zwei Paar Hände in Erlenbrück. — M.' },
+    ],
+  },
+
+  // ── NPC M. (branching dialogues) ─────────────────────────────────────────
+  {
+    id: 'm-intro',
+    lines: [
+      { speaker: 'm', text: '… Ich wusste es doch. Die Krähe fliegt niemals umsonst so laut krächzend über den Kamm.' },
+      { speaker: 'm', text: 'Du hast es wirklich bis hinter den Hügel geschafft — mit Mondfarnlicht im Gepäck. Willkommen auf den Obstwiesen, junge Gärtnerin.' },
+      {
+        speaker: 'm',
+        text: 'Ich bin M. Ich glaube, du hast in den letzten Tagen mehr über mich gelesen als irgendjemand sonst.',
+        choices: [
+          { label: 'Deine Tagebuchseiten haben mir den ganzen Weg gezeigt.', nextDialogueId: 'm-intro-pages' },
+          { label: 'Warum bist du bis hier hinter den Hügel gezogen?', nextDialogueId: 'm-intro-orchard' },
+          { label: 'Was können wir für die Obstwiesen tun?', nextDialogueId: 'm-intro-task' },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'm-intro-pages',
+    lines: [
+      { speaker: 'm', text: 'Es beruhigt mich sehr, das zu hören. Manchmal dachte ich, meine Notizen lägen am Ende nur für den Regen dort.' },
+      { speaker: 'm', text: 'Hier draußen warte ich seit dem Spätsommer darauf, dass der Mutterbaum endlich wieder Kraft schöpft.' },
+      { speaker: 'm', text: 'Nimm dieses Tütchen Nachtviolen-Samen. Wenn die alte Bewässerungsrinne unten wieder fließt und die Nachtviolen am Bienenstand blühen, erwacht der ganze Hang.' },
+      { speaker: 'm', text: 'Und sieh dir ruhig mein Gartenhaus unten am Bach an — auf dem Tisch liegt mein letztes Notizbuch für dich.' },
+    ],
+  },
+  {
+    id: 'm-intro-orchard',
+    lines: [
+      { speaker: 'm', text: 'Weil ein einzelner Garten in der Stadt nie genug Platz hat für alles, was überleben muss. Hier oben wachsen Apfelsorten, die es nirgendwo sonst mehr gibt.' },
+      { speaker: 'm', text: 'Aber die alte Bewässerungsrinne am Bach klemmt, und ohne duftende Nachtviolen fehlen dem Hang die Wildbienen.' },
+      { speaker: 'm', text: 'Hier, nimm diese Nachtviolen-Samen. Schau danach gern unten in meinem Gartenhaus vorbei — dort liegt mein Obstwiesen-Notizbuch auf dem Tisch.' },
+    ],
+  },
+  {
+    id: 'm-intro-task',
+    lines: [
+      { speaker: 'm', text: 'Gleich drei kleine Dinge, genau nach deinem Geschmack: Öffne die Bewässerungsrinne am Bach, pflanze diese Nachtviolen beim Bienenstand und lies in meinem Gartenhaus mein Notizbuch.' },
+      { speaker: 'm', text: 'Wenn Wasser, Blüten und Erinnerung zusammenfinden, wird der Mutterbaum wieder blühen. Danach treffen wir uns wieder hier oben.' },
+    ],
+  },
+  {
+    id: 'm-waiting',
+    lines: [
+      {
+        speaker: 'm',
+        text: 'Wie läuft es unten auf der Wiese? Wir brauchen fließendes Wasser in der Rinne, blühende Nachtviolen am Bienenstand und einen Blick in mein Notizbuch im Gartenhaus.',
+        choices: [
+          { label: 'Wo kann ich die Nachtviolen pflanzen?', nextDialogueId: 'm-help-violet' },
+          { label: 'Was braucht die Bewässerungsrinne genau?', nextDialogueId: 'm-help-sluice' },
+          { label: 'Wo liegt dein Gartenhaus?', nextDialogueId: 'm-help-cottage' },
+          { label: 'Ich mache mich gleich an die Arbeit.', nextDialogueId: 'm-help-bye' },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'm-help-violet',
+    lines: [
+      { speaker: 'm', text: 'Gleich unterhalb dieses Hangs neben den hölzernen Bienenkästen liegt ein vorbereitetes Beet. Und falls du noch ein Tütchen brauchst: in der Samen-Truhe in meinem Gartenhaus liegt Ersatz.' },
+    ],
+  },
+  {
+    id: 'm-help-sluice',
+    lines: [
+      { speaker: 'm', text: 'Das Wehr am Bach braucht 2× Sonnenlicht, 2× Tau und 1× Fundstück als Keil. Hier oben auf der Terrasse und unten an der Wiese findest du genug davon.' },
+    ],
+  },
+  {
+    id: 'm-help-cottage',
+    lines: [
+      { speaker: 'm', text: 'Überquere unten einfach wieder die Holzbrücke nach Westen — im Nordwesten der Obstwiese wartet das kleine Holzhaus mit dem grünen Kachelofen.' },
+    ],
+  },
+  {
+    id: 'm-help-bye',
+    lines: [
+      { speaker: 'm', text: 'Lass dir Zeit. Ein guter Obstgarten kennt keine Hast.' },
+    ],
+  },
+  {
+    id: 'm-orchard-awakened',
+    lines: [
+      { speaker: 'm', text: 'Hörst du das? Das Wasser singt in den Gräben, die Bienen haben die Nachtviolen gefunden — und über uns öffnen sich schon die ersten Blüten am Mutterbaum!' },
+      { speaker: 'm', text: 'Vor ein paar Wochen hätte ich nie geglaubt, dass ich diesen Frühling noch einmal mit jemand anderem teilen darf.' },
+      {
+        speaker: 'm',
+        text: 'Sag mir ehrlich: Wohin soll unsere nächste Arbeit gehen, wenn die Obstwiesen jetzt gerettet sind?',
+        choices: [
+          {
+            label: 'Wir tragen diese neuen Samen zurück in die verlassenen Gärten von Erlenbrück.',
+            nextDialogueId: 'm-legacy-town',
+            setFlags: ['legacy-choice-town'],
+          },
+          {
+            label: 'Wir folgen deiner Karte bis zur Alten Mühle und den Höfen am Fluss.',
+            nextDialogueId: 'm-legacy-valley',
+            setFlags: ['legacy-choice-valley'],
+          },
+          {
+            label: 'Zeig mir erst, wie man alte Sorten wie den Goldreinettenbaum veredelt.',
+            nextDialogueId: 'm-legacy-graft',
+            setFlags: ['legacy-choice-graft'],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'm-legacy-town',
+    lines: [
+      { speaker: 'm', text: 'Ja … Die Stadt hat den Botanischen Garten nie vergessen, sie wusste nur nicht mehr, wie man anfängt. Mit dir wächst die Hoffnung jetzt von innen nach außen.' },
+      { speaker: 'm', text: 'Nimm dieses Goldreinetten-Edelreis als mein Versprechen mit: Unsere Arbeit hier hinter dem Hügel fängt gerade erst richtig an.' },
+    ],
+  },
+  {
+    id: 'm-legacy-valley',
+    lines: [
+      { speaker: 'm', text: 'Du hast meine Karte im Gartenhaus also genau angesehen! Hinter der Alten Mühle liegen die schönsten vergessenen Bauerngärten des Tals.' },
+      { speaker: 'm', text: 'Nimm dieses Goldreinetten-Edelreis mit auf den Weg — sobald wir bereit sind, gehen wir das nächste Tal gemeinsam an.' },
+    ],
+  },
+  {
+    id: 'm-legacy-graft',
+    lines: [
+      { speaker: 'm', text: 'Sehr gern. Wer einen Zweig veredelt, pflanzt für Menschen, deren Namen er noch gar nicht kennt.' },
+      { speaker: 'm', text: 'Nimm dieses Goldreinetten-Edelreis an dich — der Botanische Garten und diese Obstwiesen gehören nun genauso dir wie mir.' },
+    ],
+  },
+  {
+    id: 'm-after',
+    lines: [
+      {
+        speaker: 'm',
+        text: 'Sieh nur diese Blütenkrone über uns. Es fühlt sich an, als hätte das ganze Tal einmal tief durchgeatmet.',
+        choices: [
+          { label: 'Bleibst du jetzt hier oben auf den Obstwiesen?', nextDialogueId: 'm-after-stay' },
+          { label: 'Was wächst als Nächstes in Erlenbrück?', nextDialogueId: 'm-after-future' },
+          { label: 'Ich gehe noch etwas durch den Garten spazieren.', nextDialogueId: 'm-after-rest' },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'm-after-stay',
+    lines: [
+      { speaker: 'm', text: 'Im Moment bleibe ich hier zwischen dem Mutterbaum und meinem Ofen — und sobald im Garten unten Platz für eine neue Obstreihe ist, komme ich dich besuchen.' },
+    ],
+  },
+  {
+    id: 'm-after-future',
+    lines: [
+      { speaker: 'm', text: 'Auf meiner Karte im Gartenhaus wartet noch die Alte Mühle hinter den Wiesen. Aber heute genießen wir erst einmal, was schon blüht.' },
+    ],
+  },
+  {
+    id: 'm-after-rest',
+    lines: [
+      { speaker: 'm', text: 'Mach das. Die Türen von Gartenhaus, Gewächshaus und Wasserturm stehen dir überall offen.' },
+    ],
+  },
 ];

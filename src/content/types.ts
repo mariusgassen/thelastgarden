@@ -4,7 +4,7 @@
  */
 
 /** Kinds of natural obstacles placed in the world (see src/world/types.ts ObstacleDef). */
-export type ObstacleKind = 'bramble' | 'fallenTree' | 'tallGrass';
+export type ObstacleKind = 'bramble' | 'fallenTree' | 'tallGrass' | 'denseFog';
 
 export interface PlantDef {
   id: string;
@@ -102,6 +102,8 @@ export interface DialogueDef {
 /** First rule whose conditions hold is the dialogue an NPC shows. */
 export interface NpcDialogueRule {
   dialogueId: string;
+  /** Optional: rule applies only while the player is on this map. */
+  mapId?: string;
   /** All of these flags must be set. */
   requires?: string[];
   /** None of these flags may be set. */

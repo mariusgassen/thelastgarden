@@ -28,7 +28,7 @@ interface PlantsExt {
 export const STAGE_DURATION_MS = 15_000;
 
 /** Species tried, in order, on a bed that accepts any plant (PlantingBedDef.plantId is omitted). */
-const ANY_BED_SPECIES_ORDER = ['bramble-vine', 'glow-lily', 'lavender'];
+const ANY_BED_SPECIES_ORDER = ['bramble-vine', 'glow-lily', 'lavender', 'night-violet', 'moon-fern'];
 
 function readState(): PlantsExt {
   return gameState.getExt<PlantsExt>('plants', { beds: {} });
@@ -118,6 +118,8 @@ function abilityFlavor(abilityId?: string): string {
       return 'windet sich durchs Gestrüpp und öffnet einen Weg.';
     case 'calm-animals':
       return 'ihr Duft vertreibt die Zecken aus dem hohen Gras.';
+    case 'awaken-heart':
+      return 'schickt ein silbernes Leuchten aus, das den dichten Nebel teilt.';
     default:
       return 'öffnet den Weg.';
   }

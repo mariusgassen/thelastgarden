@@ -154,8 +154,8 @@ export class PlantLayer {
       entry.fireflies = undefined;
     }
 
-    // Lavender calms the tick-ridden tall grass; a gentle scent drifting up sells the effect.
-    if (mature && def.abilityId === 'calm-animals') {
+    // Lavender and Night Violet send up gentle scent / pollen motes when mature.
+    if (mature && (def.abilityId === 'calm-animals' || def.abilityId === 'call-pollinators')) {
       if (!entry.scent) {
         entry.scent = this.scene.add
           .particles(entry.cx, entry.cy - 10, 'sparkle', {

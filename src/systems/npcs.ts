@@ -11,6 +11,7 @@ import { gameState } from './state';
 export function pickNpcDialogue(def: NpcDef): NpcDialogueRule | undefined {
   return def.dialogues?.find(
     (rule) =>
+      (!rule.mapId || rule.mapId === gameState.data.player.mapId) &&
       (rule.requires ?? []).every((flag) => gameState.hasFlag(flag)) &&
       !(rule.forbids ?? []).some((flag) => gameState.hasFlag(flag)),
   );

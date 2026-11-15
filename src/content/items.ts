@@ -129,4 +129,28 @@ export const ITEMS: ItemDef[] = [
     stackable: false,
     color: 0xf1e6c8,
   },
+  {
+    id: 'seed-night-violet',
+    name: 'Nachtviolen-Samen',
+    description: 'Kleine schwarze Samen aus der Alten Mühle. In der Tüte riecht es schwach nach Honig.',
+    category: 'seed',
+    stackable: true,
+    color: 0x6f7bf7,
+  },
+  {
+    id: 'journal-page-orchard',
+    name: 'M.s Notizbuch · Die Obstwiesen',
+    description: 'Ein ledergebundenes Notizbuch voller Skizzen von alten Apfelsorten und gepfropften Zweigen.',
+    category: 'note',
+    stackable: false,
+    color: 0xf1e6c8,
+  },
+  {
+    id: 'orchard-apple-graft',
+    name: 'Goldreinetten-Edelreis',
+    description: 'Ein frischer Zweig einer vergessenen Apfelsorte, den M. dir als Zeichen des Anfangs geschenkt hat.',
+    category: 'key',
+    stackable: false,
+    color: 0xe6a145,
+  },
 ];
