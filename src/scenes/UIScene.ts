@@ -14,6 +14,7 @@ import { SCENES } from './keys';
 const TAP_MAX_MS = 280;
 const TAP_MAX_MOVE = 12;
 const TOAST_MS = 1900;
+const TOP_ROW_OFFSET = 40;
 
 /**
  * HUD overlay above WorldScene. Works in CSS pixels (camera zoom = DPR).
@@ -45,14 +46,15 @@ export class UIScene extends Phaser.Scene {
     this.joystick = new Joystick(this, touch);
     this.button = new ContextButton(this, !touch, () => inputState.requestInteract());
     this.dialogue = new DialoguePanel(this, touch);
-    this.areaBanner = new Banner(this, 17);
-    this.toast = new Banner(this, 14);
+    this.areaBanner = new Banner(this, 17, () => this.layoutTopStack());
+    this.toast = new Banner(this, 14, () => this.layoutTopStack());
     this.resourceBar = new ResourceBar(this);
     this.questLog = new QuestLog(this, (open) => {
       inputState.modal = open || this.dialogue.isOpen;
       if (open) this.releaseJoystick();
+      this.layoutTopStack();
     });
-    this.tutorial = new TutorialHints(this, touch);
+    this.tutorial = new TutorialHints(this, touch, () => this.layoutTopStack());
 
     this.input.on(Phaser.Input.Events.POINTER_DOWN, this.onPointerDown, this);
     this.input.on(Phaser.Input.Events.POINTER_MOVE, this.onPointerMove, this);
@@ -81,12 +83,19 @@ export class UIScene extends Phaser.Scene {
       if (this.questLog.isOpen) this.questLog.setOpen(false);
       else this.advanceDialogue();
     });
-    bus.onScene(this, 'inventory-changed', () => this.resourceBar.refresh());
+    bus.onScene(this, 'inventory-changed', () => {
+      this.resourceBar.refresh();
+      this.layoutTopStack();
+    });
     bus.onScene(this, 'save-loaded', () => {
       this.resourceBar.refresh();
       this.questLog.refresh();
+      this.layoutTopStack();
     });
-    bus.onScene(this, 'quest-updated', () => this.questLog.refresh());
+    bus.onScene(this, 'quest-updated', () => {
+      this.questLog.refresh();
+      this.layoutTopStack();
+    });
 
     this.layout();
     this.scale.on(Phaser.Scale.Events.RESIZE, this.layout, this);
@@ -114,14 +123,49 @@ export class UIScene extends Phaser.Scene {
     this.safe = readSafeArea();
     const { viewW: w, viewH: h, safe } = this;
     const r = this.button.radius;
+    const topRowY = safe.top + TOP_ROW_OFFSET;
+    const centerX = safe.left + (w - safe.left - safe.right) / 2;
+    const maxBannerW = Math.max(200, w - safe.left - safe.right - 24);
+
     this.button.setPosition(w - safe.right - r - 22, h - safe.bottom - r - 34);
     this.joystick.setRestPosition(safe.left + 92, h - safe.bottom - 100);
     this.dialogue.layout(w, h, safe.bottom, safe.left, safe.right);
-    this.areaBanner.setPosition(w / 2, safe.top + 34);
-    this.toast.setPosition(w / 2, safe.top + 100);
-    this.resourceBar.setPosition(safe.left + 18, safe.top + 26);
-    this.questLog.layout(w, h, safe);
-    this.tutorial.layout(w, safe.top + 165);
+    this.resourceBar.setPosition(safe.left + 28, topRowY);
+    this.questLog.layout(w, h, safe, topRowY);
+    this.areaBanner.setMaxWidth(maxBannerW);
+    this.toast.setMaxWidth(maxBannerW);
+    this.tutorial.layout(w, 0, centerX, maxBannerW);
+    this.layoutTopStack();
+  }
+
+  private layoutTopStack(): void {
+    if (!this.tutorial) return;
+    const { viewW: w, safe } = this;
+    const topRowY = safe.top + TOP_ROW_OFFSET;
+    const centerX = safe.left + (w - safe.left - safe.right) / 2;
+
+    const leftClearance = centerX - (this.resourceBar.rightEdge + 16);
+    const rightClearance = this.questLog.buttonLeft - 16 - centerX;
+    const maxTopRowBannerW = 2 * Math.min(leftClearance, rightClearance);
+    const areaFitsTopRow = maxTopRowBannerW >= this.areaBanner.width;
+
+    let nextY = this.questLog.trackerBottom;
+    if (areaFitsTopRow) {
+      this.areaBanner.setPosition(centerX, topRowY);
+      if (this.areaBanner.isVisible) {
+        nextY = Math.max(nextY, topRowY + this.areaBanner.height / 2);
+      }
+    } else {
+      const areaTop = nextY + 10;
+      this.areaBanner.setPosition(centerX, areaTop + this.areaBanner.height / 2);
+      if (this.areaBanner.isVisible) nextY = areaTop + this.areaBanner.height;
+    }
+
+    const toastTop = nextY + 10;
+    this.toast.setPosition(centerX, toastTop + this.toast.height / 2);
+    if (this.toast.isVisible) nextY = toastTop + this.toast.height;
+
+    this.tutorial.setTopY(nextY + 12);
   }
 
   private enqueueToast(text: string): void {

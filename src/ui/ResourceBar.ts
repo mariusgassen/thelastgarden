@@ -4,7 +4,7 @@ import { gameState } from '../systems/state';
 import { THEME } from './theme';
 
 const SEED_COLOR = 0xc49a6c;
-const ROW_GAP = 54;
+const ROW_GAP = 48;
 
 interface Row {
   itemId: string | '__seeds__';
@@ -17,6 +17,7 @@ export class ResourceBar {
   private readonly container: Phaser.GameObjects.Container;
   private readonly bg: Phaser.GameObjects.Graphics;
   private readonly rows: Row[];
+  private pillW = 0;
 
   constructor(scene: Phaser.Scene) {
     this.bg = scene.add.graphics();
@@ -30,7 +31,7 @@ export class ResourceBar {
       itemId: spec.itemId,
       dot: scene.add.circle(i * ROW_GAP, 0, 6, spec.color),
       text: scene.add
-        .text(i * ROW_GAP + 11, 0, '0', {
+        .text(i * ROW_GAP + 10, 0, '0', {
           fontFamily: THEME.font,
           fontSize: '14px',
           fontStyle: 'bold',
@@ -42,6 +43,10 @@ export class ResourceBar {
       .container(0, 0, [this.bg, ...this.rows.flatMap((r) => [r.dot, r.text])])
       .setDepth(90_000);
     this.refresh();
+  }
+
+  get rightEdge(): number {
+    return this.container.x - 14 + this.pillW;
   }
 
   setPosition(x: number, y: number): void {
@@ -57,10 +62,10 @@ export class ResourceBar {
       const count = row.itemId === '__seeds__' ? seedTotal : gameState.getItemCount(row.itemId);
       row.text.setText(String(count));
     }
-    const w = (this.rows.length - 1) * ROW_GAP + 56;
+    this.pillW = (this.rows.length - 1) * ROW_GAP + 54;
     const h = 30;
     this.bg.clear();
     this.bg.fillStyle(THEME.panel, THEME.panelAlpha * 0.85);
-    this.bg.fillRoundedRect(-14, -h / 2, w, h, h / 2);
+    this.bg.fillRoundedRect(-14, -h / 2, this.pillW, h, h / 2);
   }
 }

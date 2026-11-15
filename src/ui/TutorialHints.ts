@@ -32,11 +32,14 @@ export class TutorialHints {
   private moveHeldMs = 0;
   private keysDown = 0;
   private viewW = 0;
+  private centerX = 0;
+  private maxW = 380;
   private y = 0;
 
   constructor(
     private readonly scene: Phaser.Scene,
     touch: boolean,
+    private readonly onBeforeShow?: () => void,
   ) {
     const kb = scene.input.keyboard;
     kb?.on('keydown', (e: KeyboardEvent) => {
@@ -82,15 +85,26 @@ export class TutorialHints {
     });
   }
 
-  layout(viewW: number, y: number): void {
+  get height(): number {
+    return this.current ? this.text.height + 20 : 0;
+  }
+
+  layout(viewW: number, y: number, centerX = viewW / 2, maxWidth = viewW - 48): void {
     this.viewW = viewW;
+    this.centerX = centerX;
+    this.maxW = Math.min(380, Math.max(180, maxWidth));
     this.y = y;
-    this.text.setWordWrapWidth(Math.min(380, viewW - 48), true);
+    this.text.setWordWrapWidth(this.maxW - 36, true);
     this.redraw();
     if (this.current) {
       this.scene.tweens.killTweensOf(this.container);
       this.container.setAlpha(1);
     }
+  }
+
+  setTopY(topY: number): void {
+    this.y = topY + (this.text.height + 20) / 2;
+    this.container.setPosition(this.centerX, this.y);
   }
 
   /** Call every frame with the frame delta; dismisses the movement hint once the player walked a bit. */
@@ -125,6 +139,7 @@ export class TutorialHints {
     this.markSeen(next.id);
     this.text.setText(next.text);
     this.redraw();
+    this.onBeforeShow?.();
     this.scene.tweens.killTweensOf(this.container);
     this.container.setAlpha(0).setY(this.y + 8);
     this.scene.tweens.add({ targets: this.container, alpha: 1, y: this.y, duration: 260, ease: 'Sine.easeOut' });
@@ -158,6 +173,6 @@ export class TutorialHints {
     this.bg.fillRoundedRect(-w / 2, -h / 2, w, h, 12);
     this.bg.lineStyle(1.5, THEME.sun, 0.45);
     this.bg.strokeRoundedRect(-w / 2, -h / 2, w, h, 12);
-    this.container.setPosition(this.viewW / 2, this.y);
+    this.container.setPosition(this.centerX || this.viewW / 2, this.y);
   }
 }
