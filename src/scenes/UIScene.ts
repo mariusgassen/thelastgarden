@@ -5,6 +5,7 @@ import { Banner } from '../ui/Banner';
 import { ContextButton } from '../ui/ContextButton';
 import { DialogueBox } from '../ui/DialogueBox';
 import { Joystick } from '../ui/Joystick';
+import { ResourceBar } from '../ui/ResourceBar';
 import { DPR, isTouchDevice, readSafeArea, type SafeArea } from '../ui/viewport';
 import { SCENES } from './keys';
 
@@ -21,6 +22,7 @@ export class UIScene extends Phaser.Scene {
   private dialogue!: DialogueBox;
   private areaBanner!: Banner;
   private toast!: Banner;
+  private resourceBar!: ResourceBar;
   private safe: SafeArea = { top: 0, right: 0, bottom: 0, left: 0 };
   private downAt = new Map<number, { x: number; y: number; t: number }>();
 
@@ -38,6 +40,7 @@ export class UIScene extends Phaser.Scene {
     this.dialogue = new DialogueBox(this);
     this.areaBanner = new Banner(this, 17);
     this.toast = new Banner(this, 14);
+    this.resourceBar = new ResourceBar(this);
 
     this.input.on(Phaser.Input.Events.POINTER_DOWN, this.onPointerDown, this);
     this.input.on(Phaser.Input.Events.POINTER_MOVE, this.onPointerMove, this);
@@ -53,6 +56,8 @@ export class UIScene extends Phaser.Scene {
       if (inputState.modal) this.releaseJoystick();
     });
     bus.onScene(this, 'dialogue-advance', () => this.advanceDialogue());
+    bus.onScene(this, 'inventory-changed', () => this.resourceBar.refresh());
+    bus.onScene(this, 'save-loaded', () => this.resourceBar.refresh());
 
     this.layout();
     this.scale.on(Phaser.Scale.Events.RESIZE, this.layout, this);
@@ -80,6 +85,7 @@ export class UIScene extends Phaser.Scene {
     this.dialogue.layout(w, h, safe.bottom);
     this.areaBanner.setPosition(w / 2, safe.top + 34);
     this.toast.setPosition(w / 2, safe.top + 78);
+    this.resourceBar.setPosition(safe.left + 18, safe.top + 26);
   }
 
   private advanceDialogue(): void {

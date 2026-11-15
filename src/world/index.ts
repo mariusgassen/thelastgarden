@@ -1,6 +1,6 @@
 import { GARDEN_MAP } from './maps/garden';
 import { WORKSHOP_MAP } from './maps/workshop';
-import type { MapDef, ObstacleDef } from './types';
+import type { MapDef, ObstacleDef, PlantingBedDef, ResourceNodeDef } from './types';
 
 export * from './types';
 export { TILE_SIZE } from './tiles';
@@ -26,4 +26,22 @@ export function allObstacles(): (ObstacleDef & { mapId: string })[] {
 
 export function findObstacle(id: string): (ObstacleDef & { mapId: string }) | undefined {
   return allObstacles().find((o) => o.id === id);
+}
+
+/** Every planting bed across all maps, with the map it lives on. */
+export function allPlantingBeds(): (PlantingBedDef & { mapId: string })[] {
+  return Object.values(MAPS).flatMap((m) => (m.plantingBeds ?? []).map((b) => ({ ...b, mapId: m.id })));
+}
+
+export function findPlantingBed(id: string): (PlantingBedDef & { mapId: string }) | undefined {
+  return allPlantingBeds().find((b) => b.id === id);
+}
+
+/** Every resource node across all maps, with the map it lives on. */
+export function allResourceNodes(): (ResourceNodeDef & { mapId: string })[] {
+  return Object.values(MAPS).flatMap((m) => (m.resourceNodes ?? []).map((n) => ({ ...n, mapId: m.id })));
+}
+
+export function findResourceNode(id: string): (ResourceNodeDef & { mapId: string }) | undefined {
+  return allResourceNodes().find((n) => n.id === id);
 }

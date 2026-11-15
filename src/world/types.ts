@@ -45,6 +45,28 @@ export interface ObstacleDef {
   hint: string;
 }
 
+/**
+ * Prepared soil the player can plant a seed on (src/systems/plants.ts). `rect` is also the
+ * bed's clickable area; its center is where the plant sprite and prompt appear.
+ */
+export interface PlantingBedDef {
+  id: string;
+  rect: TileRect;
+  /** Species this bed accepts; omit to accept the first species the player owns a seed for. */
+  plantId?: string;
+}
+
+/** A collectible resource or seed in the world (src/systems/resources.ts). */
+export interface ResourceNodeDef {
+  id: string;
+  /** Item id added to the inventory on collection (content/items.ts). */
+  itemId: string;
+  at: TilePoint;
+  label: string;
+  /** ms before the node reappears after collection; omit for a one-time pickup. */
+  respawnMs?: number;
+}
+
 export interface PropDef {
   /** Texture key generated in src/world/textures.ts. */
   texture: string;
@@ -100,6 +122,10 @@ export interface MapDef {
   obstacles: ObstacleDef[];
   props: PropDef[];
   interactables: InteractableSpec[];
+  /** Plantable soil (Wave 2). Optional: maps without it simply have no beds. */
+  plantingBeds?: PlantingBedDef[];
+  /** Collectible resources/seeds (Wave 2). Optional: maps without it simply have no pickups. */
+  resourceNodes?: ResourceNodeDef[];
   /** Named spawn points (tiles). `default` is required. */
   spawns: Record<string, TilePoint> & { default: TilePoint };
   /** Scatter decorative trees along forest edges. */

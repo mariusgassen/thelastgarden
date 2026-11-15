@@ -138,6 +138,126 @@ export function generateTextures(scene: Phaser.Scene): void {
     for (let i = 0; i < 4; i++) g.fillCircle(10 + rnd() * 76, 20 + rnd() * 80, 3);
   });
 
+  // Resource pickups & plant growth feedback (Wave 2)
+  make('pickup-orb', 28, 28, (g) => {
+    g.fillStyle(0xffffff, 0.18);
+    g.fillCircle(14, 14, 13);
+    g.fillStyle(0xffffff, 0.35);
+    g.fillCircle(14, 14, 9);
+    g.fillStyle(0xffffff, 0.9);
+    g.fillCircle(14, 14, 5);
+    g.fillStyle(0xffffff, 1);
+    g.fillCircle(12, 11, 2);
+  });
+  make('sparkle', 10, 10, (g) => {
+    g.fillStyle(0xffffff, 0.55);
+    g.fillCircle(5, 5, 4);
+    g.fillStyle(0xfff6d8, 1);
+    g.fillCircle(5, 5, 2.4);
+  });
+  make('firefly', 8, 8, (g) => {
+    g.fillStyle(0xfff0a0, 0.5);
+    g.fillCircle(4, 4, 4);
+    g.fillStyle(0xfff6c8, 1);
+    g.fillCircle(4, 4, 2);
+  });
+
+  make('plant-bramble-vine-sprout', 18, 18, (g) => {
+    g.fillStyle(0x3f6b35, 1);
+    g.fillRect(8, 8, 2, 10);
+    g.fillStyle(0x5b8a45, 1);
+    g.fillCircle(6, 8, 3);
+    g.fillCircle(12, 7, 3);
+  });
+  make('plant-bramble-vine-growing', 30, 46, (g) => {
+    g.fillStyle(0x3f6b35, 1);
+    g.fillRect(13, 10, 3, 36);
+    g.lineStyle(2, 0x5b8a45, 1);
+    g.lineBetween(14, 36, 6, 26);
+    g.lineBetween(15, 24, 24, 16);
+    g.fillStyle(0x6b2e4a, 1);
+    g.fillCircle(6, 26, 3);
+    g.fillCircle(24, 16, 3);
+  });
+  make('plant-bramble-vine-mature', 38, 60, (g) => {
+    g.fillStyle(0x5c3b25, 1);
+    g.fillRect(17, 6, 4, 50);
+    g.lineStyle(3, 0x3f6b35, 1);
+    g.lineBetween(19, 54, 6, 42);
+    g.lineBetween(19, 42, 32, 30);
+    g.lineBetween(19, 30, 6, 18);
+    g.lineBetween(19, 18, 30, 8);
+    g.fillStyle(0x6b2e4a, 1);
+    for (const [x, y] of [
+      [6, 42],
+      [32, 30],
+      [6, 18],
+      [30, 8],
+      [19, 36],
+    ])
+      g.fillCircle(x, y, 3.2);
+    g.fillStyle(0x9c4a5f, 1);
+    for (const [x, y] of [
+      [6, 42],
+      [32, 30],
+      [6, 18],
+    ])
+      g.fillCircle(x, y, 1.3);
+  });
+
+  make('plant-glow-lily-sprout', 16, 16, (g) => {
+    g.fillStyle(0x3f6b35, 1);
+    g.fillRect(7, 6, 2, 9);
+    g.fillStyle(0xf3e38a, 1);
+    g.fillCircle(8, 5, 2.4);
+  });
+  make('plant-glow-lily-growing', 22, 32, (g) => {
+    g.fillStyle(0x3f6b35, 1);
+    g.fillRect(10, 8, 2, 22);
+    g.fillStyle(0xf3e38a, 1);
+    g.fillEllipse(11, 8, 7, 11);
+  });
+  make('plant-glow-lily-mature', 34, 42, (g) => {
+    g.fillStyle(0x3f6b35, 1);
+    g.fillRect(16, 16, 2, 24);
+    g.fillStyle(0xf3e38a, 0.35);
+    g.fillCircle(17, 14, 15);
+    g.fillStyle(0xf3e38a, 1);
+    for (let i = 0; i < 6; i++) {
+      const a = (i / 6) * Math.PI * 2;
+      g.fillEllipse(17 + Math.cos(a) * 8, 14 + Math.sin(a) * 8, 7, 10);
+    }
+    g.fillStyle(0xfff6d8, 1);
+    g.fillCircle(17, 14, 4);
+  });
+
+  make('plant-lavender-sprout', 16, 16, (g) => {
+    g.fillStyle(0x3f6b35, 1);
+    g.fillRect(7, 7, 2, 8);
+    g.fillStyle(0x9b84d6, 1);
+    g.fillCircle(8, 6, 2);
+  });
+  make('plant-lavender-growing', 24, 30, (g) => {
+    g.fillStyle(0x4c7a3d, 1);
+    g.fillCircle(12, 22, 8);
+    g.fillStyle(0x9b84d6, 1);
+    g.fillCircle(7, 10, 2);
+    g.fillCircle(12, 6, 2.2);
+    g.fillCircle(17, 11, 2);
+  });
+  make('plant-lavender-mature', 30, 44, (g) => {
+    g.fillStyle(0x4c7a3d, 1);
+    g.fillCircle(15, 36, 11);
+    g.fillStyle(0x3f6b35, 1);
+    g.fillRect(13, 10, 2, 24);
+    g.fillRect(8, 16, 2, 20);
+    g.fillRect(19, 16, 2, 20);
+    g.fillStyle(0x9b84d6, 1);
+    for (let i = 0; i < 5; i++) g.fillEllipse(14, 8 + i * 3, 5, 3);
+    for (let i = 0; i < 4; i++) g.fillEllipse(9, 14 + i * 3, 4, 2.6);
+    for (let i = 0; i < 4; i++) g.fillEllipse(20, 14 + i * 3, 4, 2.6);
+  });
+
   // Buildings & props
   make('greenhouse-door', 64, 44, (g) => {
     g.fillStyle(0x4d6b66, 1);

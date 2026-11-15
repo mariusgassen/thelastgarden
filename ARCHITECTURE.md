@@ -178,24 +178,111 @@ interface SaveGame {
 - Registration lives in `src/systems/pwa.ts` and runs **only in production builds**. Test it with `npm run build && npm run preview`.
 - When the shell list or the cache strategy changes, bump `CACHE` in `sw.js`.
 
-## Debugging
+## Plant Abilities (Wave 2 hand-off)
 
-In `npm run dev`, `window.__tlg` exposes `{ game, gameState, bus, content, unblockPath, isBlocked, getObstacles }`.
+Resources, inventory, planting and the 3 plant abilities. New systems: `systems/plants.ts`
+(logic, no Phaser), `systems/plantLayer.ts` (`PlantLayer`, scene-bound rendering), and
+`systems/resources.ts` (logic + `ResourceLayer`, scene-bound rendering) — the same
+logic/rendering split as `obstacles.ts`/`ObstacleLayer`.
+
+**Resources & inventory.** No new save fields were needed. "Sonnenlicht" / "Tau" /
+"Fundstück" are ordinary `ItemDef`s with the new `category: 'resource'`
+(`resource-sunlight`, `resource-dew`, `resource-curio`), and "Samen" is the existing 3
+`category: 'seed'` items. Both go through Wave 1's `gameState.addItem` /
+`getItemCount` / `removeItem` and live in `SaveGame.inventory.items`, unchanged. The HUD
+(`ui/ResourceBar.ts`, top-left) shows 4 counters: the 3 resource items plus the **sum**
+of all seed items as one "Samen" number. It refreshes on `inventory-changed`.
+
+**World data.** Two new optional `MapDef` fields (`world/types.ts`), both additive:
+
+```ts
+plantingBeds?: PlantingBedDef[];  // { id, rect, plantId? }  — rect is tiles, plantId omitted = "any species"
+resourceNodes?: ResourceNodeDef[]; // { id, itemId, at, label, respawnMs? } — no respawnMs = one-time pickup
+```
+
+Looked up the same way as obstacles: `allPlantingBeds()` / `findPlantingBed(id)` and
+`allResourceNodes()` / `findResourceNode(id)` in `world/index.ts`; `systems/resources.ts`
+wraps the latter as `getResourceNodes(mapId?)`, mirroring `obstacles.ts`'s `getObstacles`.
+
+**Garden map beds.** Reused the 4 existing `soil` rects as beds: `bed-bramble` (only
+accepts `bramble-vine`), `bed-lily` (`glow-lily`), `bed-lavender` (`lavender`), and
+`bed-extra` (`plantId` omitted — accepts the first species, in the fixed order
+bramble-vine → glow-lily → lavender, that the player owns a seed for; there's no seed-picker
+UI in this wave). `bed-bramble`/`bed-lily`/`bed-lavender` are the "3 verwilderte Beete" for
+Wave 3's Quest 3.
+
+**Obstacle ↔ plant mapping.** `bramble-vine` clears `bramble` and `lavender` clears
+`tallGrass` — both already set in `content/plants.ts` from Wave 1 and left unchanged.
+**`fallenTree` (`fallen-tree-canal`) has no plant that clears it.** No `PlantDef.clears`
+targets it; moving a fallen tree needs something a plant can't do alone. Leave it to a
+future wave (a tool, or the Wave 3 crow). This still meets "at least 2 paths unlocked by
+the right plant."
+
+**Growth.** Uniform `STAGE_DURATION_MS` (15 s) per stage; `currentStage(bed)` computes
+`min(growthStages, floor((now - plantedAt) / STAGE_DURATION_MS))` from `ext.plants`'s
+stored `plantedAt`, so maturity is always correct after a reload or a map change — no
+stage number is persisted. State shape:
+
+```ts
+ext.plants = { beds: { [bedId]: { bedId, plantId, plantedAt } } }
+ext.resources = { collected: string[]; lastCollectedAt: Record<string, number> } // one-time vs. respawnable nodes
+```
+
+`startGrowthTicker()` (called once from `BootScene`) polls every 2 s and, for each bed
+that just became mature, sets two flags and emits `plant-matured`:
+
+- `bed-restored:<bedId>` — "restored" means **mature**, not just planted.
+- `ability:<abilityId>` — set once any bed with that `PlantDef.abilityId` is mature.
+
+**Wave 3 query API** (`systems/plants.ts`): `isBedPlanted(bedId)`, `isBedMature(bedId)`,
+`getBedState(bedId)`, `hasAbility(abilityId)`, `getAllPlantedBeds()`. Quest 3 ("3 beete
+wiederherstellen") needs no new `QuestObjective` variant — use 3
+`{ type: 'flag', flag: 'bed-restored:bed-bramble' }`-style objectives (ditto `bed-lily`,
+`bed-lavender`); the quest runtime already listens for `flag-changed` per Wave 1's plan.
+
+**Obstacle hook.** `systems/plants.ts` registers one `addObstacleInteractHandler` at
+**module load** (imported once from `BootScene`, so it's never duplicated across map
+changes): on inspecting a blocked obstacle it calls `getMatureClearingKind(obstacle.blockedBy)`,
+and if any mature bed's `PlantDef.clears` matches, calls `unblockPath(obstacle.id)` and
+shows a flavor toast. Maturity is recomputed at interact time, not cached, so it's correct
+even if the player planted on a different map visit.
+
+**Wave 4 atmosphere hooks.** `PlantDef.lightRadius?: number` (set to 150 on `glow-lily`)
+plus `getLightSources(): { bedId, mapId, lightRadius }[]` in `systems/plants.ts` — a
+real day/night layer can dim the world and use these as light cutouts. `PlantLayer`
+already renders a placeholder additive glow + firefly particles around a mature
+`lightRadius` plant; `plant-matured` fires for any ambient effect Wave 4 wants to add.
+
+**Adding a new plant.** Add a `PlantDef` (`content/plants.ts`) and its seed `ItemDef`
+(`content/items.ts`); add 3 textures `plant-<id>-sprout` / `-growing` / `-mature` in
+`world/textures.ts`; add a `PlantingBedDef` entry to a map; if it should clear an
+obstacle, set `clears`; if it needs a custom on-mature visual beyond a texture swap, add
+a branch to `PlantLayer.updateAmbient`.
+
+**Debugging.** `window.__tlg` (dev only) gained: `plantSeed(bedId)`, `getBedState(bedId)`,
+`isBedMature(bedId)`, `hasAbility(abilityId)`, `getAllPlantedBeds()`,
+`debugRewindGrowth(ms)` (rewinds every planted bed's clock so growth/maturity advances
+immediately — stage durations are 15 s, so a few seconds of rewind per stage is enough),
+`getResourceNodes(mapId?)`, `collectNode(id)`, `give(itemId, n)`, and
+`teleport(tileX, tileY)`.
 
 ```js
-__tlg.unblockPath('fallen-tree-canal');
-__tlg.gameState.setFlag('greenhouse-unlocked');
-__tlg.gameState.reset(); location.reload();
+__tlg.give('seed-bramble-vine', 2);
+__tlg.plantSeed('bed-bramble');
+__tlg.debugRewindGrowth(60_000);     // fast-forward growth
+__tlg.teleport(35, 16);              // walk up to the bramble obstacle, then press E
 ```
 
 ## Wave boundaries
 
-- **Wave 2 (plant abilities):** planting and growth logic go in their own `systems/plants.ts`. Store state in `ext.plants` or a new `SaveGame` field. Clear obstacles through `addObstacleInteractHandler` and `unblockPath`. Register plant interactables through `worldScene.interaction`.
+- **Wave 2 (plant abilities):** done — see "Plant Abilities" above.
 - **Wave 3 (quests/story):**
   - Quest runtime listens on `bus` for `area-changed`, `path-unblocked`, `inventory-changed` and `flag-changed`.
+  - Use the `bed-restored:<bedId>` flags for Quest 3; see "Plant Abilities" above.
   - Branching dialogue.
   - Crow NPC as an interactable.
   - Greenhouse interior map; set the `greenhouse-unlocked` flag and add a `target` to the door.
 - **Wave 4 (atmosphere / PWA):**
   - Day/night cycle and particles: add a new scene or layers in `WorldScene`; depth `-10` is the ground.
+  - Use `getLightSources()` (see "Plant Abilities" above) as light cutouts in that layer.
   - Full offline support and an update flow in `sw.js`.

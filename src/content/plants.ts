@@ -20,6 +20,7 @@ export const PLANTS: PlantDef[] = [
     growthStages: 3,
     abilityId: 'emit-light',
     color: 0xf3e38a,
+    lightRadius: 150,
   },
   {
     id: 'lavender',

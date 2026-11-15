@@ -1,0 +1,66 @@
+import Phaser from 'phaser';
+import { content } from '../content';
+import { gameState } from '../systems/state';
+import { THEME } from './theme';
+
+const SEED_COLOR = 0xc49a6c;
+const ROW_GAP = 54;
+
+interface Row {
+  itemId: string | '__seeds__';
+  dot: Phaser.GameObjects.Arc;
+  text: Phaser.GameObjects.Text;
+}
+
+/** Compact, always-visible resource/seed counts. Top-left, never intercepts touches (no hit area). */
+export class ResourceBar {
+  private readonly container: Phaser.GameObjects.Container;
+  private readonly bg: Phaser.GameObjects.Graphics;
+  private readonly rows: Row[];
+
+  constructor(scene: Phaser.Scene) {
+    this.bg = scene.add.graphics();
+    const specs: { itemId: Row['itemId']; color: number }[] = [
+      { itemId: 'resource-sunlight', color: content.items.get('resource-sunlight').color },
+      { itemId: 'resource-dew', color: content.items.get('resource-dew').color },
+      { itemId: 'resource-curio', color: content.items.get('resource-curio').color },
+      { itemId: '__seeds__', color: SEED_COLOR },
+    ];
+    this.rows = specs.map((spec, i) => ({
+      itemId: spec.itemId,
+      dot: scene.add.circle(i * ROW_GAP, 0, 6, spec.color),
+      text: scene.add
+        .text(i * ROW_GAP + 11, 0, '0', {
+          fontFamily: THEME.font,
+          fontSize: '14px',
+          fontStyle: 'bold',
+          color: THEME.creamCss,
+        })
+        .setOrigin(0, 0.5),
+    }));
+    this.container = scene.add
+      .container(0, 0, [this.bg, ...this.rows.flatMap((r) => [r.dot, r.text])])
+      .setDepth(90_000);
+    this.refresh();
+  }
+
+  setPosition(x: number, y: number): void {
+    this.container.setPosition(x, y);
+  }
+
+  refresh(): void {
+    const seedTotal = content.items
+      .all()
+      .filter((i) => i.category === 'seed')
+      .reduce((sum, i) => sum + gameState.getItemCount(i.id), 0);
+    for (const row of this.rows) {
+      const count = row.itemId === '__seeds__' ? seedTotal : gameState.getItemCount(row.itemId);
+      row.text.setText(String(count));
+    }
+    const w = (this.rows.length - 1) * ROW_GAP + 56;
+    const h = 30;
+    this.bg.clear();
+    this.bg.fillStyle(THEME.panel, THEME.panelAlpha * 0.85);
+    this.bg.fillRoundedRect(-14, -h / 2, w, h, h / 2);
+  }
+}

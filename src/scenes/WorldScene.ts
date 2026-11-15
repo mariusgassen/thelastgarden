@@ -4,7 +4,9 @@ import { bus } from '../systems/events';
 import { inputState } from '../systems/input';
 import { createSpecInteractable, InteractionSystem, type WorldApi } from '../systems/interaction';
 import { ObstacleLayer } from '../systems/obstacles';
+import { PlantLayer } from '../systems/plantLayer';
 import { PlayerController } from '../systems/player';
+import { ResourceLayer } from '../systems/resources';
 import { gameState } from '../systems/state';
 import { DPR } from '../ui/viewport';
 import { getMap, MAPS, START_MAP_ID, type MapDef, type ZoneDef } from '../world';
@@ -30,6 +32,8 @@ export class WorldScene extends Phaser.Scene implements WorldApi {
   player!: PlayerController;
   interaction!: InteractionSystem;
   obstacles!: ObstacleLayer;
+  plants!: PlantLayer;
+  resources!: ResourceLayer;
   /** Static colliders (props, obstacles). Add your own solid bodies here. */
   solids!: Phaser.Physics.Arcade.StaticGroup;
   private marker!: Phaser.GameObjects.Image;
@@ -77,6 +81,8 @@ export class WorldScene extends Phaser.Scene implements WorldApi {
     }));
     for (const spec of this.map.interactables) this.interaction.register(createSpecInteractable(spec));
     this.obstacles = new ObstacleLayer(this, this.map, this.solids, this.interaction);
+    this.plants = new PlantLayer(this, this.map.id, this.interaction);
+    this.resources = new ResourceLayer(this, this.map.id, this.interaction);
 
     const spawn = this.resolveSpawn(data.spawn);
     this.player = new PlayerController(this, spawn.x, spawn.y, gameState.data.player.facing);

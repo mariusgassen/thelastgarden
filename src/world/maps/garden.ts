@@ -142,6 +142,35 @@ export const GARDEN_MAP: MapDef = {
     { id: 'old-well', type: 'dialogue', at: { x: 41.5, y: 15.8 }, label: 'Ansehen', dialogueId: 'old-well' },
     { id: 'bus-stop-sign', type: 'dialogue', at: { x: 23.4, y: 62.2 }, label: 'Lesen', dialogueId: 'bus-stop-sign' },
   ],
+  // The 3 "verwilderte Beete" Quest 3 (Wave 3) restores, plus one open bed. See
+  // ARCHITECTURE.md § Plant Abilities for how Wave 3 should check restoration.
+  plantingBeds: [
+    { id: 'bed-bramble', rect: { x: 16, y: 29, w: 4, h: 2 }, plantId: 'bramble-vine' },
+    { id: 'bed-lily', rect: { x: 30, y: 29, w: 4, h: 2 }, plantId: 'glow-lily' },
+    { id: 'bed-lavender', rect: { x: 16, y: 41, w: 4, h: 2 }, plantId: 'lavender' },
+    { id: 'bed-extra', rect: { x: 30, y: 41, w: 4, h: 2 } },
+  ],
+  resourceNodes: [
+    // Sonnenlicht — sunny open spots, respawn.
+    { id: 'sun-1', itemId: 'resource-sunlight', at: { x: 17, y: 22 }, label: 'Sonnenlicht sammeln', respawnMs: 45_000 },
+    { id: 'sun-2', itemId: 'resource-sunlight', at: { x: 20, y: 34 }, label: 'Sonnenlicht sammeln', respawnMs: 45_000 },
+    { id: 'sun-3', itemId: 'resource-sunlight', at: { x: 10, y: 61 }, label: 'Sonnenlicht sammeln', respawnMs: 45_000 },
+    // Tau — near water and wild grass, respawn.
+    { id: 'dew-1', itemId: 'resource-dew', at: { x: 38, y: 31 }, label: 'Tau sammeln', respawnMs: 45_000 },
+    { id: 'dew-2', itemId: 'resource-dew', at: { x: 44, y: 17 }, label: 'Tau sammeln', respawnMs: 45_000 },
+    { id: 'dew-3', itemId: 'resource-dew', at: { x: 11, y: 35 }, label: 'Tau sammeln', respawnMs: 45_000 },
+    // Fundstücke — tucked into corners, including places only reachable after an obstacle clears. One-time.
+    { id: 'curio-1', itemId: 'resource-curio', at: { x: 41, y: 14 }, label: 'Aufheben' },
+    { id: 'curio-2', itemId: 'resource-curio', at: { x: 18, y: 56 }, label: 'Aufheben' },
+    { id: 'curio-3', itemId: 'resource-curio', at: { x: 6, y: 50 }, label: 'Aufheben' },
+    // Samen — one-time, 2 per species, placed near the obstacle each plant eventually clears.
+    { id: 'seed-bramble-1', itemId: 'seed-bramble-vine', at: { x: 33, y: 22 }, label: 'Samen einsammeln' },
+    { id: 'seed-bramble-2', itemId: 'seed-bramble-vine', at: { x: 17, y: 12 }, label: 'Samen einsammeln' },
+    { id: 'seed-lily-1', itemId: 'seed-glow-lily', at: { x: 45, y: 32 }, label: 'Samen einsammeln' },
+    { id: 'seed-lily-2', itemId: 'seed-glow-lily', at: { x: 39, y: 42 }, label: 'Samen einsammeln' },
+    { id: 'seed-lavender-1', itemId: 'seed-lavender', at: { x: 9, y: 33 }, label: 'Samen einsammeln' },
+    { id: 'seed-lavender-2', itemId: 'seed-lavender', at: { x: 3, y: 36 }, label: 'Samen einsammeln' },
+  ],
   spawns: {
     default: { x: 25.5, y: 31 },
     'workshop-door': { x: 7, y: 33.4 },

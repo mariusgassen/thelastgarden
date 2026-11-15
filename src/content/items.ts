@@ -41,4 +41,28 @@ export const ITEMS: ItemDef[] = [
     stackable: false,
     color: 0xc9a227,
   },
+  {
+    id: 'resource-sunlight',
+    name: 'Sonnenlicht',
+    description: 'Warmes, eingefangenes Licht, das in der Hand schimmert.',
+    category: 'resource',
+    stackable: true,
+    color: 0xf4c430,
+  },
+  {
+    id: 'resource-dew',
+    name: 'Tau',
+    description: 'Ein klarer Tropfen, kühl und schwer wie ein kleiner Kristall.',
+    category: 'resource',
+    stackable: true,
+    color: 0x8fd6e8,
+  },
+  {
+    id: 'resource-curio',
+    name: 'Fundstück',
+    description: 'Ein kleiner Schatz, vom Garten selbst vergessen und wiedergefunden.',
+    category: 'resource',
+    stackable: true,
+    color: 0xd291e4,
+  },
 ];

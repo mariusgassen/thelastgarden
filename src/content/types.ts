@@ -20,9 +20,11 @@ export interface PlantDef {
   abilityId?: string;
   /** Primary display color (hex) for placeholder rendering. */
   color: number;
+  /** Light radius in px a mature plant emits (hook for Wave 4's day/night layer; see systems/plants.ts getLightSources). */
+  lightRadius?: number;
 }
 
-export type ItemCategory = 'seed' | 'tool' | 'key' | 'material' | 'note';
+export type ItemCategory = 'seed' | 'tool' | 'key' | 'material' | 'note' | 'resource';
 
 export interface ItemDef {
   id: string;

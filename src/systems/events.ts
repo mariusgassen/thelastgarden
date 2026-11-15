@@ -24,6 +24,12 @@ export interface GameEvents {
   'dialogue-closed': { id: string };
   'flag-changed': { key: string; value: FlagValue };
   'inventory-changed': { itemId: string; count: number };
+  /** A seed was planted on an empty bed. */
+  'plant-planted': { bedId: string; plantId: string };
+  /** A planted bed just reached full growth (see systems/plants.ts isBedMature). */
+  'plant-matured': { bedId: string; plantId: string };
+  /** A resource/seed pickup in the world was collected. */
+  'resource-collected': { nodeId: string; itemId: string };
   'save-loaded': { save: SaveGame };
   'save-written': { savedAt: number };
   /** Short transient message in the HUD. */
