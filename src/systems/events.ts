@@ -1,6 +1,20 @@
 import Phaser from 'phaser';
-import type { DialogueLine } from '../content/types';
+import type { DialogueLine, DialogueStyle } from '../content/types';
 import type { FlagValue, SaveGame } from './save';
+
+export type NightEventKind = 'snails' | 'voles' | 'crows' | 'rain';
+
+/** What a night did to the garden; shown to the player once the night fades (see systems/nightEvents.ts). */
+export interface NightOutcome {
+  kind: NightEventKind;
+  dialogueId: string;
+  /** Bed ids that were harmed (growth set back) or helped (rain). */
+  affectedBedIds: string[];
+  /** Decoration left behind in the world (px), e.g. snails next to a nibbled bed. */
+  remnants: { texture: 'snail' | 'mole-mound' | 'feather' | 'puddle'; x: number; y: number }[];
+  /** Set when the player's garden design (plants) or ally (crow) prevented harm. */
+  protectedBy?: 'lavender' | 'glow-lily' | 'crow';
+}
 
 /**
  * Global, typed event bus. Systems and scenes communicate through it instead of
@@ -18,10 +32,19 @@ export interface GameEvents {
   /** A map finished loading. */
   'map-changed': { mapId: string };
   /** Ask the UI to show text lines (use WorldApi.showDialogue/showLines instead of emitting directly). */
-  'dialogue-show': { id: string; lines: DialogueLine[] };
+  'dialogue-show': { id: string; lines: DialogueLine[]; style?: DialogueStyle; title?: string };
   /** Advance the open dialogue (keyboard E/Space while modal). */
   'dialogue-advance': undefined;
   'dialogue-closed': { id: string };
+  /** Quest runtime (systems/quests.ts). `quest-updated` fires after any of the other three. */
+  'quest-started': { questId: string };
+  'quest-objective-completed': { questId: string; index: number };
+  'quest-completed': { questId: string };
+  'quest-updated': undefined;
+  /** Night events (systems/nightEvents.ts): dusk → resolution → dawn. */
+  'night-begins': { kind: NightEventKind };
+  'night-resolved': { outcome: NightOutcome };
+  'night-ends': { outcome: NightOutcome };
   'flag-changed': { key: string; value: FlagValue };
   'inventory-changed': { itemId: string; count: number };
   /** A seed was planted on an empty bed. */

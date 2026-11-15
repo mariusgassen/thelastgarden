@@ -1,14 +1,16 @@
 import { GARDEN_MAP } from './maps/garden';
+import { GREENHOUSE_VESTIBULE_MAP } from './maps/greenhouseVestibule';
 import { WORKSHOP_MAP } from './maps/workshop';
-import type { MapDef, ObstacleDef, PlantingBedDef, ResourceNodeDef } from './types';
+import type { JournalPageDef, MapDef, ObstacleDef, PlantingBedDef, ResourceNodeDef } from './types';
 
 export * from './types';
 export { TILE_SIZE } from './tiles';
 
-/** All maps by id. Register new maps (e.g. greenhouse interior) here. */
+/** All maps by id. Register new maps (e.g. the greenhouse proper) here. */
 export const MAPS: Record<string, MapDef> = {
   [GARDEN_MAP.id]: GARDEN_MAP,
   [WORKSHOP_MAP.id]: WORKSHOP_MAP,
+  [GREENHOUSE_VESTIBULE_MAP.id]: GREENHOUSE_VESTIBULE_MAP,
 };
 
 export const START_MAP_ID = GARDEN_MAP.id;
@@ -44,4 +46,9 @@ export function allResourceNodes(): (ResourceNodeDef & { mapId: string })[] {
 
 export function findResourceNode(id: string): (ResourceNodeDef & { mapId: string }) | undefined {
   return allResourceNodes().find((n) => n.id === id);
+}
+
+/** Every journal page across all maps, with the map it lives on. */
+export function allJournalPages(): (JournalPageDef & { mapId: string })[] {
+  return Object.values(MAPS).flatMap((m) => (m.journalPages ?? []).map((p) => ({ ...p, mapId: m.id })));
 }

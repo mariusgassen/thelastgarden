@@ -1,0 +1,95 @@
+import Phaser from 'phaser';
+import { content } from '../content';
+import type { NpcDef, NpcDialogueRule } from '../content/types';
+import { TILE_SIZE } from '../world/tiles';
+import type { MapDef } from '../world/types';
+import { onDialogueClosed, type InteractionSystem } from './interaction';
+import { gameState } from './state';
+
+/** First rule whose flag conditions hold, else undefined (caller falls back to `def.dialogueId`). */
+export function pickNpcDialogue(def: NpcDef): NpcDialogueRule | undefined {
+  return def.dialogues?.find(
+    (rule) =>
+      (rule.requires ?? []).every((flag) => gameState.hasFlag(flag)) &&
+      !(rule.forbids ?? []).some((flag) => gameState.hasFlag(flag)),
+  );
+}
+
+interface LiveNpc {
+  def: NpcDef;
+  sprite: Phaser.GameObjects.Image;
+  x: number;
+  y: number;
+}
+
+/**
+ * Scene-bound NPCs for the current map (MapDef.npcs). Each is an interactable `npc:<id>`
+ * that shows the first matching NpcDialogueRule and applies its effects when that
+ * dialogue closes. Visual behavior is deliberately simple: face the player, hop now and then.
+ */
+export class NpcLayer {
+  private readonly live: LiveNpc[] = [];
+
+  constructor(
+    private readonly scene: Phaser.Scene,
+    map: MapDef,
+    private readonly interaction: InteractionSystem,
+    private readonly getPlayerX: () => number,
+  ) {
+    for (const placement of map.npcs ?? []) {
+      const def = content.npcs.get(placement.npcId);
+      const x = placement.at.x * TILE_SIZE;
+      const y = placement.at.y * TILE_SIZE;
+      const sprite = scene.add.image(x, y, def.id).setOrigin(0.5, 1).setDepth(y);
+      this.live.push({ def, sprite, x, y });
+      this.scheduleHop(sprite, y);
+      this.register(def, placement.radius ?? 64, x, y);
+    }
+    scene.events.on(Phaser.Scenes.Events.UPDATE, this.update, this);
+    scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => scene.events.off(Phaser.Scenes.Events.UPDATE, this.update, this));
+  }
+
+  private register(def: NpcDef, radius: number, x: number, y: number): void {
+    this.interaction.register({
+      id: `npc:${def.id}`,
+      label: def.interactLabel ?? 'Ansprechen',
+      radius,
+      markerOffset: 46,
+      getPosition: () => ({ x, y: y - 10 }),
+      onInteract: (ctx) => {
+        const rule = pickNpcDialogue(def);
+        const dialogueId = rule?.dialogueId ?? def.dialogueId;
+        if (!dialogueId) return;
+        ctx.world.showDialogue(dialogueId);
+        if (!rule) return;
+        onDialogueClosed(dialogueId, () => {
+          for (const item of rule.giveItems ?? []) {
+            gameState.addItem(item.itemId, item.count);
+            ctx.world.toast(`+${item.count} ${content.items.get(item.itemId).name}`);
+          }
+          for (const flag of rule.setFlags ?? []) gameState.setFlag(flag);
+          gameState.save();
+        });
+      },
+    });
+  }
+
+  private scheduleHop(sprite: Phaser.GameObjects.Image, baseY: number): void {
+    this.scene.time.delayedCall(1800 + Math.random() * 2600, () => {
+      if (!sprite.active) return;
+      this.scene.tweens.add({
+        targets: sprite,
+        y: baseY - 7,
+        duration: 130,
+        yoyo: true,
+        ease: 'Quad.easeOut',
+        onComplete: () => this.scheduleHop(sprite, baseY),
+      });
+    });
+  }
+
+  private update(): void {
+    const px = this.getPlayerX();
+    for (const npc of this.live) npc.sprite.setFlipX(px < npc.x - 4);
+  }
+}

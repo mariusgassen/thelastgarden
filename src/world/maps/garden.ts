@@ -107,9 +107,11 @@ export const GARDEN_MAP: MapDef = {
     },
   ],
   props: [
-    { texture: 'greenhouse-door', at: { x: 25, y: 20 } },
+    { texture: 'greenhouse-door', at: { x: 25, y: 20 }, hideWhenFlag: 'greenhouse-unlocked' },
+    { texture: 'greenhouse-door-open', at: { x: 25, y: 20 }, showWhenFlag: 'greenhouse-unlocked' },
     { texture: 'hut-roof', at: { x: 7, y: 30.4 } },
     { texture: 'hut-door', at: { x: 7, y: 32 } },
+    { texture: 'stump', at: { x: 11.5, y: 34.8 }, solid: { x: 11, y: 34.2, w: 1, h: 0.6 } },
     { texture: 'sign', at: { x: 28.2, y: 33.2 }, solid: { x: 27.9, y: 32.8, w: 0.6, h: 0.4 } },
     { texture: 'bench', at: { x: 21, y: 32.4 }, solid: { x: 19.9, y: 31.6, w: 2.2, h: 0.8 } },
     { texture: 'bench', at: { x: 30, y: 39.6 }, solid: { x: 28.9, y: 38.8, w: 2.2, h: 0.8 }, flipX: true },
@@ -130,6 +132,9 @@ export const GARDEN_MAP: MapDef = {
       locked: true,
       unlockFlag: 'greenhouse-unlocked',
       lockedDialogueId: 'greenhouse-locked',
+      keyItemId: 'greenhouse-key',
+      unlockedDialogueId: 'greenhouse-unlock',
+      target: { mapId: 'greenhouse-vestibule', spawn: 'entrance' },
     },
     {
       id: 'workshop-door',
@@ -170,6 +175,32 @@ export const GARDEN_MAP: MapDef = {
     { id: 'seed-lily-2', itemId: 'seed-glow-lily', at: { x: 39, y: 42 }, label: 'Samen einsammeln' },
     { id: 'seed-lavender-1', itemId: 'seed-lavender', at: { x: 9, y: 33 }, label: 'Samen einsammeln' },
     { id: 'seed-lavender-2', itemId: 'seed-lavender', at: { x: 3, y: 36 }, label: 'Samen einsammeln' },
+  ],
+  // The crow perches on the stump at the hut-yard entrance, where the path from the main garden arrives.
+  npcs: [{ npcId: 'crow', at: { x: 11.5, y: 34.3 }, radius: 70 }],
+  // One journal page per restored bed, lying right next to it (see systems/journal.ts).
+  journalPages: [
+    {
+      id: 'page-bramble',
+      at: { x: 21.3, y: 30.4 },
+      dialogueId: 'journal-page-bramble',
+      appearsWhenFlag: 'bed-restored:bed-bramble',
+      itemId: 'journal-page-bramble',
+    },
+    {
+      id: 'page-lily',
+      at: { x: 28.8, y: 30.4 },
+      dialogueId: 'journal-page-lily',
+      appearsWhenFlag: 'bed-restored:bed-lily',
+      itemId: 'journal-page-lily',
+    },
+    {
+      id: 'page-lavender',
+      at: { x: 21.3, y: 42.4 },
+      dialogueId: 'journal-page-lavender',
+      appearsWhenFlag: 'bed-restored:bed-lavender',
+      itemId: 'journal-page-lavender',
+    },
   ],
   spawns: {
     default: { x: 25.5, y: 31 },

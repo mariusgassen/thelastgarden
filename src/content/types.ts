@@ -36,38 +36,76 @@ export interface ItemDef {
   color: number;
 }
 
-export type QuestObjective =
-  | { type: 'flag'; flag: string; description: string }
-  | { type: 'item'; itemId: string; count: number; description: string }
-  | { type: 'unblock'; obstacleId: string; description: string }
-  | { type: 'visitZone'; zoneId: string; description: string };
+interface QuestObjectiveBase {
+  description: string;
+  /**
+   * Interactable ids (e.g. `npc:crow`, `bed:bed-lily`, `greenhouse-door`) that get a quest
+   * pin in the world while this objective is open. Ids not registered on the current map
+   * are simply skipped.
+   */
+  markers?: string[];
+}
+
+export type QuestObjective = QuestObjectiveBase &
+  (
+    | { type: 'flag'; flag: string }
+    | { type: 'item'; itemId: string; count: number }
+    | { type: 'unblock'; obstacleId: string }
+    | { type: 'visitZone'; zoneId: string }
+  );
 
 export interface QuestDef {
   id: string;
   title: string;
   summary: string;
   objectives: QuestObjective[];
+  /** Start as soon as the game runs (new save or old save that never started it). */
+  autoStart?: boolean;
+  /** Start once ANY of these flags is set. `quest-completed:<id>` is set for every finished quest. */
+  startsWhen?: string[];
   /** Flags set when the quest completes. */
   rewardFlags?: string[];
   rewardItems?: { itemId: string; count: number }[];
 }
 
 export interface DialogueLine {
-  /** NPC id or free display name; omit for narration. */
+  /** NPC id (resolved to its name + portrait) or free display name; omit for narration. */
   speaker?: string;
   text: string;
 }
 
+export type DialogueStyle = 'speech' | 'page';
+
 export interface DialogueDef {
   id: string;
   lines: DialogueLine[];
+  /** `page` renders as a parchment note (journal pages); default is the speech panel. */
+  style?: DialogueStyle;
+  /** Header shown above a `page` style dialogue. */
+  title?: string;
+}
+
+/** First rule whose conditions hold is the dialogue an NPC shows. */
+export interface NpcDialogueRule {
+  dialogueId: string;
+  /** All of these flags must be set. */
+  requires?: string[];
+  /** None of these flags may be set. */
+  forbids?: string[];
+  /** Applied when the dialogue closes. */
+  setFlags?: string[];
+  giveItems?: { itemId: string; count: number }[];
 }
 
 export interface NpcDef {
   id: string;
   name: string;
   description: string;
-  /** Default dialogue shown on interaction (Wave 3 adds behavior). */
+  /** Evaluated top to bottom on interaction; falls back to `dialogueId`. */
+  dialogues?: NpcDialogueRule[];
+  /** Fallback dialogue if no rule matches. */
   dialogueId?: string;
+  /** Context-button label (default "Ansprechen"). */
+  interactLabel?: string;
   color: number;
 }
