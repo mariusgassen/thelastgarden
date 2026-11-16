@@ -1,13 +1,16 @@
 import Phaser from 'phaser';
 import { content } from '../content';
 import type { PlantDef } from '../content/types';
+import { prefersReducedMotion } from '../ui/viewport';
 import { allPlantingBeds } from '../world';
 import { TILE_SIZE } from '../world/tiles';
+import { getDayTime } from './dayClock';
 import { bus } from './events';
 import type { InteractionSystem } from './interaction';
 import { gameState } from './state';
 import {
   canWaterBed,
+  computeLightAttenuation,
   currentStage,
   getBedState,
   getPlantableSpecies,
@@ -17,9 +20,11 @@ import {
   isProduceReady,
   plantSeed,
   waterBed,
+  type LightPoint,
 } from './plants';
 
 const SEED_PICKER_PREFIX = 'seed-picker:';
+const BASE_FIREFLY_FREQ_MS = 450;
 
 function labelFor(bedId: string): string {
   if (!isBedPlanted(bedId)) return 'Pflanzen';
@@ -38,6 +43,10 @@ interface LiveBed {
   scale: number;
   sprite?: Phaser.GameObjects.Image;
   glow?: Phaser.GameObjects.Image;
+  /** Shared pulse multiplier animated by tween; scaled by glowAlpha so overlap updates smoothly. */
+  glowPulse?: { v: number };
+  glowAlpha: number;
+  lightRadius?: number;
   fireflies?: Phaser.GameObjects.Particles.ParticleEmitter;
   scent?: Phaser.GameObjects.Particles.ParticleEmitter;
   /** Bobbing marker shown while produce is ready to harvest. */
@@ -74,12 +83,20 @@ export class PlantLayer {
     scene.time.addEvent({ delay: 1000, loop: true, callback: () => this.pollAll() });
   }
 
+  private destroyEntryVisuals(entry: LiveBed): void {
+    if (entry.glowPulse) this.scene.tweens.killTweensOf(entry.glowPulse);
+    for (const part of [entry.sprite, entry.glow, entry.fireflies, entry.scent, entry.produce]) part?.destroy();
+    entry.sprite = entry.glow = entry.fireflies = entry.scent = entry.produce = undefined;
+    entry.glowPulse = undefined;
+    entry.glowAlpha = 0;
+    entry.lightRadius = undefined;
+  }
+
   /** A plant was dug up (shovel): the bed stays, its sprite and effects go. */
   private clearBed(bedId: string): void {
     const entry = this.live.get(bedId);
     if (!entry) return;
-    for (const part of [entry.sprite, entry.glow, entry.fireflies, entry.scent, entry.produce]) part?.destroy();
-    entry.sprite = entry.glow = entry.fireflies = entry.scent = entry.produce = undefined;
+    this.destroyEntryVisuals(entry);
     entry.lastRenderedStage = -1;
     entry.plantId = undefined;
     this.render(bedId);
@@ -90,7 +107,7 @@ export class PlantLayer {
     const wanted = new Set(beds.map((b) => b.id));
     for (const [bedId, entry] of this.live) {
       if (wanted.has(bedId)) continue;
-      for (const part of [entry.sprite, entry.glow, entry.fireflies, entry.scent, entry.produce]) part?.destroy();
+      this.destroyEntryVisuals(entry);
       this.interaction.unregister(`bed:${bedId}`);
       this.live.delete(bedId);
     }
@@ -99,10 +116,11 @@ export class PlantLayer {
       const cx = (bed.rect.x + bed.rect.w / 2) * TILE_SIZE;
       const cy = (bed.rect.y + bed.rect.h) * TILE_SIZE;
       const scale = bed.plantScale ?? 1;
-      this.live.set(bed.id, { cx, cy, scale, lastRenderedStage: -1 });
+      this.live.set(bed.id, { cx, cy, scale, glowAlpha: 0, lastRenderedStage: -1 });
       this.registerInteractable(bed.id, cx, cy, scale);
-      this.render(bed.id);
+      this.render(bed.id, false);
     }
+    this.refreshGlows();
   }
 
   private registerInteractable(bedId: string, cx: number, cy: number, scale: number): void {
@@ -156,17 +174,21 @@ export class PlantLayer {
   }
 
   private pollAll(): void {
-    for (const bedId of this.live.keys()) this.render(bedId);
+    for (const bedId of this.live.keys()) this.render(bedId, false);
+    this.refreshGlows();
   }
 
-  private render(bedId: string): void {
+  private render(bedId: string, refresh = true): void {
     const entry = this.live.get(bedId);
     if (!entry) return;
     const item = this.interaction.get(`bed:${bedId}`);
     if (item) item.label = labelFor(bedId);
 
     const bed = getBedState(bedId);
-    if (!bed) return;
+    if (!bed) {
+      if (refresh) this.refreshGlows();
+      return;
+    }
     const def = content.plants.get(bed.plantId);
     const stage = currentStage(bed);
     const mature = stage >= def.growthStages;
@@ -190,6 +212,7 @@ export class PlantLayer {
 
     this.updateAmbient(entry, def, mature);
     this.updateProduce(entry, bedId, def);
+    if (refresh) this.refreshGlows();
   }
 
   private updateProduce(entry: LiveBed, bedId: string, def: PlantDef): void {
@@ -222,17 +245,33 @@ export class PlantLayer {
   }
 
   private updateAmbient(entry: LiveBed, def: PlantDef, mature: boolean): void {
-    // Glow-lily's light (hook for Wave 4's day/night layer, see PlantDef.lightRadius).
+    // Light-emitting plants (hook for Wave 4's day/night layer, see PlantDef.lightRadius).
     if (mature && def.lightRadius) {
+      entry.lightRadius = def.lightRadius;
       if (!entry.glow) {
         entry.glow = this.scene.add
           .image(entry.cx, entry.cy - 16, 'light-halo')
-          .setBlendMode(Phaser.BlendModes.ADD)
-          .setAlpha(0.45)
+          .setBlendMode(Phaser.BlendModes.SCREEN)
+          .setAlpha(0)
           .setTint(def.color)
           .setDisplaySize(def.lightRadius * 2, def.lightRadius * 2)
           .setDepth(entry.cy - 1);
-        this.scene.tweens.add({ targets: entry.glow, alpha: 0.25, duration: 1400, yoyo: true, repeat: -1 });
+        entry.glowPulse = { v: 1 };
+        if (!prefersReducedMotion()) {
+          this.scene.tweens.add({
+            targets: entry.glowPulse,
+            v: 0.62,
+            duration: 1400,
+            yoyo: true,
+            repeat: -1,
+            ease: 'Sine.easeInOut',
+            onUpdate: () => {
+              entry.glow?.setAlpha(entry.glowAlpha * (entry.glowPulse?.v ?? 1));
+            },
+          });
+        }
+      } else {
+        entry.glow.setTint(def.color).setDisplaySize(def.lightRadius * 2, def.lightRadius * 2);
       }
       if (!entry.fireflies) {
         entry.fireflies = this.scene.add
@@ -242,13 +281,17 @@ export class PlantLayer {
             lifespan: 2200,
             alpha: { start: 0.9, end: 0 },
             scale: { start: 0.8, end: 0.2 },
-            frequency: 450,
+            frequency: BASE_FIREFLY_FREQ_MS,
           })
           .setDepth(entry.cy);
       }
     } else {
+      if (entry.glowPulse) this.scene.tweens.killTweensOf(entry.glowPulse);
       entry.glow?.destroy();
       entry.glow = undefined;
+      entry.glowPulse = undefined;
+      entry.glowAlpha = 0;
+      entry.lightRadius = undefined;
       entry.fireflies?.destroy();
       entry.fireflies = undefined;
     }
@@ -271,6 +314,34 @@ export class PlantLayer {
     } else {
       entry.scent?.destroy();
       entry.scent = undefined;
+    }
+  }
+
+  /** Attenuates overlapping glows so stacked or adjacent light plants combine smoothly without blinding glare. */
+  private refreshGlows(): void {
+    const lights: LightPoint[] = [];
+    for (const [bedId, entry] of this.live) {
+      if (entry.glow && entry.lightRadius) {
+        lights.push({ id: bedId, x: entry.cx, y: entry.cy - 16, radius: entry.lightRadius });
+      }
+    }
+    if (lights.length === 0) return;
+
+    const attenuation = computeLightAttenuation(lights);
+    const { shadeAlpha } = getDayTime();
+    const nightFactor = Phaser.Math.Clamp(shadeAlpha / 0.52, 0, 1);
+    const baseAlpha = 0.28 + nightFactor * 0.16;
+    const reduced = prefersReducedMotion();
+
+    for (const [bedId, entry] of this.live) {
+      const scale = attenuation.get(bedId);
+      if (scale === undefined || !entry.glow) continue;
+      entry.glowAlpha = baseAlpha * scale;
+      entry.glow.setAlpha(entry.glowAlpha * (reduced ? 0.85 : (entry.glowPulse?.v ?? 1)));
+      if (entry.fireflies) {
+        const nextFreq = Math.round(BASE_FIREFLY_FREQ_MS / Math.max(0.15, scale));
+        if (entry.fireflies.frequency !== nextFreq) entry.fireflies.setFrequency(nextFreq);
+      }
     }
   }
 }

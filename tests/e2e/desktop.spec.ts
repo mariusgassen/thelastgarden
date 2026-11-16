@@ -893,4 +893,58 @@ test.describe('Desktop gameplay and PWA', () => {
 
     expect(errors).toEqual([]);
   });
+
+  test('renders stacked and adjacent light plants without white blowout', async ({ page }) => {
+    const errors = trackErrors(page);
+    const matureAt = Date.now() - 600_000;
+    const beds: Record<string, { bedId: string; plantId: string; plantedAt: number; harvestedAt: number }> = {};
+    for (let i = 0; i < 8; i++) {
+      const id = i === 0 ? 'bed-lily' : `bed-lily#${i}`;
+      beds[id] = { bedId: id, plantId: 'glow-lily', plantedAt: matureAt, harvestedAt: Date.now() };
+    }
+    for (const px of [30, 31]) {
+      for (let i = 0; i < 4; i++) {
+        const id = i === 0 ? `planter:garden:${px}:32` : `planter:garden:${px}:32#${i}`;
+        beds[id] = { bedId: id, plantId: 'moon-fern', plantedAt: matureAt, harvestedAt: Date.now() };
+      }
+    }
+
+    await page.addInitScript(
+      ({ key, seededBeds }) => {
+        if (localStorage.getItem(key)) return;
+        localStorage.setItem(
+          key,
+          JSON.stringify({
+            version: 1,
+            savedAt: Date.now(),
+            player: { mapId: 'garden', x: 32 * 32, y: 33 * 32, facing: 'down' },
+            world: { unblockedPaths: [], visitedZones: ['garden'], flags: { 'crow-met': true, 'gathered-material': true } },
+            inventory: { items: {} },
+            quests: { active: [], completed: ['q-meet-crow'], progress: {} },
+            ext: {
+              plants: { beds: seededBeds },
+              building: {
+                pieces: {
+                  garden: [
+                    { id: 'planter', x: 30, y: 32 },
+                    { id: 'planter', x: 31, y: 32 },
+                  ],
+                },
+              },
+            },
+          }),
+        );
+      },
+      { key: SAVE_KEY, seededBeds: beds },
+    );
+
+    await page.goto('/');
+    await waitForGameBoot(page);
+    await page.waitForTimeout(400);
+
+    // 16 mature light plants stacked in bed-lily + adjacent planters must not saturate the center to pure white.
+    const whitePixels = await countColorPixels(page, { x: 520, y: 240, width: 240, height: 180 }, [255, 255, 255], 6);
+    expect(whitePixels).toBeLessThan(200);
+    expect(errors).toEqual([]);
+  });
 });

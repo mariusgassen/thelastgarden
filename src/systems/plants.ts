@@ -202,6 +202,74 @@ export function getLightSources(): { bedId: string; mapId: string; lightRadius: 
   return out;
 }
 
+export interface LightPoint {
+  id: string;
+  x: number;
+  y: number;
+  radius: number;
+}
+
+const HALO_RING_DECAY = 0.92;
+const HALO_RINGS = 16;
+const HALO_MAX_OPACITY = 1 - Math.pow(HALO_RING_DECAY, HALO_RINGS);
+const CLUSTER_GLOW_BOOST = 0.25;
+
+/**
+ * Radial falloff matching the `light-halo` texture (16 concentric circles at 0.08 alpha),
+ * normalized to 1 at the center and 0 at `dist >= radius`.
+ */
+export function haloFalloff(dist: number, radius: number): number {
+  if (radius <= 0 || dist >= radius) return 0;
+  if (dist <= 0) return 1;
+  const u = dist / radius;
+  return (1 - Math.pow(HALO_RING_DECAY, HALO_RINGS * (1 - u))) / HALO_MAX_OPACITY;
+}
+
+/**
+ * Computes a brightness multiplier in (0, 1] per light source so stacked or adjacent
+ * light-emitting plants combine smoothly toward a gentle cap instead of blowing out.
+ */
+export function computeLightAttenuation(sources: readonly LightPoint[]): Map<string, number> {
+  const out = new Map<string, number>();
+  const n = sources.length;
+  if (n === 0) return out;
+  if (n === 1) {
+    out.set(sources[0].id, 1);
+    return out;
+  }
+
+  const K: number[][] = Array.from({ length: n }, (_, i) =>
+    Array.from({ length: n }, (_, j) =>
+      haloFalloff(Math.hypot(sources[i].x - sources[j].x, sources[i].y - sources[j].y), sources[j].radius),
+    ),
+  );
+
+  const targets = K.map((row) => {
+    const overlap = row.reduce((sum, k) => sum + k, 0);
+    return 1 + CLUSTER_GLOW_BOOST * (1 - Math.exp(-(overlap - 1) / 2));
+  });
+
+  let scales = K.map((row, i) => {
+    const overlap = row.reduce((sum, k) => sum + k, 0);
+    return overlap > 0 ? Math.min(1, targets[i] / overlap) : 1;
+  });
+
+  // Two damped Jacobi passes keep boundary plants next to dense clusters balanced and order-independent.
+  for (let pass = 0; pass < 2; pass++) {
+    const next = new Array<number>(n);
+    for (let i = 0; i < n; i++) {
+      let received = 0;
+      for (let j = 0; j < n; j++) received += scales[j] * K[i][j];
+      const desired = received > 0 ? Math.min(1, Math.max(0.001, scales[i] * (targets[i] / received))) : 1;
+      next[i] = 0.5 * scales[i] + 0.5 * desired;
+    }
+    scales = next;
+  }
+
+  for (let i = 0; i < n; i++) out.set(sources[i].id, scales[i]);
+  return out;
+}
+
 function abilityFlavor(abilityId?: string): string {
   switch (abilityId) {
     case 'calm-animals':
