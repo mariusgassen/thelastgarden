@@ -138,3 +138,77 @@ describe('Tier 1 interactables & variants', () => {
     }
   });
 });
+
+describe('Tier 2 opened building interiors', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    gameState.reset();
+  });
+
+  it('frees the railway lever once in signal-box-interior and lights the brass lamp on cooldown', () => {
+    const { world, shown } = makeWorld('signal-box-interior');
+
+    trigger('signal-box-interior', 'signal-box-levers', world);
+    expect(shown[0]).toBe('signal-box-levers');
+    bus.emit('dialogue-closed', { id: 'signal-box-levers' });
+    expect(gameState.hasFlag('signal-lever-freed')).toBe(true);
+    expect(gameState.getItemCount('mat-scrap')).toBe(2);
+    expect(gameState.getItemCount('resource-curio')).toBe(1);
+
+    trigger('signal-box-interior', 'signal-box-levers', world);
+    expect(shown[1]).toBe('signal-box-levers-done');
+
+    trigger('signal-box-interior', 'signal-box-lamp', world);
+    expect(shown[2]).toBe('signal-box-lamp-glow');
+    bus.emit('dialogue-closed', { id: 'signal-box-lamp-glow' });
+    expect(gameState.getItemCount('resource-sunlight')).toBe(1);
+
+    trigger('signal-box-interior', 'signal-box-lamp', world);
+    expect(shown[3]).toBe('signal-box-lamp');
+  });
+
+  it('switches pump & gauge dialogue on cistern repair and draws dew inside water-tower-interior', () => {
+    const { world, shown } = makeWorld('water-tower-interior');
+
+    trigger('water-tower-interior', 'water-tower-pump', world);
+    trigger('water-tower-interior', 'water-tower-gauge', world);
+    expect(shown).toEqual(['water-tower-pump-dry', 'water-tower-gauge-low']);
+
+    gameState.setFlag('tower-cistern-repaired');
+    trigger('water-tower-interior', 'water-tower-pump', world);
+    trigger('water-tower-interior', 'water-tower-gauge', world);
+    expect(shown.slice(2)).toEqual(['water-tower-pump-flowing', 'water-tower-gauge-ok']);
+
+    trigger('water-tower-interior', 'water-tower-basin', world);
+    expect(shown[4]).toBe('water-tower-basin-draw');
+    bus.emit('dialogue-closed', { id: 'water-tower-basin-draw' });
+    expect(gameState.getItemCount('resource-dew')).toBe(1);
+  });
+
+  it('serves pantry honey, post-restoration turnip bread, bed rest, and hearth cooking in farms-house-interior', () => {
+    const { world, shown, rested } = makeWorld('farms-house-interior');
+
+    trigger('farms-house-interior', 'farms-pantry', world);
+    expect(shown[0]).toBe('farms-pantry-found');
+    bus.emit('dialogue-closed', { id: 'farms-pantry-found' });
+    expect(gameState.getItemCount('produce-honey')).toBe(1);
+
+    trigger('farms-house-interior', 'farms-pantry', world);
+    expect(shown[1]).toBe('farms-pantry-empty');
+
+    trigger('farms-house-interior', 'farms-table', world);
+    expect(shown[2]).toBe('farms-table-waiting');
+
+    gameState.setFlag('village-restored:farms');
+    trigger('farms-house-interior', 'farms-table', world);
+    expect(shown[3]).toBe('farms-table-supper');
+    bus.emit('dialogue-closed', { id: 'farms-table-supper' });
+    expect(gameState.getItemCount('meal-turnip-bread')).toBe(1);
+
+    trigger('farms-house-interior', 'farms-table', world);
+    expect(shown[4]).toBe('farms-table-restored');
+
+    trigger('farms-house-interior', 'farms-bed', world);
+    expect(rested).toHaveLength(1);
+  });
+});

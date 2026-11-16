@@ -1,3 +1,4 @@
+import { FARMS_HOUSE_INTERIOR_MAP } from './maps/farmsHouseInterior';
 import { GARDEN_MAP } from './maps/garden';
 import { GREENHOUSE_HEART_MAP } from './maps/greenhouseHeart';
 import { GREENHOUSE_VESTIBULE_MAP } from './maps/greenhouseVestibule';
@@ -7,8 +8,10 @@ import { OLD_MILL_MAP } from './maps/oldMill';
 import { ORCHARD_MAP } from './maps/orchard';
 import { ORCHARD_COTTAGE_MAP } from './maps/orchardCottage';
 import { RIVER_FARMS_MAP } from './maps/riverFarms';
+import { SIGNAL_BOX_INTERIOR_MAP } from './maps/signalBoxInterior';
 import { TRAMLINE_MAP } from './maps/tramline';
 import { WATER_TOWER_MAP } from './maps/waterTower';
+import { WATER_TOWER_INTERIOR_MAP } from './maps/waterTowerInterior';
 import { WORKSHOP_MAP } from './maps/workshop';
 import type { BlightHeartDef, JournalPageDef, MapDef, ObstacleDef, PlantingBedDef, ResourceNodeDef } from './types';
 
@@ -21,7 +24,9 @@ export const MAPS: Record<string, MapDef> = {
   [WORKSHOP_MAP.id]: WORKSHOP_MAP,
   [GREENHOUSE_VESTIBULE_MAP.id]: GREENHOUSE_VESTIBULE_MAP,
   [TRAMLINE_MAP.id]: TRAMLINE_MAP,
+  [SIGNAL_BOX_INTERIOR_MAP.id]: SIGNAL_BOX_INTERIOR_MAP,
   [WATER_TOWER_MAP.id]: WATER_TOWER_MAP,
+  [WATER_TOWER_INTERIOR_MAP.id]: WATER_TOWER_INTERIOR_MAP,
   [GREENHOUSE_HEART_MAP.id]: GREENHOUSE_HEART_MAP,
   [HILL_PATH_MAP.id]: HILL_PATH_MAP,
   [ORCHARD_MAP.id]: ORCHARD_MAP,
@@ -29,6 +34,7 @@ export const MAPS: Record<string, MapDef> = {
   [OLD_MILL_MAP.id]: OLD_MILL_MAP,
   [MILL_INTERIOR_MAP.id]: MILL_INTERIOR_MAP,
   [RIVER_FARMS_MAP.id]: RIVER_FARMS_MAP,
+  [FARMS_HOUSE_INTERIOR_MAP.id]: FARMS_HOUSE_INTERIOR_MAP,
 };
 
 export const START_MAP_ID = GARDEN_MAP.id;

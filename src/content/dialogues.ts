@@ -1336,4 +1336,127 @@ export const DIALOGUES: DialogueDef[] = [
       { speaker: 'm', text: 'Nimm dir alle Zeit der Welt. Jeder Weg zwischen Gewächshaus, Wasserturm, Obstwiesen, Mühle und den Höfen gehört nun dir.' },
     ],
   },
+
+  // ── Opened Interiors (Tier 2: Signal Box, Water Tower, River Farms) ──────
+  {
+    id: 'signal-box-levers',
+    lines: [
+      { text: 'Zwischen den schweren Eisenhebeln der Weichenbank hat sich silberner Farn breitgemacht. Mit einem kräftigen Ruck löst sich der mittlere Hebel aus dem Rost.' },
+      { text: 'Im Gestänge darunter klappern zwei brauchbare Messingbeschläge und ein winziges emailliertes Linienabzeichen hervor — Linie 3 vergisst seine Leute nicht.' },
+    ],
+  },
+  {
+    id: 'signal-box-levers-done',
+    lines: [
+      { text: 'Der Weichenhebel steht wieder frei im blanken Messingkranz. Draußen vor dem Fenster glänzen die Schienen in Richtung Wasserturm.' },
+    ],
+  },
+  {
+    id: 'signal-box-lamp',
+    lines: [
+      { text: 'Die Messinglaterne auf dem Fensterbrett wirft noch einen ruhigen bernsteinfarbenen Schimmer in die Ecke des Stellwerks.' },
+    ],
+  },
+  {
+    id: 'signal-box-lamp-glow',
+    lines: [
+      { text: 'Du wischst das Rußglas sauber und öffnest die kleine Messingklappe — gesammeltes Sonnenlicht flimmert warm über dem Docht.' },
+    ],
+  },
+  {
+    id: 'signal-box-desk',
+    lines: [
+      { text: 'Im Wachbuch von Linie 3 steht der letzte Eintrag mit ruhiger Schrift: „Abendfahrt zum Wasserturm gestrichen. Eine Schleiereule nistet jetzt auf dem Turmgesims — Weiche bis zum Frühling unbesetzt.“' },
+    ],
+  },
+  {
+    id: 'water-tower-pump-dry',
+    lines: [
+      { text: 'Das schwere gusseiserne Steigrohr zum Gewächshaus liegt still. Solange die äußere Zisterne am Turm keinen Druck hält, dreht das Handrad im Leeren.' },
+    ],
+  },
+  {
+    id: 'water-tower-pump-flowing',
+    lines: [
+      { text: 'Durch das Steigrohr geht ein gleichmäßiges, kühles Rauschen — die Hauptleitung führt frisches Turmwasser direkt hinüber bis ins Gewächshaus von Erlenbrück.' },
+    ],
+  },
+  {
+    id: 'water-tower-gauge-low',
+    lines: [
+      { text: 'Beide Messingmanometer zittern knapp über Null. Ein Kreidepfeil am Brett zeigt nach draußen zur gebrochenen Zisterne: „Erst neue Ventildichtung einsetzen.“' },
+    ],
+  },
+  {
+    id: 'water-tower-gauge-ok',
+    lines: [
+      { text: 'Die Zeiger beider Manometer ruhen satt im grünen Bereich. An den Kupferverschraubungen perlen kühle Wassertropfen.' },
+    ],
+  },
+  {
+    id: 'water-tower-workbench',
+    lines: [
+      { text: 'Eine schmale Wartungsbank neben den Kupferrohren. Sobald du ein Rezept aus deinen Notizen kennst, kannst du hier direkt anpacken.' },
+    ],
+  },
+  {
+    id: 'water-tower-basin',
+    lines: [
+      { text: 'Aus dem oberen Speicherbecken tropft klares Kondenswasser in die Steinschale. Gerade ist sie schon abgeschöpft — gleich sammelt sich neuer Tau.' },
+    ],
+  },
+  {
+    id: 'water-tower-basin-draw',
+    lines: [
+      { text: 'Kühle Tropfen rinnen von den Kupferbögen in die Steinschale. Du schöpfst dir ein Fläschchen klaren Tau aus dem Pumpenraum.' },
+    ],
+  },
+  {
+    id: 'water-tower-log',
+    lines: [
+      { text: 'Auf dem runden Tisch liegt ein aufgeschlagenes Kontrollheft in M.s Handschrift: „Die Turmeule lässt mich nachts hier oben in Ruhe arbeiten. Solange jemand die Lichtbeete gießt, bleibt das Tal wach.“' },
+    ],
+  },
+  {
+    id: 'farms-hearth',
+    lines: [
+      { text: 'Ein breiter Kachel- und Bauernofen, noch sauber gekehrt. Sobald du Erntefrüchte oder frisch gemahlenes Mehl bei dir hast, kannst du hier kochen und backen.' },
+    ],
+  },
+  {
+    id: 'farms-pantry-empty',
+    lines: [
+      { text: 'In den aufgereihten Mehlfässern der Vorratskammer riecht es noch nach trockenem Stroh und altem Dinkel.' },
+    ],
+  },
+  {
+    id: 'farms-pantry-found',
+    lines: [
+      { text: 'Zwischen den alten Mehlfässern steht noch ein fest verschlossenes Glas goldenen Kleeblütenhonigs — unversehrt und klar.' },
+    ],
+  },
+  {
+    id: 'farms-shelf',
+    lines: [
+      { text: 'Auf dem Küchenregal stehen beschriftete Vorratsgläser für Goldrüben, Schilfsamen und Hollunderkraut. Jemand hat die Namen erst kürzlich neu nachgezogen.' },
+    ],
+  },
+  {
+    id: 'farms-table-waiting',
+    lines: [
+      { text: 'Auf dem Eichentisch liegen zwei blank geputzte Teetassen und ein aufgeschlagenes Hofbuch: „Wenn das Mühlrad wieder dreht, decken wir für die Rückkehrer.“' },
+    ],
+  },
+  {
+    id: 'farms-table-supper',
+    lines: [
+      { text: 'Wilma und Bruno haben ein warmes Tuch über den Küchentisch gelegt. Darunter dampft ein frisch gebackener Laib Rübenbrot für deinen Weg durch das Tal.' },
+    ],
+  },
+  {
+    id: 'farms-table-restored',
+    lines: [
+      { text: 'Auf dem Eichentisch summt bereits der kupferne Teekessel. Wilma winkt dir durchs offene Fenster vom Hofplatz zu.' },
+    ],
+  },
 ];

@@ -626,6 +626,7 @@ lines derived from plants, recipes and buildables.
   what an old save already has.
 - **UI.** `ui/WikiPanel.ts`, Menü button (top left, opens the menu list; Almanach is its first entry) and **H**. Esc steps back from an
   entry, then closes.
+- **Opened building interiors.** Three formerly closed doors (`signal-box-door` on `tramline`, `water-tower-door` on `water-tower`, and `farms-house-door` on `river-farms`) now open into playable interior maps (`signal-box-interior`, `water-tower-interior`, `farms-house-interior`) with inspectable lore, repeatable/one-time rewards, a pump-room workbench, a farmhouse oven (`Bauernofen`), and an indoor rest bed.
 
 ## The living village
 

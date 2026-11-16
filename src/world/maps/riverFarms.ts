@@ -73,7 +73,14 @@ export const RIVER_FARMS_MAP: MapDef = {
       label: 'Zur Alten Mühle',
       target: { mapId: 'old-mill', spawn: 'south' },
     },
-    { id: 'farms-house-door', type: 'dialogue', at: { x: 7.5, y: 9.3 }, label: 'Ansehen', dialogueId: 'farms-house' },
+    {
+      id: 'farms-house-door',
+      type: 'door',
+      at: { x: 7.5, y: 9.3 },
+      label: 'Eintreten',
+      target: { mapId: 'farms-house-interior', spawn: 'entrance' },
+      radius: 64,
+    },
     {
       id: 'farms-well',
       type: 'dialogue',
@@ -168,6 +175,7 @@ export const RIVER_FARMS_MAP: MapDef = {
   spawns: {
     default: { x: 12.5, y: 10.2 },
     north: { x: 12.5, y: 10.2 },
+    house: { x: 7.5, y: 10.2 },
     pier: { x: 35.5, y: 16.0 },
   },
 };
