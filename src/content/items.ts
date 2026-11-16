@@ -437,4 +437,20 @@ export const ITEMS: ItemDef[] = [
     color: 0xe6b84a,
     meal: { effect: 'blightproof', minutes: 4 },
   },
+  {
+    id: 'produce-egg',
+    name: 'Ei',
+    description: 'Noch warm. Ein Huhn hat es ins Stroh gelegt, als hätte es gewusst, dass du kommst.',
+    category: 'produce',
+    stackable: true,
+    color: 0xf2e4c9,
+  },
+  {
+    id: 'produce-honey',
+    name: 'Honig',
+    description: 'Dunkel und zäh wie Bernstein. Er schmeckt nach den Blüten rund um den Stock.',
+    category: 'produce',
+    stackable: true,
+    color: 0xe0a02b,
+  },
 ];

@@ -91,6 +91,18 @@ export function getBlightTiles(mapId: string): { x: number; y: number }[] {
   });
 }
 
+/** Removes the given blighted tiles (a grazing goat); returns how many were actually blighted. */
+export function clearBlightTiles(mapId: string, tiles: { x: number; y: number }[]): number {
+  const set = new Set(tileSet(mapId));
+  let cleared = 0;
+  for (const t of tiles) if (set.delete(key(t.x, t.y))) cleared++;
+  if (cleared > 0) {
+    writeTiles(mapId, [...set]);
+    gameState.setFlag('blight-pushed-back');
+  }
+  return cleared;
+}
+
 export function isBlighted(mapId: string, x: number, y: number): boolean {
   return tileSet(mapId).has(key(x, y));
 }
@@ -233,8 +245,17 @@ bus.on('save-loaded', () => {
 /** True once this night's growth has happened; reset when the day comes. */
 let nightDone = false;
 
+type NightfallHandler = () => void;
+const nightfallHandlers: NightfallHandler[] = [];
+
+/** Runs after the blight has grown each night, including a shelter's rest (helper animals graze here). */
+export function onNightfall(handler: NightfallHandler): void {
+  nightfallHandlers.push(handler);
+}
+
 function nightfallWithToast(): void {
   if (blightNightfall() > 0) bus.emit('toast', { text: 'Die Welke kriecht in der Dunkelheit näher.' });
+  for (const handler of nightfallHandlers) handler();
 }
 
 /** A shelter's rest: the night passes (the blight grows as on any night) and it is morning. */
