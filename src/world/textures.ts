@@ -53,6 +53,25 @@ export function generateTextures(scene: Phaser.Scene): void {
     g.fillStyle(0x3a2a1e, 1);
     g.fillRoundedRect(27, 44, 8, 4, 2);
   });
+  make('player-boating', 64, 46, (g) => {
+    g.fillStyle(0xaad8e6, 0.35);
+    g.fillEllipse(32, 38, 60, 11);
+    g.fillStyle(0x6e4529, 1); // far hull side
+    g.fillEllipse(32, 31, 56, 18);
+    g.fillStyle(0x8f6239, 1); // inside deck
+    g.fillEllipse(32, 30, 46, 12);
+    g.fillStyle(0xa8753f, 1); // thwart bench
+    g.fillRect(26, 25, 10, 11);
+    drawGardener(g, 18, 2, false);
+    g.fillStyle(0x6e4529, 1); // near gunwale overlapping lower torso
+    g.fillRoundedRect(10, 31, 44, 6, 3);
+    g.fillStyle(0x8a603d, 1);
+    g.fillRoundedRect(12, 32, 40, 3, 1.5);
+    g.lineStyle(2.4, 0xc9a47a, 1); // rowing oar
+    g.lineBetween(31, 24, 22, 43);
+    g.fillStyle(0xb88a5a, 1);
+    g.fillEllipse(21, 43, 6, 3.5);
+  });
   make('fence-post', 14, 36, (g) => {
     g.fillStyle(0x000000, 0.2);
     g.fillEllipse(7, 33, 12, 5);
@@ -2743,21 +2762,42 @@ function generateBuildAndBlightTextures(make: MakeFn): void {
     g.strokeRoundedRect(6, 6, 10, 13, 2);
     g.lineBetween(11, 6, 11, 19);
   });
-  make('build-planter', 32, 24, (g) => {
-    g.fillStyle(0x000000, 0.2);
-    g.fillEllipse(16, 21, 30, 5);
-    g.fillStyle(0x9a968c, 1);
-    g.fillRoundedRect(2, 17, 28, 5, 2);
+  make('build-planter', 32, 32, (g) => {
+    // Flat tilled soil bed flush with the ground so crops sit naturally in earth.
+    g.fillStyle(0x4b3524, 0.92);
+    g.fillRoundedRect(1, 1, 30, 30, 5);
+    g.fillStyle(0x5e442f, 1);
+    g.fillRoundedRect(2.5, 2.5, 27, 27, 4);
+    // Subtle furrow rows and soil crumbs
+    g.fillStyle(0x493322, 0.65);
+    for (const y of [8, 15, 22]) g.fillRoundedRect(4.5, y, 23, 2.5, 1);
+    g.fillStyle(0x76583e, 0.7);
+    for (const [x, y] of [[7, 6], [22, 7], [13, 13], [24, 19], [9, 25], [19, 26]]) {
+      g.fillCircle(x, y, 1);
+    }
+    // Small corner pegs
     g.fillStyle(0x8a603d, 1);
-    g.fillRoundedRect(1, 5, 30, 14, 3);
-    g.fillStyle(0x6d4a30, 1);
-    g.fillRect(1, 11, 30, 1.5);
-    g.fillRect(10, 5, 1.5, 14);
-    g.fillRect(20.5, 5, 1.5, 14);
+    for (const [x, y] of [[2, 2], [28, 2], [2, 28], [28, 28]]) {
+      g.fillRoundedRect(x, y, 2.5, 2.5, 0.8);
+    }
+  });
+  make('build-floating-bed', 32, 32, (g) => {
+    // Soft water ripple + woven reed raft around a rich dark soil square.
+    g.lineStyle(1.4, 0xbce6f5, 0.55);
+    g.strokeRoundedRect(0.5, 0.5, 31, 31, 6);
+    g.fillStyle(0xc5ad72, 1);
+    g.fillRoundedRect(2, 2, 28, 28, 4);
+    g.lineStyle(1.4, 0x9b8048, 0.85);
+    for (const y of [5, 10, 16, 22, 27]) g.lineBetween(3, y, 29, y);
+    g.fillStyle(0x8a603d, 1);
+    g.fillRoundedRect(4, 4, 24, 24, 3);
     g.fillStyle(0x5a4029, 1);
-    g.fillRoundedRect(3, 2, 26, 6, 3);
-    g.fillStyle(0x7a5a3c, 1);
-    g.fillEllipse(16, 4.5, 22, 3.5);
+    g.fillRoundedRect(5.5, 5.5, 21, 21, 2.5);
+    g.fillStyle(0x46311f, 0.75);
+    for (const y of [9.5, 15, 20.5]) g.fillRoundedRect(7, y, 18, 2, 1);
+    g.fillStyle(0x7ca956, 0.9);
+    g.fillCircle(4, 26, 1.8);
+    g.fillCircle(28, 6, 1.5);
   });
   make('build-bridge', 32, 32, (g) => {
     g.fillStyle(0x3a2a1e, 0.35);
@@ -2769,6 +2809,32 @@ function generateBuildAndBlightTextures(make: MakeFn): void {
       g.fillCircle(4, i * 8 + 4, 1);
       g.fillCircle(28, i * 8 + 4, 1);
     }
+  });
+  make('build-boat-dock', 36, 36, (g) => {
+    // Water ripple + moored wooden rowboat & post
+    g.lineStyle(1.4, 0xbce6f5, 0.6);
+    g.strokeEllipse(19, 21, 30, 18);
+    g.fillStyle(0x000000, 0.2);
+    g.fillEllipse(19, 23, 28, 12);
+    // Boat hull
+    g.fillStyle(0x8a5b38, 1);
+    g.fillEllipse(19, 19, 26, 13);
+    g.fillStyle(0x6b4326, 1);
+    g.fillEllipse(19, 18.5, 20, 8.5);
+    // Thwarts & oars
+    g.fillStyle(0xa8764c, 1);
+    g.fillRect(14, 15, 2.5, 7);
+    g.fillRect(22, 15, 2.5, 7);
+    g.lineStyle(1.5, 0xc79a63, 1);
+    g.lineBetween(11, 13, 26, 11);
+    g.lineBetween(12, 24, 27, 26);
+    // Mooring post & rope on the left
+    g.fillStyle(0x5c3c24, 1);
+    g.fillRoundedRect(3, 11, 5, 13, 1.5);
+    g.fillStyle(0xd9c28c, 1);
+    g.fillRect(3, 14, 5, 2);
+    g.lineStyle(1.2, 0xd9c28c, 0.95);
+    g.lineBetween(7, 15, 10, 18);
   });
   make('build-thorn-hedge', 34, 38, (g) => {
     g.fillStyle(0x000000, 0.2);
@@ -2996,6 +3062,68 @@ function generateBuildAndBlightTextures(make: MakeFn): void {
     g.fillStyle(0x2c2018, 1);
     g.fillRect(3, 3.5, 1, 3);
     g.fillRect(5, 3.5, 1, 3);
+  });
+  make('duck', 22, 18, (g) => {
+    // Water ripple under a mallard-style swimming duck
+    g.lineStyle(1.2, 0xc9ebf7, 0.7);
+    g.strokeEllipse(11, 14.5, 19, 5);
+    // Body & folded wing
+    g.fillStyle(0x9a8468, 1);
+    g.fillEllipse(9.5, 11.5, 14, 8);
+    g.fillStyle(0x7a654b, 1);
+    g.fillEllipse(8.5, 11, 8.5, 4.5);
+    g.fillTriangle(1.5, 9, 4.5, 11.5, 2, 13.5);
+    // Neck & green head
+    g.fillStyle(0xe8dfd1, 1);
+    g.fillRect(14, 8.2, 3, 2);
+    g.fillStyle(0x3f7a52, 1);
+    g.fillCircle(16, 5.5, 3.8);
+    // Orange bill & eye
+    g.fillStyle(0xe99d34, 1);
+    g.fillEllipse(19.8, 6.2, 4.2, 2.2);
+    g.fillStyle(0x231a13, 1);
+    g.fillCircle(16.8, 4.8, 0.8);
+  });
+  make('build-duckhouse', 38, 40, (g) => {
+    // Floating wooden raft base + cozy reed-roofed duck coop
+    g.lineStyle(1.4, 0xbce6f5, 0.6);
+    g.strokeEllipse(19, 34, 35, 9);
+    g.fillStyle(0x7a5233, 1);
+    g.fillRoundedRect(3, 28, 32, 8, 2.5);
+    g.fillStyle(0x9a6a40, 1);
+    g.fillRoundedRect(6, 30, 26, 5, 1.5);
+    // Coop walls
+    g.fillStyle(0xc5a87a, 1);
+    g.fillRoundedRect(8, 14, 22, 16, 2);
+    g.fillStyle(0x3e2d1f, 1);
+    g.fillRoundedRect(15, 20, 8, 10, 3);
+    // Ramp down into the water
+    g.fillStyle(0xa87849, 1);
+    g.fillTriangle(15, 29, 23, 29, 26, 37);
+    g.fillTriangle(15, 29, 26, 37, 13, 37);
+    // Reed roof
+    g.fillStyle(0xc7b174, 1);
+    g.fillTriangle(4, 16, 19, 3, 34, 16);
+    g.fillStyle(0xa68f54, 1);
+    g.fillTriangle(19, 3, 34, 16, 24, 16);
+    g.lineStyle(1.2, 0x7e6835, 0.8);
+    g.lineBetween(9, 14, 29, 14);
+  });
+  make('build-drift-net', 36, 36, (g) => {
+    // Two wooden stakes, floating corks, and a woven net in water ripples
+    g.lineStyle(1.4, 0xbce6f5, 0.65);
+    g.strokeEllipse(18, 22, 32, 16);
+    g.strokeEllipse(18, 17, 26, 12);
+    // Woven mesh
+    g.lineStyle(1.1, 0xcab892, 0.85);
+    for (let x = 7; x <= 29; x += 4) g.lineBetween(x, 12, x - 2, 27);
+    for (let y = 14; y <= 26; y += 4) g.lineBetween(6, y, 29, y);
+    // Wooden stakes & cork floats
+    g.fillStyle(0x6d4a30, 1);
+    g.fillRoundedRect(4, 7, 4, 21, 1.5);
+    g.fillRoundedRect(28, 7, 4, 21, 1.5);
+    g.fillStyle(0xd99b52, 1);
+    for (const x of [11, 18, 25]) g.fillCircle(x, 13, 2.1);
   });
 
   make('build-rain-barrel', 34, 40, (g) => {

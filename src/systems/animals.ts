@@ -37,12 +37,13 @@ import { getBedState, isBedPlanted, speedUpBeds } from './plants';
 import { getObstacles, isBlocked, unblockPath } from './obstacles';
 import { gameState } from './state';
 
-export type AnimalKind = 'bees' | 'hens' | 'goat' | 'horse';
+export type AnimalKind = 'bees' | 'hens' | 'goat' | 'horse' | 'ducks';
 
 export const BEE_RADIUS_TILES = 6;
 /** Extra growth per second of real time for a bed the bees visit (0.5 = half as fast again). */
 export const BEE_GROWTH_BONUS = 0.5;
 export const HEN_RADIUS_TILES = 9;
+export const DUCK_RADIUS_TILES = 9;
 export const GOAT_RADIUS_TILES = 10;
 /** Blight tiles one goat grazes per night (a heart grows six). */
 export const GOAT_BITES_PER_NIGHT = 6;
@@ -52,6 +53,8 @@ export const EGG_INTERVAL_MS = 75_000;
 export const EGGS_MAX = 4;
 export const HONEY_INTERVAL_MS = 120_000;
 export const HONEY_MAX = 3;
+export const DUCK_INTERVAL_MS = 90_000;
+export const DUCK_MAX = 3;
 const TICK_MS = 3000;
 
 export interface Home extends PlacedPiece {
@@ -135,6 +138,9 @@ export function readyProduce(h: Home): Produce | null {
   if (h.animal === 'bees') {
     return { itemId: 'produce-honey', count: Math.min(HONEY_MAX, Math.floor(elapsed / HONEY_INTERVAL_MS)), max: HONEY_MAX };
   }
+  if (h.animal === 'ducks') {
+    return { itemId: 'resource-dew', count: Math.min(DUCK_MAX, Math.floor(elapsed / DUCK_INTERVAL_MS)), max: DUCK_MAX };
+  }
   return null;
 }
 
@@ -186,12 +192,19 @@ export function isPollinated(bedId: string): boolean {
   );
 }
 
-// ── Hens ─────────────────────────────────────────────────────
+// ── Hens & ducks ─────────────────────────────────────────────
 
 /** True if a henhouse on this map is close enough (px position) to keep snails off. */
 export function isCoveredByHens(mapId: string, px: number, py: number): boolean {
   return getHomes('hens').some(
     (h) => h.mapId === mapId && Math.hypot((h.x + 0.5) * TILE_SIZE - px, (h.y + 0.5) * TILE_SIZE - py) <= HEN_RADIUS_TILES * TILE_SIZE,
+  );
+}
+
+/** True if a duckhouse on this map is close enough (px position) to keep snails off shore beds. */
+export function isCoveredByDucks(mapId: string, px: number, py: number): boolean {
+  return getHomes('ducks').some(
+    (h) => h.mapId === mapId && Math.hypot((h.x + 0.5) * TILE_SIZE - px, (h.y + 0.5) * TILE_SIZE - py) <= DUCK_RADIUS_TILES * TILE_SIZE,
   );
 }
 

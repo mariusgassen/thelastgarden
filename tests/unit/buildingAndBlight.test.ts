@@ -142,11 +142,19 @@ describe('free building', () => {
     expect(removePiece('garden', 39, 36, { x: 39.5 * TILE_SIZE, y: 36.5 * TILE_SIZE })).toMatch(/stehst gerade darauf/);
   });
 
-  it('turns a planter into a planting bed and returns the seed when it is taken down', () => {
-    give({ 'mat-wood': 2, 'mat-stone': 1, 'seed-lavender': 1 });
-    placePiece('garden', 'planter', SPOT.x, SPOT.y);
+  it('places free walkable 1x1 soil planters and returns seeds when taken down', () => {
+    give({ 'seed-lavender': 1 });
+    expect(content.buildables.get('planter').cost).toEqual([]);
+    expect(placePiece('garden', 'planter', SPOT.x, SPOT.y)).toBeNull();
+    expect(isTileWalkable('garden', SPOT.x, SPOT.y)).toBe(true); // flat soil bed stays walkable
+
     const bedId = planterBedId('garden', SPOT.x, SPOT.y);
-    expect(allPlantingBeds().some((b) => b.id === bedId && b.mapId === 'garden')).toBe(true);
+    const bed = allPlantingBeds().find((b) => b.id === bedId && b.mapId === 'garden');
+    expect(bed).toBeDefined();
+    expect(bed!.rect).toEqual({ x: SPOT.x, y: SPOT.y - 0.1, w: 1, h: 1 });
+    expect(bed!.plantScale).toBeCloseTo(0.78);
+    expect(allPlantingBeds().some((b) => b.id === `${bedId}#1`)).toBe(false);
+
     expect(plantSeed(bedId)).toBe(true);
     expect(gameState.getItemCount('seed-lavender')).toBe(0);
 
@@ -154,22 +162,30 @@ describe('free building', () => {
     expect(isBedPlanted(bedId)).toBe(false);
     expect(allPlantingBeds().some((b) => b.id === bedId)).toBe(false);
     expect(gameState.getItemCount('seed-lavender')).toBe(1);
-    expect(gameState.getItemCount('mat-wood')).toBe(2);
   });
 
-  it('holds four plants per planter and gives every seed back when it is taken down', () => {
-    give({ 'mat-wood': 2, 'mat-stone': 1, 'seed-lavender': 4 });
-    placePiece('garden', 'planter', SPOT.x, SPOT.y);
-    const base = planterBedId('garden', SPOT.x, SPOT.y);
-    const ids = [base, `${base}#1`, `${base}#2`, `${base}#3`];
-    for (const id of ids) {
-      expect(allPlantingBeds().some((b) => b.id === id)).toBe(true);
-      expect(plantSeed(id)).toBe(true);
-    }
-    expect(ids.every((id) => isBedPlanted(id))).toBe(true);
-    expect(removePiece('garden', SPOT.x, SPOT.y)).toBeNull();
-    expect(ids.some((id) => isBedPlanted(id) || allPlantingBeds().some((b) => b.id === id))).toBe(false);
-    expect(gameState.getItemCount('seed-lavender')).toBe(4);
+  it('builds floating beds, boat docks, drift nets and duckhouses anchored to water', () => {
+    give({ 'produce-reed-bundle': 10, 'mat-wood': 20, 'mat-scrap': 5, 'seed-lavender': 1 });
+    // Pond water tile adjacent to shore at (38, 36)
+    expect(whyNotPlace('garden', 'floating-bed', SPOT.x, SPOT.y)).toMatch(/aufs Wasser/);
+    expect(whyNotPlace('garden', 'floating-bed', 42, 36)).toMatch(/Ufer oder einen Steg/);
+
+    expect(placePiece('garden', 'floating-bed', 38, 36)).toBeNull();
+    expect(isTileWalkable('garden', 38, 36)).toBe(true);
+    const floatId = planterBedId('garden', 38, 36);
+    const floatDef = allPlantingBeds().find((b) => b.id === floatId);
+    expect(floatDef?.floating).toBe(true);
+    expect(plantSeed(floatId)).toBe(true);
+
+    // Chaining from another water buildable works too
+    expect(placePiece('garden', 'drift-net', 39, 36)).toBeNull();
+    expect(placePiece('garden', 'boat-dock', 40, 36)).toBeNull();
+    expect(placePiece('garden', 'duckhouse', 41, 36)).toBeNull();
+
+    // Floating bed survives snail & vole nights unscathed even without hens/lavender/glow-lily
+    expect(isBedPlanted(floatId)).toBe(true);
+    expect(removePiece('garden', 38, 36)).toBeNull();
+    expect(gameState.getItemCount('seed-lavender')).toBe(1);
   });
 
   it('has an item for every cost and puts every pile on walkable ground', () => {

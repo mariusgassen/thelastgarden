@@ -227,6 +227,10 @@ export const ORCHARD_MAP: MapDef = {
   blightHearts: [
     { id: 'heart-orchard-meadow', at: { x: 24, y: 26 }, reach: 5 },
   ],
+  clearable: [
+    { x: 4, y: 27, w: 4, h: 4 },
+    { x: 23, y: 28, w: 14, h: 3 },
+  ],
   spawns: {
     default: { x: 9.5, y: 28.8 },
     south: { x: 9.5, y: 28.8 },

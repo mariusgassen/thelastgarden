@@ -639,6 +639,156 @@ test.describe('Desktop gameplay and PWA', () => {
     expect(errors).toEqual([]);
   });
 
+  test('digs targeted slot from mixed bed into inventory with shovel and places free soil bed', async ({ page }) => {
+    const errors = trackErrors(page);
+
+    await page.addInitScript((key) => {
+      if (localStorage.getItem(key)) return;
+      localStorage.setItem(
+        key,
+        JSON.stringify({
+          version: 1,
+          savedAt: Date.now(),
+          // Standing right above slot 0 of bed-extra (x=30..34, y=41..43)
+          player: { mapId: 'garden', x: 30.5 * 32, y: 40.7 * 32, facing: 'down' },
+          world: { unblockedPaths: [], visitedZones: ['garden'], flags: { 'gathered-material': true } },
+          inventory: { items: { 'tool-shovel': 1 } },
+          quests: { active: ['q-meet-crow'], completed: [], progress: {} },
+          ext: {
+            tools: { equipped: 'tool-shovel' },
+            plants: {
+              beds: {
+                'bed-extra': { bedId: 'bed-extra', plantId: 'lavender', plantedAt: Date.now() },
+                'bed-extra#1': { bedId: 'bed-extra#1', plantId: 'glow-lily', plantedAt: Date.now() },
+              },
+            },
+          },
+        }),
+      );
+    }, SAVE_KEY);
+
+    await page.goto('/');
+    await waitForGameBoot(page);
+
+    // Open tool mode (T) and use shovel on slot 0 (E) -> lavender seed goes into inventory while slot 1 stays planted
+    await expect
+      .poll(
+        async () => {
+          const s = await flushAndReadSave(page);
+          if ((s?.inventory.items['seed-lavender'] ?? 0) >= 1) return true;
+          await page.keyboard.press('KeyT');
+          await page.waitForTimeout(200);
+          await page.keyboard.press('KeyE');
+          await page.waitForTimeout(300);
+          return ((await flushAndReadSave(page))?.inventory.items['seed-lavender'] ?? 0) >= 1;
+        },
+        { timeout: 15_000, intervals: [150] },
+      )
+      .toBe(true);
+
+    let save = (await flushAndReadSave(page)) as SaveSnapshot;
+    const bedsAfterDig = (save.ext.plants as { beds: Record<string, unknown> }).beds;
+    expect(bedsAfterDig['bed-extra']).toBeUndefined();
+    expect(bedsAfterDig['bed-extra#1']).toBeDefined();
+    expect(save.inventory.items['seed-lavender']).toBe(1);
+
+    // Close tool mode, open build mode (B), select free soil planter (Digit5), and place in front of player (KeyE)
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(150);
+    await expect
+      .poll(
+        async () => {
+          const pieces = ((await flushAndReadSave(page))?.ext.building as { pieces?: { garden?: { id: string }[] } } | undefined)
+            ?.pieces?.garden;
+          if (pieces?.some((p) => p.id === 'planter')) return true;
+          await page.keyboard.press('KeyB');
+          await page.waitForTimeout(150);
+          await page.keyboard.press('Digit5');
+          await page.waitForTimeout(150);
+          await page.keyboard.press('KeyE');
+          await page.waitForTimeout(300);
+          const next = ((await flushAndReadSave(page))?.ext.building as { pieces?: { garden?: { id: string }[] } } | undefined)
+            ?.pieces?.garden;
+          return next?.some((p) => p.id === 'planter') ?? false;
+        },
+        { timeout: 15_000, intervals: [150] },
+      )
+      .toBe(true);
+
+    save = (await flushAndReadSave(page)) as SaveSnapshot;
+    expect(save.inventory.items['mat-wood']).toBeUndefined();
+    expect(errors).toEqual([]);
+  });
+
+  test('boards moored boat on river-farms, rows on water, and lands back on shore', async ({ page }) => {
+    const errors = trackErrors(page);
+
+    await page.addInitScript((key) => {
+      if (localStorage.getItem(key)) return;
+      localStorage.setItem(
+        key,
+        JSON.stringify({
+          version: 1,
+          savedAt: Date.now(),
+          player: { mapId: 'river-farms', x: 35.4 * 32, y: 16.0 * 32, facing: 'right' },
+          world: { unblockedPaths: [], visitedZones: ['garden', 'river-farms-yard'], flags: { 'crow-met': true } },
+          inventory: { items: {} },
+          quests: { active: [], completed: ['q-meet-crow'], progress: {} },
+          ext: {},
+        }),
+      );
+    }, SAVE_KEY);
+
+    await page.goto('/');
+    await waitForGameBoot(page);
+
+    const isBoat = async () => Boolean(((await flushAndReadSave(page))?.ext.boat as { boating?: boolean } | undefined)?.boating);
+
+    // Interact with farms-boat -> pick "Ins Boot steigen" (Digit1)
+    await expect
+      .poll(
+        async () => {
+          if (await isBoat()) return true;
+          await page.keyboard.press('KeyE');
+          await page.waitForTimeout(250);
+          await page.keyboard.press('Digit1');
+          await page.waitForTimeout(250);
+          return isBoat();
+        },
+        { timeout: 15_000, intervals: [150] },
+      )
+      .toBe(true);
+
+    // Row east out into the river
+    const boatStartX = (await flushAndReadSave(page))!.player.x;
+    await page.keyboard.down('KeyD');
+    await expect
+      .poll(async () => (await flushAndReadSave(page))?.player.x ?? boatStartX, { timeout: 15_000, intervals: [80] })
+      .toBeGreaterThan(boatStartX + 40);
+    await page.keyboard.up('KeyD');
+
+    // Row back west toward the pier/shore, then disembark ("Anlegen" via KeyR)
+    await page.keyboard.down('KeyA');
+    await expect
+      .poll(async () => (await flushAndReadSave(page))?.player.x ?? 9999, { timeout: 15_000, intervals: [80] })
+      .toBeLessThan(boatStartX + 16);
+    await page.keyboard.up('KeyA');
+
+    await expect
+      .poll(
+        async () => {
+          if (!(await isBoat())) return false;
+          await page.keyboard.press('KeyR');
+          await page.waitForTimeout(250);
+          return isBoat();
+        },
+        { timeout: 15_000, intervals: [150] },
+      )
+      .toBe(false);
+
+    expect(errors).toEqual([]);
+  });
+
   test('PWA manifest and service worker work offline after initial load', async ({ page, context }) => {
     const errors = trackErrors(page);
 

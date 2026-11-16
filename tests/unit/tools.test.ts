@@ -5,21 +5,19 @@ import { placePiece, planterBedId, setBuildMode } from '../../src/systems/buildi
 import { craft, getUnlockedRecipes } from '../../src/systems/crafting';
 import {
   debugRewindGrowth,
-  getBedState,
   isBedMature,
   isBedPlanted,
   isProduceReady,
   plantSeed,
   STAGE_DURATION_MS,
 } from '../../src/systems/plants';
-import { parseSave } from '../../src/systems/save';
+import { parseSave, SAVE_KEY } from '../../src/systems/save';
 import { gameState } from '../../src/systems/state';
 import {
   AUTO_TOOL,
   cycleSeed,
   equipTool,
   getCarriedLight,
-  getCarriedPlant,
   getEquippedTool,
   getOwnedTools,
   getSowSeed,
@@ -40,14 +38,11 @@ const give = (items: Record<string, number>): void => {
 /** Open grass in the main garden, away from beds, props and the spawn (the building tests use it too). */
 const SPOT = { x: 22, y: 37 };
 const planter = (dx: number): string => planterBedId('garden', SPOT.x + dx, SPOT.y);
-/** The planting slots of the planter on tile `dx`: four per tile, slot 0 keeps the single-plant id. */
-const slotsOf = (dx: number): string[] => [0, 1, 2, 3].map((n) => (n === 0 ? planter(dx) : `${planter(dx)}#${n}`));
-const plantedIn = (dx: number): string[] => slotsOf(dx).filter((id) => isBedPlanted(id));
+const plantedIn = (dx: number): string[] => (isBedPlanted(planter(dx)) ? [planter(dx)] : []);
 const feet = (dx = 0): { x: number; y: number } => ({ x: (SPOT.x + dx + 0.5) * TILE_SIZE, y: (SPOT.y + 1) * TILE_SIZE });
 
-/** Builds planters in a row on the spot, from dx = 0. */
+/** Builds 1x1 soil planters in a row on the spot, from dx = 0. */
 function buildPlanters(n: number): void {
-  give({ 'mat-wood': 2 * n, 'mat-stone': n });
   for (let i = 0; i < n; i++) expect(placePiece('garden', 'planter', SPOT.x + i, SPOT.y)).toBeNull();
 }
 
@@ -141,7 +136,7 @@ describe('tools', () => {
     expect(isAutoTool() && isToolActing()).toBe(true);
     const sown = useTool('garden', feet(0.5));
     expect(sown.ok && sown.used).toBe('satchel');
-    expect(plantedIn(0).length + plantedIn(1).length).toBe(2); // two seeds, the two nearest slots
+    expect(plantedIn(0).length + plantedIn(1).length).toBe(2); // two seeds, the two nearest beds
     expect(useTool('garden', feet(0.5)).ok).toBe(false); // nothing ripe, no free bed
     debugRewindGrowth(10 * STAGE_DURATION_MS);
     const reaped = useTool('garden', feet(0.5));
@@ -154,56 +149,56 @@ describe('tools', () => {
     expect(isAutoTool()).toBe(true);
   });
 
-  it('lets the shovel move a plant without losing its growth', () => {
-    buildPlanters(2);
-    give({ 'seed-lavender': 1, 'tool-shovel': 1 });
-    equipTool('tool-shovel');
-    plantSeed(planter(0));
-    debugRewindGrowth(STAGE_DURATION_MS); // lavender: 2 stages, one done
-    const before = getBedState(planter(0))!;
-    const grown = Date.now() - before.plantedAt;
-
-    const dug = useTool('garden', feet(0));
-    expect(dug.ok).toBe(true);
-    expect(isBedPlanted(planter(0))).toBe(false);
-    expect(getCarriedPlant()?.plantId).toBe('lavender');
-    expect(gameState.hasFlag('moved-plant')).toBe(true);
-    expect(gameState.getItemCount('seed-lavender')).toBe(0); // carried, not turned back into a seed
-
-    // The plant is in the shovel: it only goes into a free bed.
-    const placed = useTool('garden', feet(1));
-    expect(placed.ok).toBe(true);
-    // It takes the nearest free slot, on either planter.
-    const planted = [...plantedIn(0), ...plantedIn(1)];
-    expect(planted).toHaveLength(1);
-    expect(getCarriedPlant()).toBeUndefined();
-    const after = getBedState(planted[0])!;
-    expect(Date.now() - after.plantedAt).toBeGreaterThanOrEqual(grown);
-    debugRewindGrowth(STAGE_DURATION_MS);
-    expect(isBedMature(planted[0])).toBe(true);
-  });
-
-  it('keeps a carried plant out of beds that only take another species', () => {
+  it('lets the shovel dig plants directly into inventory, including ripe produce and targeted mixed-bed slots', () => {
     buildPlanters(1);
     give({ 'seed-lavender': 1, 'tool-shovel': 1 });
     equipTool('tool-shovel');
     plantSeed(planter(0));
-    expect(useTool('garden', feet(0)).ok).toBe(true);
-    // Stand at the bramble bed, which takes only brambles.
-    const bramble = allPlantingBeds().find((b) => b.id === 'bed-bramble')!;
-    const at = { x: (bramble.rect.x + bramble.rect.w / 2) * TILE_SIZE, y: (bramble.rect.y + bramble.rect.h) * TILE_SIZE };
-    const refused = useTool('garden', at);
-    expect(refused.ok).toBe(false);
-    expect(refused.text).toMatch(/nur eine andere Sorte/);
-    expect(getCarriedPlant()?.plantId).toBe('lavender');
-    // Nothing is lost: the plant also survives a save.
-    const loaded = parseSave(JSON.stringify(gameState.data))!;
-    expect((loaded.ext.tools as { carried?: { plantId: string } }).carried?.plantId).toBe('lavender');
+    debugRewindGrowth(STAGE_DURATION_MS * 3); // mature + ripe produce
+    expect(isProduceReady(planter(0))).toBe(true);
+
+    const dug = useTool('garden', feet(0));
+    expect(dug.ok).toBe(true);
+    expect(dug.used).toBe('shovel');
+    expect(isBedPlanted(planter(0))).toBe(false);
+    expect(gameState.hasFlag('used-tool:shovel')).toBe(true);
+    expect(gameState.getItemCount('seed-lavender')).toBe(1);
+    expect(gameState.getItemCount('produce-scent-bundle')).toBe(1);
+
+    // Mixed 4x2 bed: plant lavender in slot 0 and glow-lily in slot 3, then dig only the targeted slot 3
+    give({ 'seed-lavender': 1, 'seed-glow-lily': 1 });
+    expect(plantSeed('bed-extra', 'lavender')).toBe(true);
+    expect(plantSeed('bed-extra#3', 'glow-lily')).toBe(true);
+    const slot0 = allPlantingBeds().find((b) => b.id === 'bed-extra')!;
+    const slot3 = allPlantingBeds().find((b) => b.id === 'bed-extra#3')!;
+    const playerAt = { x: (slot0.rect.x + 1.5) * TILE_SIZE, y: (slot0.rect.y + 1) * TILE_SIZE };
+    const tapSlot3 = { x: (slot3.rect.x + slot3.rect.w / 2) * TILE_SIZE, y: (slot3.rect.y + slot3.rect.h) * TILE_SIZE };
+
+    const dugMixed = useTool('garden', tapSlot3, playerAt);
+    expect(dugMixed.ok).toBe(true);
+    expect(isBedPlanted('bed-extra')).toBe(true);
+    expect(isBedPlanted('bed-extra#3')).toBe(false);
+    expect(gameState.getItemCount('seed-glow-lily')).toBe(1);
+    expect(gameState.getItemCount('seed-lavender')).toBe(1); // from earlier dig; slot 0 stays planted
+  });
+
+  it('migrates legacy carried plants from older saves back into inventory', () => {
+    localStorage.setItem(
+      SAVE_KEY,
+      JSON.stringify({
+        version: 1,
+        inventory: { items: { 'tool-shovel': 1 } },
+        ext: { plants: { beds: {} }, tools: { equipped: 'tool-shovel', carried: { plantId: 'lavender', plantedAt: 1000 } } },
+      }),
+    );
+    gameState.init();
+    expect(gameState.getItemCount('seed-lavender')).toBe(1);
+    expect((gameState.data.ext.tools as { carried?: unknown }).carried).toBeUndefined();
   });
 
   it('lets the satchel sow the chosen seed into every free bed in reach', () => {
     buildPlanters(3);
-    give({ 'seed-lavender': 2, 'seed-glow-lily': 11, 'tool-satchel': 1 });
+    give({ 'seed-lavender': 2, 'seed-glow-lily': 5, 'tool-satchel': 1 });
     equipTool('tool-satchel');
     expect(getSowSeed()).toBe('glow-lily'); // the first kind in the pocket
     expect(cycleSeed()).toBe('lavender');
@@ -216,17 +211,18 @@ describe('tools', () => {
     expect(planted()).toBe(2);
     expect(getSowSeed()).toBe('glow-lily'); // the picked kind ran out
     expect(useTool('garden', feet(1)).ok).toBe(true);
-    expect(planted()).toBe(12); // three planters, four slots each
+    expect(planted()).toBe(3); // three 1x1 planters
     expect(useTool('garden', feet(1)).text).toMatch(/kein freies Beet/);
   });
 
-  it('only sows what a bed accepts', () => {
+  it('lets the satchel sow any seed into formerly crop-locked beds too', () => {
     give({ 'seed-lavender': 1, 'tool-satchel': 1 });
     equipTool('tool-satchel');
     const bramble = allPlantingBeds().find((b) => b.id === 'bed-bramble')!;
     const at = { x: (bramble.rect.x + bramble.rect.w / 2) * TILE_SIZE, y: (bramble.rect.y + bramble.rect.h) * TILE_SIZE };
-    expect(useTool('garden', at).ok).toBe(false);
-    expect(gameState.getItemCount('seed-lavender')).toBe(1);
+    expect(useTool('garden', at).ok).toBe(true);
+    expect(isBedPlanted('bed-bramble')).toBe(true);
+    expect(gameState.getItemCount('seed-lavender')).toBe(0);
   });
 
   it('dries up the blight around a carried light, and only there', () => {

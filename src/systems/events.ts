@@ -13,7 +13,7 @@ export interface NightOutcome {
   /** Decoration left behind in the world (px), e.g. snails next to a nibbled bed. */
   remnants: { texture: 'snail' | 'mole-mound' | 'feather' | 'puddle'; x: number; y: number }[];
   /** Set when the player's garden design (plants) or ally (crow) prevented harm. */
-  protectedBy?: 'lavender' | 'glow-lily' | 'crow' | 'sachet' | 'lantern' | 'hens';
+  protectedBy?: 'lavender' | 'glow-lily' | 'crow' | 'sachet' | 'lantern' | 'hens' | 'ducks';
 }
 
 /**
@@ -66,6 +66,8 @@ export interface GameEvents {
   'crafting-open': undefined;
   /** The player mounted or dismounted the horse (see systems/horse.ts). */
   'riding-changed': { riding: boolean };
+  /** The player boarded or disembarked a rowboat (see systems/boat.ts). */
+  'boat-changed': { boating: boolean };
   /** The player picked a stop on the town map (see systems/travel.ts); WorldScene changes the map. */
   'fast-travel': { mapId: string; spawn: string };
   /** Build mode was switched on/off or another piece was picked (see systems/building.ts). */

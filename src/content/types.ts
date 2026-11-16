@@ -91,9 +91,11 @@ export interface BuildableDef {
   /** Resting here skips to the next morning. */
   rest?: boolean;
   /** A home for helper animals (systems/animals.ts); the animals move in on their own. */
-  home?: { animal: 'bees' | 'hens' | 'goat' | 'horse' };
+  home?: { animal: 'bees' | 'hens' | 'goat' | 'horse' | 'ducks' };
   /** A working machine (systems/machines.ts): what it does is decided by this kind. */
-  machine?: 'rain-barrel' | 'compost' | 'drying-rack' | 'windmill';
+  machine?: 'rain-barrel' | 'compost' | 'drying-rack' | 'windmill' | 'drift-net';
+  /** A water dock / rowboat where the player can board and row freely (systems/boat.ts). */
+  boat?: boolean;
 }
 
 interface QuestObjectiveBase {

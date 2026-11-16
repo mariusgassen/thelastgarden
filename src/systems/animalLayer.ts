@@ -13,7 +13,7 @@ import {
   readyProduce,
   type Home,
 } from './animals';
-import { getPieceAt, isTileWalkable } from './building';
+import { baseTileAt, getPieceAt, isTileWalkable } from './building';
 import { bus } from './events';
 import { hasHorse } from './horse';
 import type { InteractionSystem } from './interaction';
@@ -21,12 +21,14 @@ import { gameState } from './state';
 
 const WANDER_RADIUS_TILES = 1.6;
 const HEN_SPEED = 16;
+const DUCK_SPEED = 14;
 const GOAT_SPEED = 20;
 const BADGE_REFRESH_MS = 600;
 
 const LABELS: Record<Home['animal'], string> = {
   hens: 'Eier nehmen',
   bees: 'Honig nehmen',
+  ducks: 'Tau nehmen',
   goat: 'Streicheln',
   horse: 'Mohn besuchen',
 };
@@ -98,13 +100,19 @@ export class AnimalLayer {
     const cx = (home.x + 0.5) * TILE_SIZE;
     const base = (home.y + 1) * TILE_SIZE;
     const entry: LiveHome = { home, residents: [], bees: [] };
-    const count = home.animal === 'hens' ? 2 : home.animal === 'goat' ? 1 : 0;
+    const count = home.animal === 'hens' || home.animal === 'ducks' ? 2 : home.animal === 'goat' ? 1 : 0;
+    const texture = home.animal === 'hens' ? 'hen' : home.animal === 'ducks' ? 'duck' : 'goat';
+    const speed = home.animal === 'hens' ? HEN_SPEED : home.animal === 'ducks' ? DUCK_SPEED : GOAT_SPEED;
     for (let i = 0; i < count; i++) {
+      const start =
+        home.animal === 'ducks'
+          ? (this.pickTarget(home) ?? { x: cx + (i - 0.5) * 18, y: base - 2 })
+          : { x: cx + (i - 0.5) * 22, y: base + 8 };
       const sprite = this.scene.add
-        .image(cx + (i - 0.5) * 22, base + 8, home.animal === 'hens' ? 'hen' : 'goat')
+        .image(start.x, start.y, texture)
         .setOrigin(0.5, 1)
         .setFlipX(i % 2 === 1);
-      entry.residents.push({ sprite, speed: home.animal === 'hens' ? HEN_SPEED : GOAT_SPEED, target: null, wait: 800 + i * 1400 });
+      entry.residents.push({ sprite, speed, target: null, wait: 800 + i * 1400 });
       sprite.setDepth(sprite.y);
     }
     if (home.animal === 'bees') {
@@ -171,16 +179,22 @@ export class AnimalLayer {
     r.sprite.setDepth(r.sprite.y);
   }
 
-  /** A walkable spot near the home that no piece stands on, or null. */
+  /** A walkable spot near the home (or open water for ducks) that no piece stands on, or null. */
   private pickTarget(home: Home): { x: number; y: number } | null {
-    for (let tries = 0; tries < 6; tries++) {
+    const tries = home.animal === 'ducks' ? 12 : 6;
+    for (let i = 0; i < tries; i++) {
       const angle = Math.random() * Math.PI * 2;
       const dist = (0.7 + Math.random() * (WANDER_RADIUS_TILES - 0.7)) * TILE_SIZE;
       const x = (home.x + 0.5) * TILE_SIZE + Math.cos(angle) * dist;
       const y = (home.y + 1) * TILE_SIZE + Math.sin(angle) * dist * 0.8 + 6;
       const tx = Math.floor(x / TILE_SIZE);
       const ty = Math.floor((y - 4) / TILE_SIZE);
-      if ((tx === home.x && ty === home.y) || getPieceAt(this.mapId, tx, ty) || !isTileWalkable(this.mapId, tx, ty)) continue;
+      if ((tx === home.x && ty === home.y) || getPieceAt(this.mapId, tx, ty)) continue;
+      if (home.animal === 'ducks') {
+        if (baseTileAt(this.mapId, tx, ty) !== 'water') continue;
+        return { x, y };
+      }
+      if (!isTileWalkable(this.mapId, tx, ty)) continue;
       return { x, y };
     }
     return null;
@@ -211,10 +225,12 @@ export class AnimalLayer {
     const toast = (text: string): void => bus.emit('toast', { text });
     switch (home.animal) {
       case 'hens':
-      case 'bees': {
+      case 'bees':
+      case 'ducks': {
         const got = collectProduce(home);
         if (got) toast(`${got.count} ${content.items.get(got.itemId).name} genommen.`);
         else if (home.animal === 'hens') toast('Noch keine Eier. Die Hennen scharren zufrieden im Stroh.');
+        else if (home.animal === 'ducks') toast('Noch kein Tau. Die Enten gründeln gemütlich im Wasser.');
         else if (plantedBedsNear(home).length === 0) toast('Die Bienen finden hier keine Blüten. Pflanz etwas in der Nähe.');
         else toast('Noch kein Honig. Die Bienen sind fleißig.');
         break;

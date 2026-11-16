@@ -120,12 +120,20 @@ function buildableEntry(piece: BuildableDef): WikiEntry {
   const lines = [piece.description];
   if (piece.on === 'forest') lines.push(`Kosten: ${stack(piece.cost)}. Der Wald wächst nicht zurück.`, 'Geht nur an Waldstücken, die an freien Boden grenzen.');
   else {
-    lines.push(`Kosten: ${stack(piece.cost)}. Beim Abbauen bekommst du alles zurück.`);
-    lines.push(piece.on === 'water' ? 'Wird auf Wasser neben dem Ufer gebaut.' : 'Wird auf freiem Boden gebaut.');
+    lines.push(
+      piece.cost.length === 0
+        ? 'Kostenlos. Du kannst es jederzeit wieder entfernen.'
+        : `Kosten: ${stack(piece.cost)}. Beim Abbauen bekommst du alles zurück.`,
+    );
+    lines.push(piece.on === 'water' ? 'Wird auf Wasser mit Anschluss ans Ufer oder einen Steg gebaut.' : 'Wird auf freiem Boden gebaut.');
   }
   if (piece.wardRadius) lines.push(`Hält die Welke im Umkreis von ${piece.wardRadius} Feldern fern.`);
   if (piece.lightRadius) lines.push('Leuchtet nachts.');
-  if (piece.planter) lines.push(`Hier wachsen bis zu ${piece.planter.cols * piece.planter.rows} Pflanzen nebeneinander.`);
+  if (piece.planter) {
+    const slots = piece.planter.cols * piece.planter.rows;
+    lines.push(slots === 1 ? 'Hier wächst eine Pflanze nach Wahl.' : `Hier wachsen bis zu ${slots} Pflanzen nebeneinander.`);
+  }
+  if (piece.boat) lines.push('Hier kannst du ins Ruderboot steigen und frei übers Wasser fahren.');
   if (piece.rest) lines.push('Hier kannst du rasten: Die Nacht vergeht bis 7 Uhr.');
   return { key: `buildables:${piece.id}`, section: 'buildables', title: piece.name, lines, known: isBuildUnlocked };
 }

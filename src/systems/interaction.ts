@@ -234,6 +234,9 @@ const specHandlers: { [K in InteractableSpec['type']]: SpecHandler<K> } = {
     if (getUnlockedRecipes().length > 0) bus.emit('crafting-open', undefined);
     else ctx.world.showDialogue(spec.emptyDialogueId);
   },
+  boat: (_spec, ctx) => {
+    ctx.world.toast('Das Boot liegt vertäut.');
+  },
 };
 
 /** Replace the behavior of a built-in spec type (e.g. Wave 3 adds key checks to doors). */

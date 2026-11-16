@@ -42,6 +42,8 @@ export const GARDEN_MAP: MapDef = {
     { op: 'ellipse', tile: 'water', cx: 42.5, cy: 36, rx: 4.5, ry: 4 },
     { op: 'rect', tile: 'water', rect: { x: 42, y: 39, w: 2, h: 27 } },
     { op: 'rect', tile: 'overgrownPath', rect: { x: 39, y: 45, w: 2, h: 13 } },
+    // Secluded eastern canal bank clearing reachable by boat or bridge
+    { op: 'rect', tile: 'wildGrass', rect: { x: 44, y: 47, w: 5, h: 8 } },
 
     // Workshop hut yard
     { op: 'rect', tile: 'grass', rect: { x: 2, y: 25, w: 11, h: 14 } },
@@ -75,6 +77,7 @@ export const GARDEN_MAP: MapDef = {
     { id: 'greenhouse-yard', name: 'Verborgener Winkel', rect: { x: 35, y: 11, w: 11, h: 9 } },
     { id: 'pond', name: 'Teich', rect: { x: 35, y: 29, w: 13, h: 17 } },
     { id: 'canal', name: 'Am Kanal', rect: { x: 38, y: 46, w: 6, h: 12 } },
+    { id: 'canal-island', name: 'Verwachsene Kanalbucht', rect: { x: 44, y: 46, w: 6, h: 10 } },
     { id: 'overgrown-path', name: 'Überwucherter Pfad', rect: { x: 15, y: 45, w: 10, h: 13 } },
     { id: 'bus-stop', name: 'Alte Bushaltestelle', rect: { x: 0, y: 58, w: 50, h: 11 } },
     { id: 'workshop-yard', name: 'Gartenhütte', rect: { x: 2, y: 25, w: 12, h: 14 } },
@@ -213,10 +216,12 @@ export const GARDEN_MAP: MapDef = {
     { id: 'dew-1', itemId: 'resource-dew', at: { x: 38, y: 31 }, label: 'Tau sammeln', respawnMs: 45_000 },
     { id: 'dew-2', itemId: 'resource-dew', at: { x: 44, y: 17 }, label: 'Tau sammeln', respawnMs: 45_000 },
     { id: 'dew-3', itemId: 'resource-dew', at: { x: 11, y: 35 }, label: 'Tau sammeln', respawnMs: 45_000 },
+    { id: 'dew-canal-island', itemId: 'resource-dew', at: { x: 45, y: 48.5 }, label: 'Tau sammeln', respawnMs: 45_000 },
     // Fundstücke — tucked into corners, including places only reachable after an obstacle clears. One-time.
     { id: 'curio-1', itemId: 'resource-curio', at: { x: 41, y: 14 }, label: 'Aufheben' },
     { id: 'curio-2', itemId: 'resource-curio', at: { x: 18, y: 56 }, label: 'Aufheben' },
     { id: 'curio-3', itemId: 'resource-curio', at: { x: 6, y: 50 }, label: 'Aufheben' },
+    { id: 'curio-canal-island', itemId: 'resource-curio', at: { x: 46.5, y: 51 }, label: 'Aufheben' },
     // Samen — one-time, 2 per species, placed near the obstacle each plant eventually clears.
     { id: 'seed-bramble-1', itemId: 'seed-bramble-vine', at: { x: 33, y: 22 }, label: 'Samen einsammeln' },
     { id: 'seed-bramble-2', itemId: 'seed-bramble-vine', at: { x: 17, y: 12 }, label: 'Samen einsammeln' },
@@ -268,8 +273,11 @@ export const GARDEN_MAP: MapDef = {
       itemId: 'journal-page-lavender',
     },
   ],
-  // The wooded slope south of the main garden: the player cuts it back with Roden to make room for more beds.
-  clearable: [{ x: 10, y: 45, w: 28, h: 13 }],
+  // The wooded slope south of the main garden + eastern canal strip: the player cuts them back with Roden to make room for more beds.
+  clearable: [
+    { x: 10, y: 45, w: 28, h: 13 },
+    { x: 44, y: 46, w: 5, h: 3 },
+  ],
   // Where the blight grows from once Episode 1 is done (systems/blight.ts).
   blightHearts: [
     { id: 'heart-plaza', at: { x: 7, y: 62 }, reach: 6 },

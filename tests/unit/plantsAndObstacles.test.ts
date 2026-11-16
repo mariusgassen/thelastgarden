@@ -45,16 +45,18 @@ describe('plants and obstacles systems', () => {
     vi.useRealTimers();
   });
 
-  it('plants species-locked and open beds, consumes seeds, and prevents double planting', () => {
+  it('allows any species in any bed, consumes seeds, and prevents double planting', () => {
     expect(plantSeed('unknown-bed')).toBe(false);
     expect(plantSeed('bed-bramble')).toBe(false); // no seed owned yet
 
+    // Pre-defined beds accept any crop, and open beds use priority order.
     gameState.addItem('seed-lavender', 1);
-    // bed-bramble only accepts bramble-vine
-    expect(plantSeed('bed-bramble')).toBe(false);
-    expect(gameState.getItemCount('seed-lavender')).toBe(1);
+    expect(plantSeed('bed-bramble')).toBe(true);
+    expect(getBedState('bed-bramble')?.plantId).toBe('lavender');
+    expect(gameState.getItemCount('seed-lavender')).toBe(0);
 
     // bed-extra accepts any owned seed in priority order (bramble-vine -> glow-lily -> lavender)
+    gameState.addItem('seed-lavender', 1);
     gameState.addItem('seed-glow-lily', 1);
     const plantedEvents: { bedId: string; plantId: string }[] = [];
     const onPlant = (p: { bedId: string; plantId: string }) => plantedEvents.push(p);
@@ -67,7 +69,7 @@ describe('plants and obstacles systems', () => {
     expect(gameState.hasFlag('bed-planted:bed-extra')).toBe(true);
     expect(isBedPlanted('bed-extra')).toBe(true);
     expect(plantSeed('bed-extra')).toBe(false); // already planted
-    expect(getAllPlantedBeds()).toHaveLength(1);
+    expect(getAllPlantedBeds()).toHaveLength(2);
 
     bus.off('plant-planted', onPlant);
     expect(plantedEvents).toEqual([{ bedId: 'bed-extra', plantId: 'glow-lily' }]);
@@ -111,19 +113,21 @@ describe('plants and obstacles systems', () => {
     expect(getLightSources()).toEqual([{ bedId: 'bed-lily', mapId: 'garden', lightRadius: 150 }]);
   });
 
-  it('lets the player pick the species for an open bed', () => {
+  it('lets the player pick any owned species for any bed, putting the thematic plant first', () => {
     expect(getPlantableSpecies('unknown-bed')).toEqual([]);
     gameState.addItem('seed-glow-lily', 1);
     gameState.addItem('seed-lavender', 1);
     expect(getPlantableSpecies('bed-extra')).toEqual(['glow-lily', 'lavender']);
-    expect(getPlantableSpecies('bed-lavender')).toEqual(['lavender']); // species-locked bed
+    // Bed with a thematic plant puts that plant first, then offers other owned seeds too
+    expect(getPlantableSpecies('bed-lavender')).toEqual(['lavender', 'glow-lily']);
 
     expect(plantSeed('bed-extra', 'bramble-vine')).toBe(false); // no such seed owned
-    expect(plantSeed('bed-lavender', 'glow-lily')).toBe(false); // bed does not accept it
+    expect(plantSeed('bed-lavender', 'glow-lily')).toBe(true);
+    expect(getBedState('bed-lavender')?.plantId).toBe('glow-lily');
     expect(plantSeed('bed-extra', 'lavender')).toBe(true);
     expect(getBedState('bed-extra')?.plantId).toBe('lavender');
     expect(gameState.getItemCount('seed-lavender')).toBe(0);
-    expect(gameState.getItemCount('seed-glow-lily')).toBe(1);
+    expect(gameState.getItemCount('seed-glow-lily')).toBe(0);
   });
 
   it('waters a growing bed with dew once per stage, and never needs dew to mature', () => {

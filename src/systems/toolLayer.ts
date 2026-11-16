@@ -82,18 +82,19 @@ export class ToolLayer {
     this.use();
   }
 
-  /** A tap or click while the tool bar is open: the tool works around the player. */
-  tap(): void {
-    this.use();
+  /** A tap or click while the tool bar is open: prioritizes beds at the tapped spot within reach. */
+  tap(worldX?: number, worldY?: number): void {
+    this.use(worldX !== undefined && worldY !== undefined ? { x: worldX, y: worldY } : undefined);
   }
 
   private heldOffset(p: Player): number {
     return p.facing === 'left' ? -HELD_OFFSET_X : HELD_OFFSET_X;
   }
 
-  private use(): void {
+  private use(target?: { x: number; y: number }): void {
     const p = this.getPlayer();
-    const result = useTool(this.mapId, { x: p.x, y: p.y });
+    const from = { x: p.x, y: p.y };
+    const result = useTool(this.mapId, target ?? from, from);
     bus.emit('toast', { text: result.text });
     const kind = result.used;
     if (!result.ok || !kind) return;

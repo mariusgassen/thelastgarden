@@ -192,6 +192,12 @@ export const DIALOGUES: DialogueDef[] = [
     ],
   },
   {
+    id: 'night-snails-ducks',
+    lines: [
+      { text: 'Schnecken kamen in der Nacht ans Ufer. Die Enten waren schneller und haben sie aufgelesen. Alle Beete sind unversehrt.' },
+    ],
+  },
+  {
     id: 'night-snails-sachet',
     lines: [
       { text: 'Schnecken kamen in der Nacht. Der Duft aus deinem Lavendelsäckchen lag über den Beeten — sie drehten um. Das Säckchen ist nun verduftet.' },
