@@ -66,6 +66,8 @@ export interface BuildableDef {
   planter?: boolean;
   /** Resting here skips to the next morning. */
   rest?: boolean;
+  /** A working machine (systems/machines.ts): what it does is decided by this kind. */
+  machine?: 'rain-barrel' | 'compost' | 'drying-rack' | 'windmill';
 }
 
 interface QuestObjectiveBase {

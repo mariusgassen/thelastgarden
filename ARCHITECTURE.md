@@ -444,6 +444,32 @@ push back a grey wilt that creeps in at night. No money, no chores, no fail stat
 - **New outdoor map?** Optionally add `blightHearts`; a unit test checks hearts sit on open
   ground, away from spawns and beds.
 
+## Working buildings
+
+Four more build pieces that do something (`BuildableDef.machine`, `systems/machines.ts`, no
+Phaser). No money and nothing spoils; every machine only makes something faster or turns
+harvest into something else.
+
+| Piece | Cost | Does |
+|---|---|---|
+| Regentonne | 3 Holz, 1 Schrott | beds within 2.5 tiles grow +50 % faster |
+| Komposthaufen | 3 Holz | *Kompostieren* eats one produce item and works for 2 min (up to 3 stacked); beds within 3 tiles grow +100 % faster meanwhile |
+| Trockengestell | 2 Holz, 1 Schrott | *Trocknen* hangs one produce item; after 90 s *Samen nehmen* gives 2 seeds of its species |
+| Windmühle | 4 Holz, 3 Feldstein, 2 Schrott | *Mahlen* takes 2 produce items; after 60 s *Mehl holen* gives 1 `craft-flour` (Blütenmehl) |
+
+- **State.** `ext.machines = { stations: { "<mapId>:<x>:<y>": { plantId?, inputs?, readyAt?, activeUntil? } } }`.
+  Old saves start empty. Taking a piece down hands back what is inside (finished goods if done,
+  otherwise the input).
+- **Growth boost.** `tickMachines(from, to)` calls `shiftGrowth` on every growing bed in range,
+  also on other maps; `startMachineTicker()` runs it every 5 s (one tick counts at most 10 s).
+  A bed gets each kind of help once, so a row of barrels does not stack.
+- **Rendering.** `BuildLayer.registerMachine` registers one interactable per rack, mill and
+  heap whose label follows `machineAction(...).label`; the windmill's sails are a second sprite
+  turning in a tween (not under reduced motion). The first time a machine is built, its
+  description is toasted.
+- **Build bar.** `ui/BuildBar.ts` wraps into rows of six; keys 1–9 pick the first nine slots.
+- **Flour** is a plain `craft-flour` material for cooking recipes; nothing consumes it yet.
+
 ## Wave boundaries
 
 - **Wave 2 (plant abilities):** done — see "Plant Abilities" above.
