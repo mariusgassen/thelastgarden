@@ -89,6 +89,71 @@ export const QUESTS: QuestDef[] = [
       },
     ],
   },
+  // Crafting tutorials: one per everyday recipe, each naming what to harvest and what the recipe
+  // costs. Placed before q-greenhouse (same start flag) so the HUD tracker keeps the main journey.
+  {
+    id: 'q-craft-cutting',
+    title: 'Ein Steckling für die Dornen',
+    summary: 'M.s Seite über die Brombeere beschreibt, wie man an der Werkbank einen Steckling zieht. Wer das kann, bekommt ihre Werkzeugrolle — eine Werkbank für unterwegs.',
+    startsWhen: ['quest-completed:q-journal-pages'],
+    objectives: [
+      {
+        type: 'flag',
+        flag: 'harvested:produce-tendril',
+        description: 'Ernte Brombeertriebe von einer ausgewachsenen Brombeerranke. Sie wachsen jede Minute nach.',
+        markers: ['bed:bed-bramble'],
+      },
+      {
+        type: 'flag',
+        flag: 'crafted:bramble-cutting',
+        description: 'Stelle an der Werkbank in der Gartenhütte einen Brombeer-Steckling her (2 Brombeertriebe, 1 Tau).',
+        markers: ['workshop-door', 'workbench'],
+      },
+    ],
+    rewardItems: [{ itemId: 'pocket-workbench', count: 1 }],
+  },
+  {
+    id: 'q-craft-lantern',
+    title: 'Licht für eine Nacht',
+    summary: 'Eine Lilienlaterne schützt die Beete eine Nacht lang vor Wühlmäusen, auch dort, wo keine Leuchtlilie steht.',
+    startsWhen: ['quest-completed:q-journal-pages'],
+    objectives: [
+      {
+        type: 'flag',
+        flag: 'harvested:produce-light-pollen',
+        description: 'Ernte Lichtpollen von einer ausgewachsenen Leuchtlilie.',
+        markers: ['bed:bed-lily'],
+      },
+      {
+        type: 'flag',
+        flag: 'crafted:lily-lantern',
+        description: 'Stelle eine Lilienlaterne her (2 Lichtpollen, 1 Sonnenlicht).',
+        markers: ['workshop-door', 'workbench'],
+      },
+    ],
+    rewardItems: [{ itemId: 'resource-sunlight', count: 1 }],
+  },
+  {
+    id: 'q-craft-sachet',
+    title: 'Duft gegen Schnecken',
+    summary: 'Ein Lavendelsäckchen hält eine Nacht lang die Schnecken fern, auch von Beeten, zu denen kein Lavendel hinüberduftet.',
+    startsWhen: ['quest-completed:q-journal-pages'],
+    objectives: [
+      {
+        type: 'flag',
+        flag: 'harvested:produce-scent-bundle',
+        description: 'Ernte Duftbündel von einem ausgewachsenen Lavendel.',
+        markers: ['bed:bed-lavender'],
+      },
+      {
+        type: 'flag',
+        flag: 'crafted:lavender-sachet',
+        description: 'Stelle ein Lavendelsäckchen her (2 Duftbündel, 1 Sonnenlicht).',
+        markers: ['workshop-door', 'workbench'],
+      },
+    ],
+    rewardItems: [{ itemId: 'resource-dew', count: 1 }],
+  },
   {
     id: 'q-greenhouse',
     title: 'Was hinter dem Glas wartet',
@@ -156,7 +221,7 @@ export const QUESTS: QuestDef[] = [
       {
         type: 'unblock',
         obstacleId: 'bramble-tram-switch',
-        description: 'Öffne das Dornengestrüpp auf den Gleisen mit einem Brombeer-Steckling von der Werkbank (2 Brombeertriebe, 1 Tau).',
+        description: 'Öffne das Dornengestrüpp auf den Gleisen mit einem Brombeer-Steckling (2 Brombeertriebe, 1 Tau).',
         markers: ['obstacle:bramble-tram-switch', 'bed:bed-tram-bramble', 'resource:tram-seed-bramble', 'workshop-door', 'workbench'],
       },
       {
@@ -194,7 +259,7 @@ export const QUESTS: QuestDef[] = [
       {
         type: 'flag',
         flag: 'tower-cistern-repaired',
-        description: 'Repariere das Zisternen-Ventil (1 Ventildichtung von der Werkbank, 2 Sonnenlicht, 1 Fundstück).',
+        description: 'Repariere das Zisternen-Ventil: 2 Sonnenlicht, 1 Fundstück und eine Ventildichtung (herstellen aus 1 Brombeertrieb, 1 Duftbündel).',
         markers: ['tower-cistern'],
       },
       {
@@ -305,7 +370,7 @@ export const QUESTS: QuestDef[] = [
       {
         type: 'unblock',
         obstacleId: 'bramble-orchard-terrace',
-        description: 'Teile die Dornenhecke am Hang zur oberen Terrasse mit einem Brombeer-Steckling.',
+        description: 'Teile die Dornenhecke am Hang zur oberen Terrasse mit einem Brombeer-Steckling (2 Brombeertriebe, 1 Tau).',
         markers: ['obstacle:bramble-orchard-terrace', 'orchard-to-cottage', 'cottage-herb-rack'],
       },
       {
@@ -325,7 +390,7 @@ export const QUESTS: QuestDef[] = [
       {
         type: 'flag',
         flag: 'orchard-sluice-repaired',
-        description: 'Repariere die alte Bewässerungsrinne (1 Dichtzopf von der Werkbank, 1 Sonnenlicht, 1 Fundstück).',
+        description: 'Repariere die alte Bewässerungsrinne: 1 Sonnenlicht, 1 Fundstück und ein Dichtzopf (herstellen aus 2 Duftbündeln, 1 Tau).',
         markers: ['orchard-sluice', 'cottage-herb-rack'],
       },
       {
@@ -399,7 +464,7 @@ export const QUESTS: QuestDef[] = [
       {
         type: 'flag',
         flag: 'mill-wheel-repaired',
-        description: 'Mache das alte Mühlrad wieder gangbar (1 Achsenwachs von der Werkbank, 2 Sonnenlicht, 2 Fundstücke).',
+        description: 'Mache das alte Mühlrad wieder gangbar: 2 Sonnenlicht, 2 Fundstücke und Achsenwachs (herstellen aus 2 Nachtviolen-Nektar, 1 Sonnenlicht).',
         markers: ['mill-wheel', 'mill-workbench'],
       },
       {
@@ -429,7 +494,7 @@ export const QUESTS: QuestDef[] = [
       {
         type: 'unblock',
         obstacleId: 'bramble-farm-gate',
-        description: 'Öffne das verwachsene Hoftor mit einem Brombeer-Steckling.',
+        description: 'Öffne das verwachsene Hoftor mit einem Brombeer-Steckling (2 Brombeertriebe, 1 Tau).',
         markers: ['obstacle:bramble-farm-gate', 'mill-workbench'],
       },
       {
@@ -445,6 +510,27 @@ export const QUESTS: QuestDef[] = [
         markers: ['journal:page-farms'],
       },
     ],
+  },
+  {
+    id: 'q-craft-seed-mix',
+    title: 'Jakobs Saattütchen',
+    summary: 'In der Chronik der Mühle steht, wie aus Stockrosenkapseln neue Samen für den ganzen Garten werden.',
+    startsWhen: ['journal-read:page-mill'],
+    objectives: [
+      {
+        type: 'flag',
+        flag: 'harvested:produce-seed-pod',
+        description: 'Ernte Samenkapseln von einer ausgewachsenen Stockrose.',
+        markers: ['bed:bed-mill-hollyhock'],
+      },
+      {
+        type: 'flag',
+        flag: 'crafted:seed-mix',
+        description: 'Mische ein Saattütchen (2 Samenkapseln, 1 Tau). Es enthält je einen Samen für Brombeere, Leuchtlilie und Lavendel.',
+        markers: ['mill-workbench'],
+      },
+    ],
+    rewardItems: [{ itemId: 'resource-dew', count: 1 }],
   },
   {
     id: 'q-erlenbrueck-awakens',

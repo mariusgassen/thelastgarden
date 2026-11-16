@@ -152,6 +152,7 @@ export function harvestBed(bedId: string): { itemId: string; seedItemId?: string
   gameState.addItem(itemId, 1);
   if (seedItemId) gameState.addItem(seedItemId, 1);
   gameState.setFlag('harvested-once');
+  gameState.setFlag(`harvested:${itemId}`);
   gameState.save();
   bus.emit('plant-harvested', { bedId, plantId: bed.plantId, itemId });
   return { itemId, seedItemId };

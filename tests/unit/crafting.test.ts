@@ -5,7 +5,9 @@ import {
   craftingMenuLines,
   getMissing,
   getUnlockedRecipes,
+  hasPocketWorkbench,
 } from '../../src/systems/crafting';
+import { getInventoryGroups } from '../../src/systems/inventory';
 import { content } from '../../src/content';
 import { bus } from '../../src/systems/events';
 import { gameState } from '../../src/systems/state';
@@ -61,9 +63,34 @@ describe('crafting system', () => {
     bus.off('item-crafted', onCrafted);
 
     expect(crafted).toEqual(['bramble-cutting']);
+    expect(gameState.hasFlag('crafted:bramble-cutting')).toBe(true);
     expect(gameState.getItemCount('craft-bramble-cutting')).toBe(1);
     expect(gameState.getItemCount('produce-tendril')).toBe(0);
     expect(gameState.getItemCount('resource-dew')).toBe(1);
+  });
+
+  it('groups the inventory for the bag view and knows the pocket workbench', () => {
+    expect(getInventoryGroups()).toEqual([]);
+    expect(hasPocketWorkbench()).toBe(false);
+
+    gameState.addItem('resource-dew', 2);
+    gameState.addItem('seed-lavender', 1);
+    gameState.addItem('produce-tendril', 3);
+    gameState.addItem('craft-valve-seal', 1);
+    gameState.addItem('pocket-workbench', 1);
+    gameState.addItem('journal-page-lily', 1);
+
+    expect(hasPocketWorkbench()).toBe(true);
+    expect(getInventoryGroups().map((g) => [g.title, g.entries.map((e) => `${e.count} ${e.item.id}`)])).toEqual([
+      ['Samen', ['1 seed-lavender']],
+      ['Ernte', ['3 produce-tendril']],
+      ['Rohstoffe', ['2 resource-dew']],
+      ['Werkzeug & Bauteile', ['1 pocket-workbench', '1 craft-valve-seal']],
+      ['Notizen', ['1 journal-page-lily']],
+    ]);
+
+    gameState.removeItem('produce-tendril', 3);
+    expect(getInventoryGroups().map((g) => g.title)).not.toContain('Ernte');
   });
 
   it('crafts the picked workbench choice and ignores other dialogues', () => {

@@ -1,11 +1,13 @@
 import Phaser from 'phaser';
 import { content, type DialogueChoice } from '../content';
+import { CRAFTING_DIALOGUE_ID, craftingMenuLines, hasPocketWorkbench } from '../systems/crafting';
 import { bus } from '../systems/events';
 import { inputState } from '../systems/input';
 import { gameState } from '../systems/state';
 import { Banner } from '../ui/Banner';
 import { ContextButton } from '../ui/ContextButton';
 import { DialoguePanel } from '../ui/DialoguePanel';
+import { InventoryPanel } from '../ui/InventoryPanel';
 import { Joystick } from '../ui/Joystick';
 import { QuestLog } from '../ui/QuestLog';
 import { ResourceBar } from '../ui/ResourceBar';
@@ -30,6 +32,7 @@ export class UIScene extends Phaser.Scene {
   private toast!: Banner;
   private resourceBar!: ResourceBar;
   private questLog!: QuestLog;
+  private inventory!: InventoryPanel;
   private tutorial!: TutorialHints;
   private safe: SafeArea = { top: 0, right: 0, bottom: 0, left: 0 };
   private downAt = new Map<number, { x: number; y: number; t: number }>();
@@ -58,17 +61,31 @@ export class UIScene extends Phaser.Scene {
     this.toast = new Banner(this, 14, () => this.layoutTopStack());
     this.resourceBar = new ResourceBar(this);
     this.questLog = new QuestLog(this, (open) => {
-      inputState.modal = open || this.dialogue.isOpen;
+      if (open) this.inventory.setOpen(false);
+      this.syncModal();
       if (open) this.releaseJoystick();
       this.layoutTopStack();
     });
+    this.inventory = new InventoryPanel(
+      this,
+      (open) => {
+        if (open) this.questLog.setOpen(false);
+        this.syncModal();
+        if (open) this.releaseJoystick();
+      },
+      hasPocketWorkbench,
+      () => this.openPocketWorkbench(),
+    );
     this.tutorial = new TutorialHints(this, touch, () => this.layoutTopStack());
 
     this.input.on(Phaser.Input.Events.POINTER_DOWN, this.onPointerDown, this);
     this.input.on(Phaser.Input.Events.POINTER_MOVE, this.onPointerMove, this);
     this.input.on(Phaser.Input.Events.POINTER_UP, this.onPointerUp, this);
     this.input.on(Phaser.Input.Events.POINTER_UP_OUTSIDE, this.onPointerUp, this);
-    this.input.on('wheel', (_p: Phaser.Input.Pointer, _o: unknown, _dx: number, dy: number) => this.questLog.scrollBy(dy * 0.5));
+    this.input.on('wheel', (_p: Phaser.Input.Pointer, _o: unknown, _dx: number, dy: number) => {
+      if (this.inventory.isOpen) this.inventory.scrollBy(dy * 0.5);
+      else this.questLog.scrollBy(dy * 0.5);
+    });
 
     const kb = this.input.keyboard;
     kb?.on('keydown-Q', () => this.toggleQuestLog());
@@ -76,7 +93,16 @@ export class UIScene extends Phaser.Scene {
       e.preventDefault();
       this.toggleQuestLog();
     });
-    kb?.on('keydown-ESC', () => this.questLog.setOpen(false));
+    kb?.on('keydown-I', () => {
+      if (!this.dialogue.isOpen) this.inventory.toggle();
+    });
+    kb?.on('keydown-C', () => {
+      if (!this.dialogue.isOpen && hasPocketWorkbench()) this.openPocketWorkbench();
+    });
+    kb?.on('keydown-ESC', () => {
+      this.questLog.setOpen(false);
+      this.inventory.setOpen(false);
+    });
     kb?.on('keydown-UP', () => {
       if (this.dialogue.isOpen && this.dialogue.hasChoices) this.dialogue.moveChoice(-1);
     });
@@ -102,12 +128,14 @@ export class UIScene extends Phaser.Scene {
     bus.onScene(this, 'toast', ({ text }) => this.enqueueToast(text));
     bus.onScene(this, 'dialogue-show', ({ id, lines, style, title }) => {
       this.questLog.setOpen(false);
+      this.inventory.setOpen(false);
       this.dialogue.open(id, lines, style, title);
       inputState.modal = this.dialogue.isOpen;
       if (inputState.modal) this.releaseJoystick();
     });
     bus.onScene(this, 'dialogue-advance', () => {
       if (this.questLog.isOpen) this.questLog.setOpen(false);
+      else if (this.inventory.isOpen) this.inventory.setOpen(false);
       else if (this.dialogue.isOpen && this.dialogue.hasChoices) {
         const picked = this.dialogue.pickSelectedChoice();
         if (picked) this.applyDialogueChoice(picked);
@@ -115,6 +143,7 @@ export class UIScene extends Phaser.Scene {
     });
     bus.onScene(this, 'inventory-changed', () => {
       this.resourceBar.refresh();
+      this.inventory.refresh();
       this.layoutTopStack();
     });
     bus.onScene(this, 'save-loaded', () => {
@@ -162,6 +191,7 @@ export class UIScene extends Phaser.Scene {
     this.dialogue.layout(w, h, safe.bottom, safe.left, safe.right);
     this.resourceBar.setPosition(safe.left + 28, topRowY);
     this.questLog.layout(w, h, safe, topRowY);
+    this.inventory.layout(w, h, safe);
     this.areaBanner.setMaxWidth(maxBannerW);
     this.toast.setMaxWidth(maxBannerW);
     this.tutorial.layout(w, 0, centerX, maxBannerW);
@@ -203,6 +233,18 @@ export class UIScene extends Phaser.Scene {
     this.toastQueue.push(text);
   }
 
+  private syncModal(): void {
+    inputState.modal = this.dialogue.isOpen || this.questLog.isOpen || this.inventory.isOpen;
+  }
+
+  /** The pocket workbench: the same crafting menu a workbench opens, from anywhere. */
+  private openPocketWorkbench(): void {
+    this.inventory.setOpen(false);
+    const lines = craftingMenuLines();
+    if (lines) bus.emit('dialogue-show', { id: CRAFTING_DIALOGUE_ID, lines });
+    else this.enqueueToast('Du kennst noch kein Rezept.');
+  }
+
   private toggleQuestLog(): void {
     if (this.dialogue.isOpen) return;
     this.questLog.toggle();
@@ -224,7 +266,7 @@ export class UIScene extends Phaser.Scene {
     const rootId = this.dialogue.getRootId();
     const id = this.dialogue.id;
     this.dialogue.close();
-    inputState.modal = this.questLog.isOpen;
+    this.syncModal();
     if (id) bus.emit('dialogue-closed', { id });
     if (rootId && rootId !== id) bus.emit('dialogue-closed', { id: rootId });
   }
@@ -234,7 +276,7 @@ export class UIScene extends Phaser.Scene {
     const id = this.dialogue.id;
     if (id === null) return;
     if (!this.dialogue.advance()) {
-      inputState.modal = this.questLog.isOpen;
+      this.syncModal();
       bus.emit('dialogue-closed', { id });
       if (rootId && rootId !== id) bus.emit('dialogue-closed', { id: rootId });
     }
@@ -259,9 +301,14 @@ export class UIScene extends Phaser.Scene {
       }
       return;
     }
+    if (this.inventory.pointerDown(p.x, p.y)) return;
     if (this.questLog.pointerDown(p.x, p.y)) return;
     if (this.questLog.buttonContains(p.x, p.y)) {
       this.questLog.toggle();
+      return;
+    }
+    if (this.resourceBar.contains(p.x, p.y)) {
+      this.inventory.toggle();
       return;
     }
     if (this.button.contains(p.x, p.y)) return;
@@ -272,6 +319,10 @@ export class UIScene extends Phaser.Scene {
   private onPointerMove(pointer: Phaser.Input.Pointer): void {
     if (!pointer.isDown) return;
     const p = this.toCss(pointer);
+    if (this.inventory.isOpen) {
+      this.inventory.pointerMove(p.y);
+      return;
+    }
     if (this.questLog.isOpen) {
       this.questLog.pointerMove(p.y);
       return;
@@ -281,6 +332,7 @@ export class UIScene extends Phaser.Scene {
 
   private onPointerUp(pointer: Phaser.Input.Pointer): void {
     this.questLog.pointerUp();
+    this.inventory.pointerUp();
     const down = this.downAt.get(pointer.id);
     this.downAt.delete(pointer.id);
     this.joystick.end(pointer.id);

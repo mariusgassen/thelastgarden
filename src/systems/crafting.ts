@@ -7,7 +7,9 @@
  *
  *   getUnlockedRecipes()      recipes whose `requiresFlag` is set
  *   getMissing(recipe)        ingredients still short (count = shortfall)
- *   craft(recipeId)           spends the cost, adds the result; false if locked or short
+ *   craft(recipeId)           spends the cost, adds the result, sets `crafted:<recipeId>`;
+ *                             false if locked or short
+ *   hasPocketWorkbench()      true once the player may craft anywhere (see UIScene)
  *   craftingMenuLines()       dialogue lines for the menu, or null if nothing is unlocked yet
  */
 import { content } from '../content';
@@ -16,6 +18,12 @@ import { bus } from './events';
 import { gameState } from './state';
 
 export const CRAFTING_DIALOGUE_ID = 'crafting';
+/** Carrying this item lets the player open the crafting menu anywhere (from the inventory). */
+export const POCKET_WORKBENCH_ITEM_ID = 'pocket-workbench';
+
+export function hasPocketWorkbench(): boolean {
+  return gameState.getItemCount(POCKET_WORKBENCH_ITEM_ID) > 0;
+}
 
 export function isRecipeUnlocked(recipe: RecipeDef): boolean {
   return !recipe.requiresFlag || gameState.hasFlag(recipe.requiresFlag);
@@ -36,6 +44,7 @@ export function craft(recipeId: string): boolean {
   if (!recipe || !isRecipeUnlocked(recipe) || getMissing(recipe).length > 0) return false;
   for (const c of recipe.cost) gameState.removeItem(c.itemId, c.count);
   for (const r of recipe.result) gameState.addItem(r.itemId, r.count);
+  gameState.setFlag(`crafted:${recipe.id}`);
   gameState.save();
   bus.emit('item-crafted', { recipeId });
   return true;

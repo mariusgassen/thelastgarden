@@ -171,6 +171,7 @@ describe('plants and obstacles systems', () => {
     expect(gameState.getItemCount('produce-tendril')).toBe(1);
     expect(gameState.getItemCount('seed-bramble-vine')).toBe(1);
     expect(gameState.hasFlag('harvested-once')).toBe(true);
+    expect(gameState.hasFlag('harvested:produce-tendril')).toBe(true);
     expect(isBedMature('bed-bramble')).toBe(true); // the plant stays
 
     // Produce has to regrow first
