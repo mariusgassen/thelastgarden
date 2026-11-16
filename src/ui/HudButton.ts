@@ -108,6 +108,15 @@ export function drawHorseIcon(g: Phaser.GameObjects.Graphics, color: number): vo
   }
 }
 
+/** A wooden rowboat icon shown while on the water. */
+export function drawBoatIcon(g: Phaser.GameObjects.Graphics, color: number): void {
+  g.fillStyle(0x8a603d, 1);
+  g.fillEllipse(0, 2, 22, 10);
+  g.lineStyle(2, color, 1);
+  g.strokeEllipse(0, 2, 22, 10);
+  g.lineBetween(-9, -4, 9, 8);
+}
+
 /** A hammer: build mode. */
 export function drawHammerIcon(g: Phaser.GameObjects.Graphics, color: number): void {
   g.lineStyle(4, 0x8a603d, 1);

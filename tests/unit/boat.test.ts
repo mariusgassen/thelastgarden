@@ -5,6 +5,7 @@ import {
   disembarkBoat,
   ferryBoatTo,
   findLandingTile,
+  getParkedBoat,
   isBoating,
   isBoatingHere,
   isOpenWaterTile,
@@ -54,8 +55,32 @@ describe('rowboats and water gameplay', () => {
     expect(findLandingTile('garden', 39 * TILE_SIZE, 36 * TILE_SIZE)).not.toBeNull();
     expect(disembarkBoat('garden', 39 * TILE_SIZE, 36 * TILE_SIZE)).toBe(true);
     expect(isBoating()).toBe(false);
+    expect(getParkedBoat('garden')).toEqual({ x: 39, y: 36 });
     expect(boatEvents).toEqual([true, false]);
     bus.off('boat-changed', onBoat);
+  });
+
+  it('parks a boat beside isolated islands so players can always board back across the water', () => {
+    gameState.data.player.mapId = 'river-farms';
+    expect(boardBoat('river-farms', { x: 37, y: 17 })).toBe(true);
+    expect(getParkedBoat('river-farms')).toBeNull();
+
+    // Disembark onto the secluded east river island (x=40..43) from water tile (39, 12)
+    expect(disembarkBoat('river-farms', 39.4 * TILE_SIZE, 12.5 * TILE_SIZE)).toBe(true);
+    expect(isBoating()).toBe(false);
+    expect(Math.floor(gameState.data.player.x / TILE_SIZE)).toBe(40);
+    expect(getParkedBoat('river-farms')).toEqual({ x: 39, y: 12 });
+
+    // Re-board from the parked boat on the island
+    const parked = getParkedBoat('river-farms')!;
+    expect(boardBoat('river-farms', parked)).toBe(true);
+    expect(isBoating()).toBe(true);
+    expect(getParkedBoat('river-farms')).toBeNull();
+
+    // Landing back at the moored pier clears parked state (no duplicate boat needed)
+    expect(disembarkBoat('river-farms', 37.2 * TILE_SIZE, 16.0 * TILE_SIZE)).toBe(true);
+    expect(isBoating()).toBe(false);
+    expect(getParkedBoat('river-farms')).toBeNull();
   });
 
   it('refuses boarding indoors and clears boating when ferrying across river maps', () => {

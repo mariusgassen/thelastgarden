@@ -17,7 +17,7 @@ import { ContextButton } from '../ui/ContextButton';
 import { CraftingPanel } from '../ui/CraftingPanel';
 import { DayClock } from '../ui/DayClock';
 import { DialoguePanel } from '../ui/DialoguePanel';
-import { drawAutoIcon, drawHammerIcon, drawHorseIcon, drawMapIcon, drawToolIcon, HudButton } from '../ui/HudButton';
+import { drawAutoIcon, drawBoatIcon, drawHammerIcon, drawHorseIcon, drawMapIcon, drawToolIcon, HudButton } from '../ui/HudButton';
 import { InventoryPanel } from '../ui/InventoryPanel';
 import { Joystick } from '../ui/Joystick';
 import { MapPanel } from '../ui/MapPanel';
@@ -179,7 +179,7 @@ export class UIScene extends Phaser.Scene {
       if (open) this.releaseJoystick();
     });
     this.mapButton = new HudButton(this, drawMapIcon, touch ? undefined : 'M');
-    this.rideButton = new HudButton(this, drawHorseIcon, touch ? undefined : 'R');
+    this.rideButton = new HudButton(this, (g, color) => (isBoatingHere() ? drawBoatIcon(g, color) : drawHorseIcon(g, color)), touch ? undefined : 'R');
     this.buildButton = new HudButton(this, drawHammerIcon, touch ? undefined : 'B');
     this.toolButton = new HudButton(
       this,
@@ -304,6 +304,10 @@ export class UIScene extends Phaser.Scene {
       this.syncHudButtons();
       this.toolBar.refresh();
       this.toolButton.refresh();
+    });
+    bus.onScene(this, 'boat-changed', () => {
+      this.rideButton.refresh();
+      this.syncHudButtons();
     });
     bus.onScene(this, 'inventory-changed', () => {
       this.buildBar.refresh();
@@ -449,8 +453,9 @@ export class UIScene extends Phaser.Scene {
     this.buildButton.setVisible(!hidden && isBuildUnlocked() && canRideHere());
     this.buildButton.setState(building);
     this.mapButton.setVisible(!hidden && hasTravelMap());
-    this.rideButton.setVisible(!hidden && hasHorse());
-    this.rideButton.setState(isRiding(), canRideHere());
+    const boating = isBoatingHere();
+    this.rideButton.setVisible(!hidden && (hasHorse() || boating));
+    this.rideButton.setState(boating || isRiding(), canRideHere());
     const r = this.button.radius;
     const bar = this.buildBar.visible ? this.buildBar : undefined;
     // BuildBar takes the bottom edge on narrow screens; ToolBar overlays only below the button column and suppresses ContextButton so buttons never jump.

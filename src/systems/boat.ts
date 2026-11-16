@@ -19,16 +19,31 @@ import { setSpecHandler } from './interaction';
 import { isBlocked } from './obstacles';
 import { gameState } from './state';
 
+export interface BoatTile {
+  x: number;
+  y: number;
+}
+
 interface BoatExt {
   boating?: boolean;
+  /** Water tile per map where the player last disembarked away from a pier/dock. */
+  parked?: Record<string, BoatTile>;
 }
 
 function readState(): BoatExt {
   return gameState.getExt<BoatExt>('boat', {});
 }
 
+function saveBoatState(next: BoatExt): void {
+  const clean: BoatExt = {};
+  if (next.boating) clean.boating = true;
+  if (next.parked && Object.keys(next.parked).length > 0) clean.parked = next.parked;
+  gameState.setExt<BoatExt>('boat', clean);
+}
+
 function writeBoating(boating: boolean): void {
-  gameState.setExt<BoatExt>('boat', boating ? { boating: true } : {});
+  const cur = readState();
+  saveBoatState({ ...cur, boating: boating || undefined });
 }
 
 export function isBoating(): boolean {
@@ -39,6 +54,15 @@ export function isBoatingHere(mapId = gameState.data.player.mapId): boolean {
   return isBoating() && !MAPS[mapId]?.indoor;
 }
 
+/** Water tile where the player last left their boat on `mapId`, or null when none is parked. */
+export function getParkedBoat(mapId = gameState.data.player.mapId): BoatTile | null {
+  if (MAPS[mapId]?.indoor) return null;
+  const p = readState().parked?.[mapId];
+  if (!p) return null;
+  if (isOpenWaterTile(mapId, p.x, p.y)) return p;
+  return findWaterSpawn(mapId, p);
+}
+
 /** True when tile (x, y) is open water usable by a rowboat. */
 export function isOpenWaterTile(mapId: string, x: number, y: number): boolean {
   if (baseTileAt(mapId, x, y) !== 'water') return false;
@@ -47,7 +71,7 @@ export function isOpenWaterTile(mapId: string, x: number, y: number): boolean {
   return Boolean(content.buildables.find(piece.id)?.boat);
 }
 
-function findWaterSpawn(mapId: string, around: { x: number; y: number }): { x: number; y: number } | null {
+function findWaterSpawn(mapId: string, around: { x: number; y: number }): BoatTile | null {
   const cx = Math.floor(around.x);
   const cy = Math.floor(around.y);
   const offsets: [number, number][] = [
@@ -87,20 +111,27 @@ export function boardBoat(mapId: string, waterAt: { x: number; y: number }): boo
   gameState.data.player.mapId = mapId;
   gameState.data.player.x = (tile.x + 0.5) * TILE_SIZE;
   gameState.data.player.y = (tile.y + 0.5) * TILE_SIZE;
-  writeBoating(true);
+  const cur = readState();
+  const parked = cur.parked ? { ...cur.parked } : undefined;
+  if (parked) delete parked[mapId];
+  saveBoatState({ boating: true, parked });
   gameState.setFlag('boated-once');
   gameState.save();
   bus.emit('boat-changed', { boating: true });
   return true;
 }
 
+function overlapsTile(r: { x: number; y: number; w: number; h: number }, tx: number, ty: number): boolean {
+  return tx + 1 > r.x && tx < r.x + r.w && ty + 1 > r.y && ty < r.y + r.h;
+}
+
 function isBlockedByWorld(mapId: string, tx: number, ty: number): boolean {
   const map = MAPS[mapId];
   if (!map) return true;
-  if (map.obstacles.some((o) => isBlocked(o.id) && tx >= o.rect.x && tx < o.rect.x + o.rect.w && ty >= o.rect.y && ty < o.rect.y + o.rect.h)) {
+  if (map.obstacles.some((o) => isBlocked(o.id) && overlapsTile(o.rect, tx, ty))) {
     return true;
   }
-  if (map.props.some((p) => p.solid && tx >= p.solid.x && tx < p.solid.x + p.solid.w && ty >= p.solid.y && ty < p.solid.y + p.solid.h)) {
+  if (map.props.some((p) => p.solid && overlapsTile(p.solid, tx, ty))) {
     return true;
   }
   return false;
@@ -133,7 +164,16 @@ export function findLandingTile(mapId: string, px: number, py: number): { tx: nu
   return best ? { tx: best.tx, ty: best.ty, x: best.x, y: best.y } : null;
 }
 
-/** Steps out of the boat onto the nearest shore or bridge tile. Returns false if none is within reach. */
+function findParkWaterTile(mapId: string, px: number, py: number, landing: { tx: number; ty: number }): BoatTile | null {
+  const cur = { x: Math.floor(px / TILE_SIZE), y: Math.floor(py / TILE_SIZE) };
+  if (baseTileAt(mapId, cur.x, cur.y) === 'water' && !getPieceAt(mapId, cur.x, cur.y)) return cur;
+  return (
+    findWaterSpawn(mapId, { x: landing.tx, y: landing.ty }) ??
+    (isOpenWaterTile(mapId, cur.x, cur.y) ? cur : findWaterSpawn(mapId, cur))
+  );
+}
+
+/** Steps out of the boat onto the nearest shore or bridge tile, leaving the boat moored beside the landing spot. */
 export function disembarkBoat(mapId: string, px: number, py: number): boolean {
   if (!isBoating()) return false;
   const landing = findLandingTile(mapId, px, py);
@@ -141,9 +181,20 @@ export function disembarkBoat(mapId: string, px: number, py: number): boolean {
     bus.emit('toast', { text: 'Fahr ans Ufer oder an einen Steg, um anzulegen.' });
     return false;
   }
+  const waterTile = findParkWaterTile(mapId, px, py, landing);
+  const pieceAtWater = waterTile ? getPieceAt(mapId, waterTile.x, waterTile.y) : undefined;
+  const onBuiltDock = pieceAtWater !== undefined && Boolean(content.buildables.find(pieceAtWater.id)?.boat);
+  const nearPierBoat = (MAPS[mapId]?.interactables ?? []).some(
+    (i) => i.type === 'boat' && Math.hypot(i.at.x * TILE_SIZE - landing.x, i.at.y * TILE_SIZE - landing.y) <= 1.5 * TILE_SIZE,
+  );
+  const cur = readState();
+  const parked = { ...(cur.parked ?? {}) };
+  if (waterTile && !onBuiltDock && !nearPierBoat) parked[mapId] = waterTile;
+  else delete parked[mapId];
+
   gameState.data.player.x = landing.x;
   gameState.data.player.y = landing.y;
-  writeBoating(false);
+  saveBoatState({ parked });
   gameState.save();
   bus.emit('boat-changed', { boating: false });
   return true;
