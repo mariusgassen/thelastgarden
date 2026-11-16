@@ -8,6 +8,7 @@ import { gameState } from '../systems/state';
 import { hasTravelMap, travelTo } from '../systems/travel';
 import { Banner } from '../ui/Banner';
 import { ContextButton } from '../ui/ContextButton';
+import { DayClock } from '../ui/DayClock';
 import { DialoguePanel } from '../ui/DialoguePanel';
 import { drawHorseIcon, drawMapIcon, HudButton } from '../ui/HudButton';
 import { InventoryPanel } from '../ui/InventoryPanel';
@@ -40,6 +41,7 @@ export class UIScene extends Phaser.Scene {
   private mapPanel!: MapPanel;
   private mapButton!: HudButton;
   private rideButton!: HudButton;
+  private dayClock!: DayClock;
   private tutorial!: TutorialHints;
   private safe: SafeArea = { top: 0, right: 0, bottom: 0, left: 0 };
   private downAt = new Map<number, { x: number; y: number; t: number }>();
@@ -106,6 +108,7 @@ export class UIScene extends Phaser.Scene {
     );
     this.mapButton = new HudButton(this, drawMapIcon, touch ? undefined : 'M');
     this.rideButton = new HudButton(this, drawHorseIcon, touch ? undefined : 'R');
+    this.dayClock = new DayClock(this);
     this.tutorial = new TutorialHints(this, touch, () => this.layoutTopStack());
 
     this.input.on(Phaser.Input.Events.POINTER_DOWN, this.onPointerDown, this);
@@ -194,6 +197,7 @@ export class UIScene extends Phaser.Scene {
 
   override update(_time: number, delta: number): void {
     inputState.setMove(this.joystick.vectorX, this.joystick.vectorY);
+    this.dayClock.update();
     this.tutorial.update(delta);
     this.syncHudButtons();
     if (this.toastQueue.length > 0 && this.time.now >= this.toastBusyUntil) {
@@ -222,7 +226,8 @@ export class UIScene extends Phaser.Scene {
     this.joystick.setRestPosition(safe.left + 92, h - safe.bottom - 100);
     this.dialogue.layout(w, h, safe.bottom, safe.left, safe.right);
     this.resourceBar.setPosition(safe.left + 28, topRowY);
-    this.questLog.layout(w, h, safe, topRowY);
+    this.questLog.layout(w, h, safe, topRowY, this.dayClock.width);
+    this.dayClock.setPosition(w - safe.right - 18, this.questLog.topBarBottom + 8 + this.dayClock.height / 2);
     this.inventory.layout(w, h, safe);
     this.mapPanel.layout(w, h, safe);
     this.areaBanner.setMaxWidth(maxBannerW);
@@ -242,7 +247,7 @@ export class UIScene extends Phaser.Scene {
     const maxTopRowBannerW = 2 * Math.min(leftClearance, rightClearance);
     const areaFitsTopRow = maxTopRowBannerW >= this.areaBanner.width;
 
-    let nextY = this.questLog.trackerBottom;
+    let nextY = Math.max(this.questLog.trackerBottom, this.dayClock.bottom);
     if (areaFitsTopRow) {
       this.areaBanner.setPosition(centerX, topRowY);
       if (this.areaBanner.isVisible) {
