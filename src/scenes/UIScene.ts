@@ -434,6 +434,7 @@ export class UIScene extends Phaser.Scene {
     // The bars take the bottom edge on narrow screens; the action button and the column move up above them.
     let buttonY = this.viewH - this.safe.bottom - r - 34;
     if (bar) buttonY = Math.min(buttonY, this.viewH - this.safe.bottom - bar.height - 14 - r);
+    inputState.bottomInset = bar ? this.safe.bottom + bar.height + 10 : 0;
     this.button.setPosition(this.viewW - this.safe.right - r - 22, buttonY);
     let x = this.viewW - this.safe.right - 22 - HudButton.RADIUS;
     const startY = buttonY - r - 16 - HudButton.RADIUS;

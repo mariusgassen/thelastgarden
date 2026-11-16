@@ -201,6 +201,7 @@ export class WorldScene extends Phaser.Scene implements WorldApi {
       }
     }
 
+    if (inputState.bottomInset !== this.appliedInset) this.applyZoom();
     const frozen = inputState.modal || this.transitioning;
     const building = getBuildMode().active || isToolActing();
     const onBlight = isBlightedPx(this.map.id, this.player.feetX, this.player.feetY);
@@ -286,6 +287,8 @@ export class WorldScene extends Phaser.Scene implements WorldApi {
     return { x: tile.x * TILE_SIZE, y: tile.y * TILE_SIZE };
   }
 
+  private appliedInset = 0;
+
   private applyZoom(): void {
     const cssMin = Math.min(this.scale.width, this.scale.height) / DPR;
     const zoom = Phaser.Math.Clamp(cssMin / (TARGET_TILES_ACROSS * TILE_SIZE), 1, 2) * DPR;
@@ -297,7 +300,10 @@ export class WorldScene extends Phaser.Scene implements WorldApi {
     const viewH = this.scale.height / zoom;
     const bw = Math.max(w, viewW);
     const bh = Math.max(h, viewH);
-    cam.setBounds((w - bw) / 2, (h - bh) / 2, bw, bh);
+    // A bar over the bottom of the screen hides the last tiles: let the camera scroll past the edge by its height.
+    this.appliedInset = inputState.bottomInset;
+    const extra = (this.appliedInset * DPR) / zoom;
+    cam.setBounds((w - bw) / 2, (h - bh) / 2, bw, bh + extra);
   }
 
   private updateMarker(): void {
