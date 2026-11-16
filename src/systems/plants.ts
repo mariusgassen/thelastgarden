@@ -274,6 +274,31 @@ export function shiftGrowth(bedId: string, ms: number): boolean {
   return true;
 }
 
+/**
+ * Helpers speed these beds up by `ms`: a growing bed gets older, a harvested one regrows sooner.
+ * Saves once. Returns how many beds changed (bees, see systems/animals.ts).
+ */
+export function speedUpBeds(bedIds: string[], ms: number): number {
+  const state = readState();
+  let changed = 0;
+  for (const id of bedIds) {
+    const bed = state.beds[id];
+    if (!bed) continue;
+    if (!isBedMature(id)) {
+      bed.plantedAt -= ms;
+      changed++;
+    } else if (bed.harvestedAt !== undefined && !isProduceReady(id)) {
+      bed.harvestedAt -= ms;
+      changed++;
+    }
+  }
+  if (changed > 0) {
+    writeState(state);
+    gameState.save();
+  }
+  return changed;
+}
+
 /** Dev-only: rewinds every planted bed's clock so growth and regrowth advance immediately (see window.__tlg). */
 export function debugRewindGrowth(ms: number): void {
   const state = readState();

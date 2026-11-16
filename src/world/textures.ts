@@ -2063,6 +2063,31 @@ const ITEM_ICON_DRAWERS: Record<string, (g: G) => void> = {
   },
 
   // ── Produce ──
+  'produce-egg': (g) => {
+    g.fillStyle(0xc9a47a, 1);
+    g.fillEllipse(18, 27, 24, 8);
+    g.fillStyle(0xf2e4c9, 1);
+    g.fillEllipse(18, 17, 15, 19);
+    g.fillStyle(0xfff6e0, 0.8);
+    g.fillEllipse(14.5, 12.5, 4, 6);
+    g.lineStyle(1.2, 0xb99a6a, 0.9);
+    g.strokeEllipse(18, 17, 15, 19);
+  },
+  'produce-honey': (g) => {
+    g.fillStyle(0xe0a02b, 1);
+    g.fillRoundedRect(8, 12, 20, 18, 6);
+    g.fillStyle(0xf2c35a, 0.9);
+    g.fillRoundedRect(10, 14, 6, 12, 3);
+    g.fillStyle(0xc9a47a, 1);
+    g.fillRoundedRect(10, 7, 16, 6, 2);
+    g.fillStyle(0xfff6e0, 1);
+    g.fillRoundedRect(12, 18, 12, 7, 2);
+    g.fillStyle(0xe0a02b, 1);
+    g.fillCircle(18, 21.5, 2);
+    g.fillStyle(0xe0a02b, 1);
+    g.fillRect(23, 11, 2.6, 8);
+    g.fillCircle(24.3, 19, 1.8);
+  },
   'produce-tendril': (g) => {
     g.lineStyle(2.8, 0x4f7a3f, 1);
     g.beginPath();
@@ -2515,6 +2540,146 @@ function generateBuildAndBlightTextures(make: MakeFn): void {
     g.fillCircle(10, 21, 3.5);
     g.fillCircle(16, 14, 3);
     g.fillCircle(31, 21, 3);
+  });
+
+  // ── Animal homes and their residents (systems/animals.ts, systems/animalLayer.ts) ──
+  make('build-beehive', 30, 40, (g) => {
+    g.fillStyle(0x000000, 0.18);
+    g.fillEllipse(15, 37, 28, 5);
+    g.fillStyle(0x6d4a30, 1);
+    g.fillRect(5, 28, 3, 10);
+    g.fillRect(22, 28, 3, 10);
+    g.fillRoundedRect(3, 25, 24, 5, 2);
+    g.fillStyle(0xd9a441, 1);
+    g.fillRoundedRect(6, 8, 18, 18, 3);
+    g.fillStyle(0xb98530, 1);
+    g.fillRect(6, 13, 18, 2);
+    g.fillRect(6, 19, 18, 2);
+    g.fillStyle(0x6e4a2f, 1);
+    g.fillRoundedRect(4, 3, 22, 7, 3);
+    g.fillStyle(0x3a2a1e, 1);
+    g.fillEllipse(15, 22, 6, 4);
+    g.fillStyle(0x6a9a4e, 0.9);
+    g.fillCircle(7, 4.5, 2.4);
+    g.fillCircle(24, 5, 2);
+  });
+  make('build-henhouse', 40, 40, (g) => {
+    g.fillStyle(0x000000, 0.18);
+    g.fillEllipse(20, 37, 38, 6);
+    g.fillStyle(0x8a603d, 1);
+    g.fillRoundedRect(4, 15, 32, 21, 2);
+    g.lineStyle(1.2, 0x6e4a2f, 1);
+    for (const x of [11, 18, 25, 32]) g.lineBetween(x, 16, x, 35);
+    g.fillStyle(0x6e4a2f, 1);
+    g.fillTriangle(0, 17, 20, 2, 40, 17);
+    g.fillStyle(0xa8753f, 1);
+    g.fillTriangle(5, 16, 20, 5, 35, 16);
+    g.fillStyle(0x2c2018, 1);
+    g.fillRoundedRect(15, 24, 10, 12, 4);
+    g.fillStyle(0xe9d089, 1);
+    g.fillRect(6, 33, 8, 3);
+    g.fillStyle(0xf2e4c9, 1);
+    g.fillEllipse(30, 34, 5, 6);
+  });
+  make('build-goatpen', 44, 36, (g) => {
+    g.fillStyle(0x000000, 0.18);
+    g.fillEllipse(22, 33, 42, 6);
+    g.fillStyle(0x9a8a4a, 0.55);
+    g.fillEllipse(22, 26, 36, 12);
+    for (const x of [2, 15, 28, 39]) {
+      g.fillStyle(0x6d4a30, 1);
+      g.fillRoundedRect(x, 8, 4, 24, 1.5);
+    }
+    g.fillStyle(0x8a603d, 1);
+    g.fillRect(0, 13, 44, 3.5);
+    g.fillRect(0, 22, 44, 3.5);
+    g.fillStyle(0xa8753f, 1);
+    g.fillRect(0, 13, 44, 1.2);
+    g.fillRect(0, 22, 44, 1.2);
+    g.fillStyle(0xe9d089, 1);
+    g.fillRoundedRect(17, 26, 10, 5, 2);
+  });
+  make('build-stable', 52, 52, (g) => {
+    g.fillStyle(0x000000, 0.2);
+    g.fillEllipse(26, 48, 50, 7);
+    g.fillStyle(0x7a5233, 1);
+    g.fillRoundedRect(4, 20, 44, 28, 2);
+    g.lineStyle(1.2, 0x5c3b25, 1);
+    for (const x of [12, 20, 28, 36, 44]) g.lineBetween(x, 21, x, 47);
+    g.fillStyle(0x5c3b25, 1);
+    g.fillTriangle(0, 22, 26, 3, 52, 22);
+    g.fillStyle(0x8a603d, 1);
+    g.fillTriangle(6, 21, 26, 6, 46, 21);
+    g.fillStyle(0x2c2018, 1);
+    g.fillRoundedRect(13, 28, 26, 20, 3);
+    // Mohn looks out over the half door.
+    g.fillStyle(0x9a6a42, 1);
+    g.fillEllipse(26, 36, 12, 11);
+    g.fillTriangle(21, 31, 24, 28, 24, 33);
+    g.fillTriangle(31, 31, 28, 28, 28, 33);
+    g.fillStyle(0xd9b48a, 1);
+    g.fillEllipse(26, 41, 7, 5);
+    g.fillStyle(0x2c2018, 1);
+    g.fillCircle(23, 35, 1);
+    g.fillCircle(29, 35, 1);
+    g.fillStyle(0x8a603d, 1);
+    g.fillRect(13, 42, 26, 6);
+    g.fillStyle(0xe9d089, 1);
+    g.fillRect(6, 44, 6, 3);
+  });
+  make('hen', 24, 22, (g) => {
+    g.fillStyle(0x000000, 0.16);
+    g.fillEllipse(12, 20, 18, 4);
+    g.fillStyle(0xd9a441, 1);
+    g.fillRect(9, 15, 1.6, 5);
+    g.fillRect(14, 15, 1.6, 5);
+    g.fillStyle(0xf2e4c9, 1);
+    g.fillEllipse(11, 12, 18, 13);
+    g.fillTriangle(2, 8, 5, 12, 2, 14);
+    g.fillStyle(0xd9c7a3, 1);
+    g.fillEllipse(9, 13, 9, 7);
+    g.fillStyle(0xf2e4c9, 1);
+    g.fillCircle(17, 6, 4.5);
+    g.fillStyle(0xd84a3a, 1);
+    g.fillCircle(16, 2, 1.8);
+    g.fillCircle(18.5, 2.3, 1.5);
+    g.fillStyle(0xe9a23b, 1);
+    g.fillTriangle(20.5, 5, 24, 6.5, 20.5, 8);
+    g.fillStyle(0x3a2a1e, 1);
+    g.fillCircle(18, 5.5, 0.9);
+  });
+  make('goat', 34, 30, (g) => {
+    g.fillStyle(0x000000, 0.16);
+    g.fillEllipse(17, 28, 28, 5);
+    g.fillStyle(0xd8d0bf, 1);
+    g.fillRoundedRect(7, 19, 3.5, 9, 1);
+    g.fillRoundedRect(21, 19, 3.5, 9, 1);
+    g.fillStyle(0xf1ead9, 1);
+    g.fillEllipse(15, 17, 24, 13);
+    g.fillRoundedRect(11, 20, 3.5, 8, 1);
+    g.fillRoundedRect(24, 20, 3.5, 8, 1);
+    g.fillTriangle(22, 12, 28, 5, 30, 13);
+    g.fillEllipse(29, 8, 9, 7);
+    g.fillStyle(0xb9a98a, 1);
+    g.fillTriangle(25, 4, 27, 0, 28, 5);
+    g.fillTriangle(30, 4, 31.5, 0, 31, 5);
+    g.fillStyle(0xf1ead9, 1);
+    g.fillTriangle(28, 12, 30, 12, 29, 17);
+    g.fillStyle(0x3a2a1e, 1);
+    g.fillCircle(30, 7, 0.9);
+    g.fillEllipse(33, 9, 2.5, 2);
+    g.fillStyle(0xb9a98a, 1);
+    g.fillEllipse(3.5, 14, 5, 3);
+  });
+  make('bee', 8, 8, (g) => {
+    g.fillStyle(0xdff2f7, 0.8);
+    g.fillEllipse(3, 2, 4, 3);
+    g.fillEllipse(5, 2, 4, 3);
+    g.fillStyle(0xe9b83b, 1);
+    g.fillEllipse(4, 5, 6, 4);
+    g.fillStyle(0x2c2018, 1);
+    g.fillRect(3, 3.5, 1, 3);
+    g.fillRect(5, 3.5, 1, 3);
   });
 
   // ── The blight ──

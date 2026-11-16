@@ -1,6 +1,8 @@
 import Phaser from 'phaser';
 import { content, type DialogueLine } from '../content';
 import { isBlightedPx } from '../systems/blight';
+import { isHorseRested, RESTED_SPEED_FACTOR } from '../systems/animals';
+import { AnimalLayer } from '../systems/animalLayer';
 import { BlightLayer } from '../systems/blightLayer';
 import { getBuildMode, isTileWalkable } from '../systems/building';
 import { BuildLayer } from '../systems/buildLayer';
@@ -46,6 +48,7 @@ export class WorldScene extends Phaser.Scene implements WorldApi {
   interaction!: InteractionSystem;
   obstacles!: ObstacleLayer;
   building!: BuildLayer;
+  animals!: AnimalLayer;
   blight!: BlightLayer;
   plants!: PlantLayer;
   resources!: ResourceLayer;
@@ -119,6 +122,7 @@ export class WorldScene extends Phaser.Scene implements WorldApi {
       () => ({ x: this.player.feetX, y: this.player.feetY, facing: this.player.facing }),
       isTouchDevice(),
     );
+    this.animals = new AnimalLayer(this, this.map.id, this.interaction);
     this.blight = new BlightLayer(this, this.map.id, this.interaction);
     this.plants = new PlantLayer(this, this.map.id, this.interaction);
     this.resources = new ResourceLayer(this, this.map.id, this.interaction);
@@ -193,7 +197,9 @@ export class WorldScene extends Phaser.Scene implements WorldApi {
     const frozen = inputState.modal || this.transitioning;
     const building = getBuildMode().active;
     const onBlight = isBlightedPx(this.map.id, this.player.feetX, this.player.feetY);
-    this.player.update(delta, frozen, onBlight ? BLIGHT_SPEED_FACTOR : 1);
+    const restedHorse = isRidingHere(this.map.id) && isHorseRested() ? RESTED_SPEED_FACTOR : 1;
+    this.player.update(delta, frozen, (onBlight ? BLIGHT_SPEED_FACTOR : 1) * restedHorse);
+    this.animals.update(delta);
     this.building.update(!frozen);
     this.horse.update(this.player.feetX, this.player.feetY, delta, frozen);
     this.atmosphere.update(delta);

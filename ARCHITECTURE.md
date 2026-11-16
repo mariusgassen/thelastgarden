@@ -444,6 +444,37 @@ push back a grey wilt that creeps in at night. No money, no chores, no fail stat
 - **New outdoor map?** Optionally add `blightHearts`; a unit test checks hearts sit on open
   ground, away from spawns and beds.
 
+## Helper animals
+
+Animals move into homes you build; nothing to feed, no chores, nothing lost if left alone. No
+money, no selling.
+
+- **Homes.** Four pieces in `content/buildables.ts` carry `BuildableDef.home = { animal }`:
+  Bienenstock (3 Holz, 1 Lichtpollen), Hühnerstall (4 Holz, 1 Schrott), Ziegengehege (4 Holz,
+  1 Feldstein, 1 Brombeertrieb) and Pferdestall (5 Holz, 2 Feldstein, 1 Schrott).
+- **Logic.** `systems/animals.ts` (no Phaser):
+  - *Bees:* beds within 6 tiles grow and regrow 50 % faster (`speedUpBeds` in `plants.ts`, ticks
+    every 3 s, also off-screen), every second harvest from such a bed yields one extra, and the
+    hive fills with `produce-honey` (1 per 120 s, max 3) while something is planted nearby.
+  - *Hens:* a henhouse within 9 tiles keeps snails off a bed (`isCoveredByHens`, used by the snail
+    night, outcome `protectedBy: 'hens'`, dialogue `night-snails-hens`) and lays `produce-egg`
+    (1 per 75 s, max 4).
+  - *Goat:* once per night (`onNightfall` in `blight.ts`, after the blight has grown) grazes the 6
+    blighted tiles nearest the pen within 10 tiles (`clearBlightTiles`) and opens the nearest
+    blocked bramble within 10 tiles.
+  - *Stable:* after a night with a stable standing and Mohn befriended she is rested: riding is
+    12 % faster until the next night. Honey given at the stable rests her at once (`feedHorse`).
+- **Produce** is derived from a timestamp per home, so it keeps coming while the game is closed.
+  Eggs and honey are plain `produce` items for the cooking recipes to use.
+- **Rendering.** `systems/animalLayer.ts` (`AnimalLayer`): hens and goat wander ~1.6 tiles around
+  their home on free ground (standing still with reduced motion), bees circle the hive, an item
+  badge shows when produce waits, and each home has an interactable (*Eier nehmen*, *Honig nehmen*,
+  *Streicheln*, *Mohn besuchen*).
+- **Save.** Only `ext.animals = { stamps: { "<mapId>:<x>:<y>": epoch ms }, rested: boolean }`; old
+  saves start empty.
+- **Debug.** `__tlg.animals.{getHomes, readyProduce, collectProduce, isHorseRested, feedHorse}`;
+  `__tlg.restUntilMorning()` runs a night including the goat and the stable.
+
 ## Wave boundaries
 
 - **Wave 2 (plant abilities):** done — see "Plant Abilities" above.
