@@ -74,13 +74,22 @@ export function craftingMenuLines(): DialogueLine[] | null {
 const itemList = (items: { itemId: string; count: number }[]): string =>
   items.map((i) => `${i.count} ${content.items.get(i.itemId).name}`).join(', ');
 
+/** Crafts a recipe and emits the matching reward or shortfall toast. */
+export function craftWithToast(recipeId: string): boolean {
+  const recipe = content.recipes.find(recipeId);
+  if (!recipe) return false;
+  if (craft(recipe.id)) {
+    bus.emit('toast', { text: `+${itemList(recipe.result)}` });
+    return true;
+  }
+  bus.emit('toast', { text: `Dafür fehlt noch: ${itemList(getMissing(recipe))}.` });
+  return false;
+}
+
 // Registered once at module load (interaction.ts imports this module).
 bus.on('dialogue-choice', ({ dialogueId, choiceId }) => {
   if (dialogueId !== CRAFTING_DIALOGUE_ID) return;
-  const recipe = content.recipes.find(choiceId);
-  if (!recipe) return;
-  if (craft(recipe.id)) bus.emit('toast', { text: `+${itemList(recipe.result)}` });
-  else bus.emit('toast', { text: `Dafür fehlt noch: ${itemList(getMissing(recipe))}.` });
+  craftWithToast(choiceId);
 });
 
 bus.on('flag-changed', ({ key, value }) => {

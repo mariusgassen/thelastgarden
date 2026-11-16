@@ -322,8 +322,10 @@ Produce is spent at a workbench. Recipes are content, crafting is a Phaser-free 
   | Saattütchen | 2 Samenkapsel, 1 Tau | `page-mill` | 1 seed each: bramble, lily, lavender |
 
 - **System.** `systems/crafting.ts`: `getUnlockedRecipes()`, `getMissing(recipe)`,
-  `craft(recipeId)` (emits `item-crafted`), `craftingMenuLines()`. The menu is an ad-hoc dialogue
-  with id `crafting`; the module listens for `dialogue-choice` and crafts the picked recipe.
+  `craft(recipeId)` (emits `item-crafted`), `craftWithToast(recipeId)`. Interacting with a
+  workbench emits `crafting-open`, which opens `ui/CraftingPanel.ts` — a visual recipe icon
+  grid with craftable checkmarks, ingredient icon/count chips, and a "Herstellen" bar (1–9,
+  arrows + E, or tap).
 - **Stations.** New `InteractableSpec` type `craft` (`emptyDialogueId` while nothing is
   unlocked, optional `variants` that run first). Placed as `workbench` (workshop),
   `cottage-herb-rack` (M.'s cottage) and `mill-workbench` (mill interior), so each episode has
@@ -342,14 +344,16 @@ Produce is spent at a workbench. Recipes are content, crafting is a Phaser-free 
 ## Inventory, pocket workbench and crafting tutorials
 
 - **Inventory ("Beutel").** `systems/inventory.ts` `getInventoryGroups()` groups carried items
-  by category (no Phaser); `ui/InventoryPanel.ts` renders them as a scrollable modal. It opens
-  by tapping the resource bar (`ResourceBar.contains`) or with **I**, and closes with × / Esc /
-  a tap outside. `UIScene.syncModal()` keeps `inputState.modal` true while a dialogue, the
-  quest log or the inventory is open.
+  by category (no Phaser); `ui/InventoryPanel.ts` renders them as a scrollable icon grid with
+  count badges and a bottom detail bar for the selected item (icons generated in
+  `world/textures.ts`). It opens by tapping the resource bar (`ResourceBar.contains`) or with
+  **I**, and closes with × / Esc / a tap outside. `UIScene.syncModal()` keeps
+  `inputState.modal` true while any modal panel (dialogue, quest log, inventory, crafting,
+  or map) is open.
 - **Pocket workbench.** The item `pocket-workbench` ("Werkzeugrolle") is the reward of
   `q-craft-cutting`. While `hasPocketWorkbench()` is true, the inventory shows a "Werkeln"
-  button and **C** opens the same crafting menu as a workbench, on any map. Fixed workbenches
-  stay; they are how the first cutting is made.
+  button and **C** opens the same `CraftingPanel` as a workbench, on any map. Fixed
+  workbenches stay; they are how the first cutting is made.
 - **Tutorial quests.** `q-craft-cutting`, `q-craft-lantern` and `q-craft-sachet` start with
   `quest-completed:q-journal-pages` (before `q-greenhouse` in the list, so the tracker keeps
   the main journey); `q-craft-seed-mix` starts with `journal-read:page-mill`. Each has a

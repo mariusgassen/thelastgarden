@@ -4,9 +4,17 @@ import { TILE_IDS, TILE_SIZE, TILES, TILESET_MARGIN, TILESET_SPACING, type TileD
 
 type G = Phaser.GameObjects.Graphics;
 
+export function itemTextureKey(itemId: string): string {
+  return `item-${itemId}`;
+}
+
+export function recipeTextureKey(recipeId: string): string {
+  return recipeId === 'seed-mix' ? 'recipe-seed-mix' : `recipe-${recipeId}`;
+}
+
 /**
  * Generates every texture the game uses from code (no external art).
- * Keys: 'tiles' (tileset strip) plus one key per prop/sprite (see PROP_TEXTURES below).
+ * Keys: 'tiles' (tileset strip) plus one key per prop/sprite/item.
  */
 export function generateTextures(scene: Phaser.Scene): void {
   const g = scene.make.graphics({}, false);
@@ -17,6 +25,7 @@ export function generateTextures(scene: Phaser.Scene): void {
   };
 
   generateTileset(g);
+  generateItemAndUiTextures(make);
 
   make('shadow', 32, 12, (g) => {
     g.fillStyle(0x000000, 0.22);
@@ -1783,4 +1792,505 @@ function drawTile(g: G, ox: number, def: TileDef, rnd: () => number): void {
       }
       break;
   }
+}
+
+type MakeFn = (key: string, w: number, h: number, draw: (g: G) => void) => void;
+
+function drawSeedPacket(g: G, paper: number, flap: number, drawEmblem: (g: G) => void): void {
+  g.fillStyle(0x000000, 0.22);
+  g.fillRoundedRect(8, 7, 22, 26, 4);
+  g.fillStyle(paper, 1);
+  g.fillRoundedRect(7, 5, 22, 26, 4);
+  g.fillStyle(flap, 1);
+  g.fillRoundedRect(7, 5, 22, 7, 3);
+  g.lineStyle(1.5, 0x6e4529, 0.75);
+  g.strokeRoundedRect(7, 5, 22, 26, 4);
+  g.lineBetween(7, 12, 29, 12);
+  drawEmblem(g);
+}
+
+function drawJournalNote(g: G, paper: number, drawSketch: (g: G) => void): void {
+  g.fillStyle(0x000000, 0.2);
+  g.fillRoundedRect(7, 6, 23, 27, 3);
+  g.fillStyle(paper, 1);
+  g.fillRoundedRect(6, 4, 23, 27, 3);
+  g.fillStyle(0xd9c9a0, 1);
+  g.fillTriangle(23, 4, 29, 4, 29, 10);
+  g.lineStyle(1.2, 0x8a603d, 0.8);
+  g.strokeRoundedRect(6, 4, 23, 27, 3);
+  g.lineStyle(1, 0x8a7a5c, 0.65);
+  g.lineBetween(10, 10, 21, 10);
+  g.lineBetween(10, 14, 25, 14);
+  g.lineBetween(10, 18, 22, 18);
+  drawSketch(g);
+}
+
+const ITEM_ICON_DRAWERS: Record<string, (g: G) => void> = {
+  // ── Seeds ──
+  'seed-bramble-vine': (g) =>
+    drawSeedPacket(g, 0xe8d9b5, 0xcbb58a, (g) => {
+      g.fillStyle(0x5d7f45, 1);
+      g.fillEllipse(18, 16, 8, 4);
+      g.fillStyle(0x6b2e4a, 1);
+      g.fillCircle(16, 20, 2.8);
+      g.fillCircle(20, 20, 2.8);
+      g.fillCircle(18, 23.5, 2.8);
+      g.fillStyle(0x9b4b6f, 0.85);
+      g.fillCircle(15.5, 19.2, 1);
+    }),
+  'seed-glow-lily': (g) => {
+    g.fillStyle(0xf3e38a, 0.25);
+    g.fillCircle(18, 20, 14);
+    g.fillStyle(0x5d7f45, 1);
+    g.fillTriangle(16, 12, 20, 12, 18, 5);
+    g.fillStyle(0xc89e52, 1);
+    g.fillCircle(18, 22, 9);
+    g.fillStyle(0xf3e38a, 1);
+    g.fillEllipse(18, 21, 14, 15);
+    g.lineStyle(1.3, 0x8a603d, 0.65);
+    g.lineBetween(18, 13, 18, 29);
+    g.lineBetween(14, 15, 13, 27);
+    g.lineBetween(22, 15, 23, 27);
+    g.fillStyle(0xfff6d8, 0.9);
+    g.fillCircle(15.5, 18, 2);
+  },
+  'seed-lavender': (g) =>
+    drawSeedPacket(g, 0xeae1cf, 0xd1c3aa, (g) => {
+      g.lineStyle(1.6, 0x5d7f45, 1);
+      g.lineBetween(18, 27, 18, 18);
+      g.fillStyle(0x9b84d6, 1);
+      g.fillCircle(18, 16, 2.5);
+      g.fillCircle(16, 19, 2.2);
+      g.fillCircle(20, 19, 2.2);
+      g.fillCircle(18, 22, 2.2);
+    }),
+  'seed-moon-fern': (g) => {
+    g.fillStyle(0x7ae7c7, 0.22);
+    g.fillCircle(18, 21, 13);
+    g.fillStyle(0x8a603d, 1);
+    g.fillRoundedRect(14, 5, 8, 5, 2);
+    g.fillStyle(0xb9e3df, 0.85);
+    g.fillRoundedRect(11, 10, 14, 21, 6);
+    g.lineStyle(1.5, 0xe8f9f6, 0.85);
+    g.strokeRoundedRect(11, 10, 14, 21, 6);
+    g.fillStyle(0x7ae7c7, 1);
+    g.fillCircle(16, 24, 2.4);
+    g.fillCircle(20, 22, 2);
+    g.fillCircle(18, 26, 2.2);
+    g.fillCircle(17, 18, 1.4);
+    g.fillStyle(0xffffff, 0.75);
+    g.fillRect(13, 14, 1.5, 10);
+  },
+  'seed-night-violet': (g) =>
+    drawSeedPacket(g, 0xd8dce8, 0xa8b0cc, (g) => {
+      g.fillStyle(0x6f7bf7, 1);
+      for (let i = 0; i < 5; i++) {
+        const a = (i / 5) * Math.PI * 2 - Math.PI / 2;
+        g.fillCircle(18 + Math.cos(a) * 3.5, 21 + Math.sin(a) * 3.5, 2.4);
+      }
+      g.fillStyle(0xf4d35e, 1);
+      g.fillCircle(18, 21, 1.8);
+    }),
+  'seed-hollyhock': (g) =>
+    drawSeedPacket(g, 0xf2e4df, 0xdabbb4, (g) => {
+      g.fillStyle(0xe8739c, 1);
+      for (let i = 0; i < 5; i++) {
+        const a = (i / 5) * Math.PI * 2 - Math.PI / 2;
+        g.fillCircle(18 + Math.cos(a) * 3.8, 21 + Math.sin(a) * 3.8, 2.6);
+      }
+      g.fillStyle(0xf7ecaa, 1);
+      g.fillCircle(18, 21, 2);
+    }),
+
+  // ── Tools & Keys ──
+  trowel: (g) => {
+    g.fillStyle(0x000000, 0.22);
+    g.fillEllipse(18, 30, 18, 5);
+    g.fillStyle(0x8a603d, 1);
+    g.fillRoundedRect(20, 7, 6, 12, 3);
+    g.fillStyle(0x6e4529, 1);
+    g.fillRect(19, 16, 4, 4);
+    g.fillStyle(0x9da4ac, 1);
+    g.fillTriangle(8, 29, 11, 18, 22, 23);
+    g.fillTriangle(11, 18, 21, 17, 22, 23);
+    g.lineStyle(1.2, 0xd8dee4, 0.8);
+    g.lineBetween(11, 26, 17, 20);
+  },
+  'garden-saw': (g) => {
+    g.fillStyle(0x9ea5ad, 1);
+    g.fillTriangle(6, 25, 22, 14, 24, 19);
+    g.lineStyle(1.4, 0x5c636b, 1);
+    g.lineBetween(7, 26, 23, 20);
+    g.fillStyle(0xb98a56, 1);
+    g.fillRoundedRect(20, 10, 11, 7, 3);
+    g.fillStyle(0x6e4529, 1);
+    g.fillCircle(28, 13.5, 1.5);
+  },
+  'greenhouse-key': (g) => {
+    g.fillStyle(0x000000, 0.22);
+    g.fillEllipse(18, 31, 18, 4);
+    g.lineStyle(3.2, 0xc9a227, 1);
+    g.strokeCircle(12, 15, 6);
+    g.fillStyle(0xc9a227, 1);
+    g.fillRoundedRect(17, 13.5, 14, 3.5, 1.5);
+    g.fillRect(24, 17, 2.5, 5);
+    g.fillRect(28, 17, 2.5, 4);
+    g.fillStyle(0xf4d35e, 0.85);
+    g.fillCircle(10, 13, 1.4);
+  },
+  'pocket-workbench': (g) => {
+    g.fillStyle(0x000000, 0.22);
+    g.fillEllipse(18, 30, 22, 5);
+    g.fillStyle(0x9da4ac, 1);
+    g.fillTriangle(26, 11, 31, 8, 28, 14);
+    g.fillStyle(0x8a603d, 1);
+    g.fillRoundedRect(7, 11, 21, 16, 6);
+    g.fillStyle(0x6e4529, 1);
+    g.fillCircle(11, 19, 4.5);
+    g.fillStyle(0xab7a4f, 1);
+    g.fillCircle(11, 19, 2.2);
+    g.lineStyle(2, 0xf1e6c8, 0.95);
+    g.lineBetween(18, 10.5, 18, 27.5);
+    g.lineBetween(23, 10.5, 23, 27.5);
+  },
+  'tower-water-vial': (g) => {
+    g.fillStyle(0x8a603d, 1);
+    g.fillRoundedRect(15, 4, 6, 4, 1.5);
+    g.fillStyle(0xd8f1f7, 0.85);
+    g.fillRoundedRect(11, 12, 14, 19, 6);
+    g.fillRect(15, 8, 6, 5);
+    g.fillStyle(0x5eb8d9, 0.95);
+    g.fillRoundedRect(12.5, 18, 11, 11.5, 4.5);
+    g.fillStyle(0xffffff, 0.85);
+    g.fillCircle(16, 22, 1.4);
+    g.fillCircle(20, 25, 1);
+    g.lineStyle(1.4, 0xffffff, 0.75);
+    g.strokeRoundedRect(11, 12, 14, 19, 6);
+  },
+  'orchard-apple-graft': (g) => {
+    g.lineStyle(3.2, 0x7d5434, 1);
+    g.lineBetween(8, 28, 27, 9);
+    g.lineBetween(17, 19, 14, 11);
+    g.fillStyle(0x5b8a45, 1);
+    g.fillEllipse(13, 10, 8, 4.5);
+    g.fillEllipse(24, 17, 8, 4.5);
+    g.fillStyle(0xe6a145, 1);
+    g.fillCircle(27, 9, 3.6);
+    g.fillStyle(0xd96045, 0.85);
+    g.fillCircle(28, 8.5, 1.8);
+  },
+  'craft-bramble-cutting': (g) => {
+    g.fillStyle(0x4f7a3f, 1);
+    g.fillEllipse(18, 25, 18, 11);
+    g.fillStyle(0x6b9a52, 1);
+    g.fillEllipse(18, 24, 13, 7);
+    g.lineStyle(2.4, 0x6b2e4a, 1);
+    g.lineBetween(15, 22, 11, 10);
+    g.lineBetween(20, 22, 24, 9);
+    g.fillStyle(0x5b8a45, 1);
+    g.fillCircle(10, 11, 2.8);
+    g.fillCircle(25, 10, 2.8);
+    g.fillStyle(0xa3486e, 1);
+    g.fillCircle(13, 15, 1.8);
+    g.fillCircle(22, 14, 1.8);
+  },
+  'craft-lily-lantern': (g) => {
+    g.fillStyle(0xf3e38a, 0.25);
+    g.fillCircle(18, 20, 14);
+    g.lineStyle(1.6, 0x9ea5ad, 1);
+    g.strokeCircle(18, 10, 6);
+    g.fillStyle(0xcfe7ea, 0.8);
+    g.fillRoundedRect(10, 12, 16, 19, 4);
+    g.fillStyle(0x8a603d, 1);
+    g.fillRoundedRect(12, 10, 12, 3.5, 1.5);
+    g.fillStyle(0xf3e38a, 1);
+    g.fillCircle(18, 22, 5.5);
+    g.fillStyle(0xffffff, 0.95);
+    g.fillCircle(18, 21, 2.5);
+    g.lineStyle(1.3, 0xffffff, 0.75);
+    g.strokeRoundedRect(10, 12, 16, 19, 4);
+  },
+  'craft-lavender-sachet': (g) => {
+    g.fillStyle(0xe8dcc0, 1);
+    g.fillRoundedRect(10, 14, 16, 17, 6);
+    g.fillTriangle(12, 14, 24, 14, 18, 8);
+    g.lineStyle(1.4, 0xa89474, 0.9);
+    g.strokeRoundedRect(10, 14, 16, 17, 6);
+    g.fillStyle(0x9b84d6, 1);
+    g.fillRect(13, 13, 10, 3);
+    g.fillCircle(18, 22, 2.5);
+    g.fillCircle(16, 25, 2);
+    g.fillCircle(20, 25, 2);
+  },
+
+  // ── Resources ──
+  'resource-sunlight': (g) => {
+    g.fillStyle(0xf4c430, 0.28);
+    g.fillCircle(18, 18, 14);
+    g.lineStyle(2.2, 0xf7df72, 1);
+    for (let i = 0; i < 8; i++) {
+      const a = (i / 8) * Math.PI * 2;
+      g.lineBetween(18 + Math.cos(a) * 9, 18 + Math.sin(a) * 9, 18 + Math.cos(a) * 14, 18 + Math.sin(a) * 14);
+    }
+    g.fillStyle(0xf4c430, 1);
+    g.fillCircle(18, 18, 7.5);
+    g.fillStyle(0xfff6d8, 0.9);
+    g.fillCircle(16, 16, 2.6);
+  },
+  'resource-dew': (g) => {
+    g.fillStyle(0x8fd6e8, 0.24);
+    g.fillCircle(18, 20, 12);
+    g.fillStyle(0x6ec3db, 1);
+    g.fillCircle(18, 22, 8);
+    g.fillTriangle(10.5, 20, 25.5, 20, 18, 6);
+    g.fillStyle(0x8fd6e8, 1);
+    g.fillCircle(18, 21.5, 6);
+    g.fillStyle(0xffffff, 0.9);
+    g.fillCircle(15.5, 19.5, 2.1);
+  },
+  'resource-curio': (g) => {
+    g.fillStyle(0xd291e4, 0.22);
+    g.fillCircle(18, 18, 13);
+    g.fillStyle(0xc9a227, 1);
+    g.fillCircle(18, 18, 10);
+    g.fillStyle(0xd291e4, 1);
+    g.fillCircle(18, 18, 6.8);
+    g.fillStyle(0xf4d8fc, 0.9);
+    g.fillCircle(16, 16, 2.2);
+    g.lineStyle(1.5, 0xf4d35e, 0.9);
+    g.strokeCircle(18, 18, 10);
+  },
+
+  // ── Produce ──
+  'produce-tendril': (g) => {
+    g.lineStyle(2.8, 0x4f7a3f, 1);
+    g.beginPath();
+    g.arc(19, 18, 9, Phaser.Math.DegToRad(160), Phaser.Math.DegToRad(40), false);
+    g.strokePath();
+    g.fillStyle(0x6a9a4e, 1);
+    g.fillEllipse(12, 23, 7, 4.5);
+    g.fillEllipse(24, 12, 7, 4.5);
+    g.fillStyle(0x8a4a6a, 1);
+    g.fillCircle(17, 11, 3);
+    g.fillCircle(22, 16, 2.6);
+    g.fillStyle(0xc46b94, 0.8);
+    g.fillCircle(16.5, 10.2, 1);
+  },
+  'produce-light-pollen': (g) => {
+    g.fillStyle(0xf7ecaa, 0.28);
+    g.fillCircle(18, 17, 13);
+    g.fillStyle(0x5b8a45, 1);
+    g.fillEllipse(18, 25, 22, 10);
+    g.fillStyle(0xf7ecaa, 1);
+    g.fillCircle(18, 21, 5);
+    g.fillCircle(14, 22, 3.5);
+    g.fillCircle(22, 22, 3.5);
+    g.fillStyle(0xfff9d6, 1);
+    g.fillCircle(15, 13, 1.8);
+    g.fillCircle(21, 11, 1.5);
+    g.fillCircle(19, 16, 1.4);
+  },
+  'produce-scent-bundle': (g) => {
+    g.lineStyle(2, 0x5d7f45, 1);
+    g.lineBetween(14, 30, 17, 13);
+    g.lineBetween(18, 30, 18, 10);
+    g.lineBetween(22, 30, 19, 13);
+    g.fillStyle(0xb7a3e6, 1);
+    for (const [x, y] of [
+      [16, 13],
+      [18, 9],
+      [18, 13],
+      [20, 13],
+      [15, 16],
+      [21, 16],
+    ]) {
+      g.fillCircle(x, y, 2.5);
+    }
+    g.fillStyle(0xd9b48a, 1);
+    g.fillRect(14, 23, 8, 3);
+  },
+  'produce-nectar': (g) => {
+    g.fillStyle(0x8f98f9, 0.24);
+    g.fillCircle(18, 20, 12);
+    g.fillStyle(0x6f7bf7, 1);
+    g.fillCircle(18, 22, 8);
+    g.fillTriangle(10.5, 20, 25.5, 20, 18, 7);
+    g.fillStyle(0xa8b1ff, 1);
+    g.fillCircle(16, 20, 2.5);
+    g.fillStyle(0xffffff, 0.8);
+    g.fillCircle(15.5, 19, 1.1);
+  },
+  'produce-seed-pod': (g) => {
+    g.fillStyle(0xd9a37c, 1);
+    g.fillCircle(18, 19, 10);
+    g.lineStyle(1.4, 0x8a603d, 0.85);
+    g.strokeCircle(18, 19, 10);
+    for (let i = 0; i < 6; i++) {
+      const a = (i / 6) * Math.PI * 2;
+      g.lineBetween(18, 19, 18 + Math.cos(a) * 10, 19 + Math.sin(a) * 10);
+    }
+    g.fillStyle(0x8a603d, 1);
+    g.fillCircle(18, 19, 2.4);
+  },
+
+  // ── Materials ──
+  'craft-valve-seal': (g) => {
+    g.lineStyle(6, 0x8a4a6a, 1);
+    g.strokeCircle(18, 18, 9);
+    g.lineStyle(2, 0xb7a3e6, 0.85);
+    g.strokeCircle(18, 18, 9);
+  },
+  'craft-sealing-braid': (g) => {
+    g.lineStyle(5, 0xb7a3e6, 1);
+    g.lineBetween(9, 26, 27, 10);
+    g.fillStyle(0xd9c9a0, 1);
+    for (let i = 0; i < 5; i++) g.fillCircle(11 + i * 3.5, 24 - i * 3.5, 2.3);
+  },
+  'craft-axle-wax': (g) => {
+    g.fillStyle(0x6f7bf7, 1);
+    g.fillRoundedRect(8, 13, 20, 13, 3);
+    g.fillStyle(0xa8b1ff, 1);
+    g.fillTriangle(8, 13, 28, 13, 23, 9);
+    g.fillTriangle(8, 13, 23, 9, 13, 9);
+    g.fillStyle(0xffffff, 0.55);
+    g.fillRect(12, 15, 10, 2);
+  },
+  'craft-horse-treat': (g) => {
+    g.fillStyle(0xb9a15c, 1);
+    g.fillRoundedRect(7, 12, 22, 13, 4);
+    g.lineStyle(1.4, 0x7d5434, 0.9);
+    g.strokeRoundedRect(7, 12, 22, 13, 4);
+    g.fillStyle(0x5d7f45, 1);
+    g.fillCircle(12, 17, 1.5);
+    g.fillCircle(23, 20, 1.5);
+    g.fillStyle(0x9b84d6, 1);
+    g.fillCircle(18, 16, 1.4);
+    g.lineStyle(2, 0xf1e6c8, 0.9);
+    g.lineBetween(18, 11.5, 18, 25.5);
+  },
+
+  // ── Notes & Chronicle ──
+  'journal-page-bramble': (g) =>
+    drawJournalNote(g, 0xf1e6c8, (g) => {
+      g.fillStyle(0x6b2e4a, 1);
+      g.fillCircle(19, 24, 2.6);
+      g.fillCircle(23, 24, 2.6);
+    }),
+  'journal-page-lily': (g) =>
+    drawJournalNote(g, 0xf1e2be, (g) => {
+      g.fillStyle(0xe9a23b, 1);
+      g.fillCircle(21, 24, 3);
+    }),
+  'journal-page-lavender': (g) =>
+    drawJournalNote(g, 0xf1e6c8, (g) => {
+      g.fillStyle(0x9b84d6, 1);
+      g.fillCircle(21, 24, 2.8);
+    }),
+  'journal-page-mohn': (g) =>
+    drawJournalNote(g, 0xefe5cc, (g) => {
+      g.fillStyle(0xd84a3a, 1);
+      g.fillCircle(21, 24, 2.8);
+    }),
+  'journal-page-tower': (g) =>
+    drawJournalNote(g, 0xeae4d6, (g) => {
+      g.fillStyle(0x5eb8d9, 1);
+      g.fillRect(19, 21, 4, 6);
+    }),
+  'journal-page-heart': (g) =>
+    drawJournalNote(g, 0xf4ebd2, (g) => {
+      g.fillStyle(0x4f7a3f, 1);
+      g.fillCircle(21, 24, 3);
+    }),
+  'journal-page-orchard': (g) =>
+    drawJournalNote(g, 0xe8d5b5, (g) => {
+      g.fillStyle(0xe6a145, 1);
+      g.fillCircle(21, 24, 3);
+    }),
+  'journal-page-mill': (g) =>
+    drawJournalNote(g, 0xf1e6c8, (g) => {
+      g.lineStyle(1.6, 0x6e4529, 1);
+      g.strokeCircle(21, 24, 3);
+    }),
+  'journal-page-farms': (g) =>
+    drawJournalNote(g, 0xf1e6c8, (g) => {
+      g.fillStyle(0xe8739c, 1);
+      g.fillCircle(21, 24, 2.8);
+    }),
+  'erlenbrueck-chronicle': (g) => {
+    g.fillStyle(0x000000, 0.24);
+    g.fillRoundedRect(8, 7, 22, 26, 3);
+    g.fillStyle(0x7d4c29, 1);
+    g.fillRoundedRect(7, 5, 22, 26, 3);
+    g.fillStyle(0xe9a23b, 1);
+    g.fillRect(7, 5, 4, 26);
+    g.strokeRoundedRect(13, 10, 12, 16, 2);
+    g.fillStyle(0xf1e6c8, 1);
+    g.fillRect(18, 28, 3, 5);
+  },
+};
+
+export const ITEM_ICON_IDS = Object.keys(ITEM_ICON_DRAWERS);
+
+function generateItemAndUiTextures(make: MakeFn): void {
+  // UI slot & badge textures (1:1 CSS pixels; supports Phaser 4 setCrop scrolling)
+  make('ui-slot', 56, 56, (g) => {
+    g.fillStyle(0x1f2c1b, 0.96);
+    g.fillRoundedRect(0, 0, 56, 56, 11);
+    g.lineStyle(1.5, 0x5c7a4d, 0.7);
+    g.strokeRoundedRect(1, 1, 54, 54, 10);
+  });
+  make('ui-slot-selected', 56, 56, (g) => {
+    g.fillStyle(0x364a2d, 1);
+    g.fillRoundedRect(0, 0, 56, 56, 11);
+    g.lineStyle(2.5, 0xe9a23b, 1);
+    g.strokeRoundedRect(1.5, 1.5, 53, 53, 10);
+  });
+  make('ui-slot-ready', 56, 56, (g) => {
+    g.fillStyle(0x273a21, 0.98);
+    g.fillRoundedRect(0, 0, 56, 56, 11);
+    g.lineStyle(1.8, 0x8cb86a, 0.9);
+    g.strokeRoundedRect(1, 1, 54, 54, 10);
+  });
+  make('ui-slot-dim', 56, 56, (g) => {
+    g.fillStyle(0x1a2417, 0.88);
+    g.fillRoundedRect(0, 0, 56, 56, 11);
+    g.lineStyle(1.2, 0x44583c, 0.5);
+    g.strokeRoundedRect(1, 1, 54, 54, 10);
+  });
+  make('ui-badge-check', 16, 16, (g) => {
+    g.fillStyle(0x6ea84b, 1);
+    g.fillCircle(8, 8, 7.5);
+    g.lineStyle(2, 0xfff6e0, 1);
+    g.lineBetween(4.5, 8.2, 7, 10.8);
+    g.lineBetween(7, 10.8, 11.8, 5.5);
+  });
+
+  // Fallback icon
+  make('item-fallback', 36, 36, (g) => {
+    g.fillStyle(0x8a603d, 1);
+    g.fillRoundedRect(7, 8, 22, 20, 4);
+    g.lineStyle(1.5, 0xf1e6c8, 0.85);
+    g.strokeRoundedRect(7, 8, 22, 20, 4);
+  });
+
+  for (const [id, draw] of Object.entries(ITEM_ICON_DRAWERS)) {
+    make(itemTextureKey(id), 36, 36, draw);
+  }
+
+  // Multi-seed bundle icon for the seed-mix recipe
+  make('recipe-seed-mix', 36, 36, (g) => {
+    const packets = [
+      { x: 5, y: 8, col: 0xd8c39e, dot: 0x6b2e4a },
+      { x: 11, y: 6, col: 0xefe2bc, dot: 0xe9a23b },
+      { x: 17, y: 9, col: 0xe4daf0, dot: 0x9b84d6 },
+    ];
+    for (const p of packets) {
+      g.fillStyle(p.col, 1);
+      g.fillRoundedRect(p.x, p.y, 13, 20, 3);
+      g.lineStyle(1.2, 0x6e4529, 0.8);
+      g.strokeRoundedRect(p.x, p.y, 13, 20, 3);
+      g.fillStyle(p.dot, 1);
+      g.fillCircle(p.x + 6.5, p.y + 11, 3);
+    }
+  });
 }

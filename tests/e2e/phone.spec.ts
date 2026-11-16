@@ -79,4 +79,51 @@ test.describe('Phone touch controls', () => {
 
     expect(errors).toEqual([]);
   });
+
+  test('opens the bag by tapping the resource bar and crafts via touch', async ({ page }) => {
+    const errors = trackErrors(page);
+
+    await page.addInitScript((key) => {
+      if (localStorage.getItem(key)) return;
+      localStorage.setItem(
+        key,
+        JSON.stringify({
+          version: 1,
+          savedAt: Date.now(),
+          player: { mapId: 'garden', x: 25.5 * 32, y: 31 * 32, facing: 'right' },
+          world: {
+            unblockedPaths: [],
+            visitedZones: ['garden'],
+            flags: { 'crow-met': true, 'journal-read:page-bramble': true },
+          },
+          inventory: { items: { 'pocket-workbench': 1, 'produce-tendril': 2, 'resource-dew': 1 } },
+          quests: { active: ['q-restore-beds'], completed: ['q-meet-crow'], progress: {} },
+          ext: {},
+        }),
+      );
+    }, SAVE_KEY);
+
+    await page.goto('/');
+    await waitForGameBoot(page);
+
+    // Tap ResourceBar (top-left) -> Beutel opens; tap Werkeln button -> Werkbank opens; tap Herstellen
+    await expect
+      .poll(
+        async () => {
+          const have = (await flushAndReadSave(page))?.inventory.items['craft-bramble-cutting'] ?? 0;
+          if (have > 0) return have;
+          await page.touchscreen.tap(80, 40);
+          await page.waitForTimeout(250);
+          await page.touchscreen.tap(268, 255);
+          await page.waitForTimeout(250);
+          await page.touchscreen.tap(303, 512);
+          await page.waitForTimeout(250);
+          return (await flushAndReadSave(page))?.inventory.items['craft-bramble-cutting'] ?? 0;
+        },
+        { timeout: 15_000, intervals: [150] },
+      )
+      .toBe(1);
+
+    expect(errors).toEqual([]);
+  });
 });
