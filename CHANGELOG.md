@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.3.0](https://github.com/mariusgassen/thelastgarden/compare/the-last-garden-v0.2.0...the-last-garden-v0.3.0) (2026-11-16)
+
+
+### Features
+
+* **story:** add episode 2 quests, branching dialogue, and new maps ([124b13a](https://github.com/mariusgassen/thelastgarden/commit/124b13aa630127ee19456cb7364f55156444c13a))
+* **story:** add episode 3 hill path, orchard, and M. ([9d8c6c9](https://github.com/mariusgassen/thelastgarden/commit/9d8c6c9ddf6aeae35d96e471f4eddce4348bdb88))
+* **story:** add episode 4 old mill, river farms, and garden gathering ([0780eaf](https://github.com/mariusgassen/thelastgarden/commit/0780eaff6d9aa29b3c169e7ce54b2b14d4c0c13e))
+
+
+### Bug Fixes
+
+* **ui:** clip quest log entries with setCrop for Phaser 4 HiDPI ([#21](https://github.com/mariusgassen/thelastgarden/issues/21)) ([898c009](https://github.com/mariusgassen/thelastgarden/commit/898c009580085305c154aa61a95b52111360cf13))
+
 ## [0.2.0](https://github.com/mariusgassen/thelastgarden/compare/the-last-garden-v0.1.0...the-last-garden-v0.2.0) (2026-11-15)
 
 
