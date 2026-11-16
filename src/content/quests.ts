@@ -334,4 +334,122 @@ export const QUESTS: QuestDef[] = [
     rewardFlags: ['episode-3-complete'],
     rewardItems: [{ itemId: 'orchard-apple-graft', count: 1 }],
   },
+  // ── Episode 4: Die alte Mühle am Fluss & Rückkehr nach Erlenbrück ─────────
+  // Optional side quest placed before q-valley-mill so the HUD tracker highlights the main journey first.
+  {
+    id: 'q-orchard-meadow-bed',
+    title: 'Ein Beet für die untere Wiese',
+    summary: 'Auch am westlichen Eingang der Obstwiesen wartet noch ein freies Stück Erde auf neue Blüten.',
+    startsWhen: ['episode-3-complete'],
+    objectives: [
+      {
+        type: 'flag',
+        flag: 'bed-restored:bed-orchard-extra',
+        description: 'Bepflanze das westliche Beet auf den Obstwiesen und lass die Pflanze reifen.',
+        markers: ['bed:bed-orchard-extra'],
+      },
+    ],
+    rewardItems: [
+      { itemId: 'resource-curio', count: 1 },
+      { itemId: 'seed-hollyhock', count: 1 },
+    ],
+  },
+  {
+    id: 'q-valley-mill',
+    title: 'Zur Alten Mühle am Fluss',
+    summary: 'Östlich der Obstwiesen führt ein alter Weg zu einer Wassermühle am Fluss. Vielleicht kümmert sich dort noch jemand um das Tal.',
+    startsWhen: ['episode-3-complete'],
+    objectives: [
+      {
+        type: 'visitZone',
+        zoneId: 'mill-riverbank',
+        description: 'Folge dem östlichen Pfad der Obstwiesen bis zur Alten Mühle am Fluss.',
+        markers: ['orchard-to-mill'],
+      },
+      {
+        type: 'flag',
+        flag: 'jakob-met',
+        description: 'Sprich vor dem Mühlhaus mit dem alten Müller Jakob.',
+        markers: ['npc:jakob'],
+      },
+    ],
+  },
+  {
+    id: 'q-mill-and-farms',
+    title: 'Mühlrad, Edelreis und die drei Höfe',
+    summary: 'Hilf Jakob, das alte Mühlrad und die drei stillen Höfe flussabwärts wieder mit Leben zu füllen.',
+    startsWhen: ['quest-completed:q-valley-mill'],
+    objectives: [
+      {
+        type: 'flag',
+        flag: 'mill-wheel-repaired',
+        description: 'Mache das alte Mühlrad wieder gangbar (3 Sonnenlicht, 3 Tau, 2 Fundstücke).',
+        markers: ['mill-wheel'],
+      },
+      {
+        type: 'flag',
+        flag: 'mill-apple-grafted',
+        description: 'Veredle den alten Apfel-Wildling auf der Flusswiese mit dem Goldreinetten-Edelreis.',
+        markers: ['mill-rootstock'],
+      },
+      {
+        type: 'flag',
+        flag: 'bed-restored:bed-mill-hollyhock',
+        description: 'Pflanze eine Stockrose am Mühlenbeet und lass sie erblühen.',
+        markers: ['bed:bed-mill-hollyhock'],
+      },
+      {
+        type: 'flag',
+        flag: 'journal-read:page-mill',
+        description: 'Lies die Chronik der Alten Mühle in der Mahlstube.',
+        markers: ['mill-door', 'journal:page-mill'],
+      },
+      {
+        type: 'visitZone',
+        zoneId: 'river-farms-yard',
+        description: 'Folge dem südlichen Flussweg zu den drei stillen Höfen.',
+        markers: ['mill-to-farms'],
+      },
+      {
+        type: 'unblock',
+        obstacleId: 'bramble-farm-gate',
+        description: 'Öffne das verwachsene Hoftor mit der Brombeerranke.',
+        markers: ['obstacle:bramble-farm-gate'],
+      },
+      {
+        type: 'flag',
+        flag: 'bed-restored:bed-farms-hollyhock',
+        description: 'Pflanze eine Stockrose im Flussgarten der drei Höfe und lass sie erblühen.',
+        markers: ['bed:bed-farms-hollyhock', 'resource:farms-seed-hollyhock'],
+      },
+      {
+        type: 'flag',
+        flag: 'journal-read:page-farms',
+        description: 'Lies die Gedenknotiz im Flussgarten der drei Höfe.',
+        markers: ['journal:page-farms'],
+      },
+    ],
+  },
+  {
+    id: 'q-erlenbrueck-awakens',
+    title: 'Rückkehr nach Erlenbrück',
+    summary: 'Mühle und Flusshöfe erwachen wieder. Lade Jakob ein, mit M. und der Krähe im Botanischen Garten zusammenzukommen.',
+    startsWhen: ['quest-completed:q-mill-and-farms'],
+    objectives: [
+      {
+        type: 'flag',
+        flag: 'jakob-ready-to-return',
+        description: 'Kehre zu Jakob an der Alten Mühle zurück und berichte von den Höfen.',
+        markers: ['farms-to-mill', 'npc:jakob'],
+      },
+      {
+        type: 'flag',
+        flag: 'garden-gathering-celebrated',
+        description: 'Kehre in den Botanischen Garten zurück und sprich am runden Platz mit M.',
+        markers: ['mill-to-orchard', 'orchard-to-hill', 'hill-to-tower', 'tower-to-tramline', 'tramline-to-garden', 'npc:m'],
+      },
+    ],
+    rewardFlags: ['episode-4-complete'],
+    rewardItems: [{ itemId: 'erlenbrueck-chronicle', count: 1 }],
+  },
 ];

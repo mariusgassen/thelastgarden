@@ -154,8 +154,8 @@ export class PlantLayer {
       entry.fireflies = undefined;
     }
 
-    // Lavender and Night Violet send up gentle scent / pollen motes when mature.
-    if (mature && (def.abilityId === 'calm-animals' || def.abilityId === 'call-pollinators')) {
+    // Lavender, Night Violet and Hollyhock send up gentle scent / blossom motes when mature.
+    if (mature && (def.abilityId === 'calm-animals' || def.abilityId === 'call-pollinators' || def.abilityId === 'tower-bloom')) {
       if (!entry.scent) {
         entry.scent = this.scene.add
           .particles(entry.cx, entry.cy - 10, 'sparkle', {

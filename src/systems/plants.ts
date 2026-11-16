@@ -28,7 +28,7 @@ interface PlantsExt {
 export const STAGE_DURATION_MS = 15_000;
 
 /** Species tried, in order, on a bed that accepts any plant (PlantingBedDef.plantId is omitted). */
-const ANY_BED_SPECIES_ORDER = ['bramble-vine', 'glow-lily', 'lavender', 'night-violet', 'moon-fern'];
+const ANY_BED_SPECIES_ORDER = ['bramble-vine', 'glow-lily', 'lavender', 'night-violet', 'moon-fern', 'hollyhock'];
 
 function readState(): PlantsExt {
   return gameState.getExt<PlantsExt>('plants', { beds: {} });

@@ -120,15 +120,46 @@ describe('quests, NPCs, journal, resources, and interaction', () => {
     expect(getCompletedQuests().map((q) => q.id)).toContain('q-find-m');
     expect(getActiveQuests().map((q) => q.id)).toEqual(['q-orchard-revival']);
 
-    // Complete q-orchard-revival -> sets episode-3-complete and grants apple graft
+    // Complete q-orchard-revival -> sets episode-3-complete, grants apple graft, and starts Episode 4 quests
     gameState.setFlag('orchard-sluice-repaired');
     gameState.setFlag('bed-restored:bed-orchard-violet');
     gameState.setFlag('journal-read:page-orchard');
     gameState.setFlag('m-orchard-celebrated');
-    expect(getActiveQuests()).toEqual([]);
-    expect(getTrackedObjective()).toBeNull();
     expect(gameState.hasFlag('episode-3-complete')).toBe(true);
     expect(gameState.getItemCount('orchard-apple-graft')).toBe(1);
+    expect(getActiveQuests().map((q) => q.id)).toEqual(['q-orchard-meadow-bed', 'q-valley-mill']);
+    expect(getTrackedObjective()?.quest.id).toBe('q-valley-mill');
+
+    // Complete q-orchard-meadow-bed side quest
+    gameState.setFlag('bed-restored:bed-orchard-extra');
+    expect(getCompletedQuests().map((q) => q.id)).toContain('q-orchard-meadow-bed');
+    expect(gameState.getItemCount('seed-hollyhock')).toBe(1);
+
+    // Complete q-valley-mill -> starts q-mill-and-farms
+    gameState.markZoneVisited('mill-riverbank');
+    gameState.setFlag('jakob-met');
+    expect(getCompletedQuests().map((q) => q.id)).toContain('q-valley-mill');
+    expect(getActiveQuests().map((q) => q.id)).toEqual(['q-mill-and-farms']);
+
+    // Complete q-mill-and-farms -> starts q-erlenbrueck-awakens
+    gameState.setFlag('mill-wheel-repaired');
+    gameState.setFlag('mill-apple-grafted');
+    gameState.setFlag('bed-restored:bed-mill-hollyhock');
+    gameState.setFlag('journal-read:page-mill');
+    gameState.markZoneVisited('river-farms-yard');
+    gameState.markPathUnblocked('bramble-farm-gate');
+    gameState.setFlag('bed-restored:bed-farms-hollyhock');
+    gameState.setFlag('journal-read:page-farms');
+    expect(getCompletedQuests().map((q) => q.id)).toContain('q-mill-and-farms');
+    expect(getActiveQuests().map((q) => q.id)).toEqual(['q-erlenbrueck-awakens']);
+
+    // Complete q-erlenbrueck-awakens -> sets episode-4-complete and grants town chronicle
+    gameState.setFlag('jakob-ready-to-return');
+    gameState.setFlag('garden-gathering-celebrated');
+    expect(getActiveQuests()).toEqual([]);
+    expect(getTrackedObjective()).toBeNull();
+    expect(gameState.hasFlag('episode-4-complete')).toBe(true);
+    expect(gameState.getItemCount('erlenbrueck-chronicle')).toBe(1);
   });
 
   it('evaluates item, unblock, and visitZone objective variants', () => {

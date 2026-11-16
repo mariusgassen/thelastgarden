@@ -860,4 +860,361 @@ export const DIALOGUES: DialogueDef[] = [
       { speaker: 'm', text: 'Mach das. Die Türen von Gartenhaus, Gewächshaus und Wasserturm stehen dir überall offen.' },
     ],
   },
+
+  // ── Episode 4: Obstwiesen Ostweg, Alte Mühle & Drei Höfe ─────────────────
+  {
+    id: 'orchard-sign-east',
+    lines: [
+      { text: 'Ein verwitterter Holzwegweiser Richtung Osten: „Alte Mühle am Fluss · 10 Minuten“ — und darunter mit frischer Kreide: „Drei Höfe flussabwärts“.' },
+    ],
+  },
+  {
+    id: 'mill-path-locked',
+    lines: [
+      { text: 'Der schmale Bachsteg ostwärts liegt im tiefen Schatten überhängender Äste. Zuerst wartet M. auf den Obstwiesen darauf, dass der Mutterbaum erblüht.' },
+    ],
+  },
+  {
+    id: 'mill-wheel-missing',
+    lines: [
+      { text: 'Das große hölzerne Wasserrad der Mühle sitzt trocken und schief in seiner Halterung. Mehrere Schaufelbretter sind vermorscht, und der Eisenzapfen klemmt.' },
+      { text: 'Mit 3× Sonnenlicht, 3× Tau und 2× Fundstück ließen sich die Zapfen lösen, das Holz geschmeidig machen und die gebrochenen Streben ersetzen.' },
+    ],
+  },
+  {
+    id: 'mill-wheel-repaired',
+    lines: [
+      { text: 'Du richtest die Schaufeln mit zwei Fundstücken als Keilen, benetzt das harte Lager mit klarem Tau und lässt warmes Sonnenlicht über das morsche Holz strömen.' },
+      { text: 'Ein tiefes Knarren geht durch die Mühle — dann greift das Wasser unter das Rad, und Tropfen für Tropfen beginnt es sich wieder ruhig im Strom zu drehen!' },
+    ],
+  },
+  {
+    id: 'mill-wheel-done',
+    lines: [
+      { text: 'Das Wasserrad dreht sich gleichmäßig im Fluss und wirft silberne Tropfen in die warme Luft.' },
+    ],
+  },
+  {
+    id: 'mill-rootstock-missing',
+    lines: [
+      { text: 'Ein alter, knorriger Wildling von einem Apfelbaum auf der Flusswiese. Seine Krone wurde vor vielen Jahren gekappt, doch der Stamm steckt noch voller Lebenskraft.' },
+      { text: 'Wenn du ein frisches Edelreis einer alten Sorte hättest, könntest du ihn neu veredeln.' },
+    ],
+  },
+  {
+    id: 'mill-rootstock-repaired',
+    lines: [
+      { text: 'Vorsichtig setzt du M.s Goldreinetten-Edelreis in die junge Rinde des Wildlings und streichst feuchten Mooslehm um die Veredlungsstelle.' },
+      { text: 'Wie von selbst treibt der alte Stamm frische Triebe aus — ein neues Bündel rosafarbener Knospen spannt sich über der Flusswiese!' },
+    ],
+  },
+  {
+    id: 'mill-rootstock-done',
+    lines: [
+      { text: 'Aus dem alten Wildling ist ein junger, lebendiger Goldreinettenbaum gewachsen.' },
+    ],
+  },
+  {
+    id: 'mill-flour-barrels',
+    lines: [
+      { text: 'Leere Holzfässer stehen sauber abgedeckt unter dem Vordach. In einem liegt ein kleiner Strauß getrockneter Stockrosen gegen die Motten.' },
+    ],
+  },
+  {
+    id: 'mill-sign-farms',
+    lines: [
+      { text: '„Flussabwärts · Die drei Höfe von Erlenbrück“. Die alte Wagenspur im Gras ist halb zugewachsen, aber gut zu erkennen.' },
+    ],
+  },
+  {
+    id: 'mill-interior-stone',
+    lines: [
+      { text: 'Ein mächtiger grauer Mahlstein aus Basalt, fein gerillt wie vor hundert Jahren. Über die Welle spürt man jetzt wieder das sanfte Beben des Flusses.' },
+    ],
+  },
+  {
+    id: 'mill-interior-sacks',
+    lines: [
+      { text: 'Grob gewebte Leinensäcke mit verblasstem blauem Stempel: „Erlenbrücker Mühle · Vollkorn & Hafer“. Einige liegen noch ordentlich vernäht auf dem Holzpodest.' },
+    ],
+  },
+  {
+    id: 'mill-interior-ledger',
+    lines: [
+      { text: 'Ein dickes, ledergebundenes Mahlbuch. Neben den alten Kornmengen stehen am Rand kleine Garteneinträge: „Lindenweg 4 — drei Hände Stockrosen mitgegeben“.' },
+    ],
+  },
+  {
+    id: 'journal-page-mill',
+    style: 'page',
+    title: 'Chronik der Alten Mühle',
+    lines: [
+      { text: 'Wer Mehl mahlt, wartet immer auf die Ernte anderer Leute. Ohne die Höfe flussabwärts dreht sich dieses Rad nur für den Wind.' },
+      { text: 'Als Erlenbrück still wurde, habe ich die letzten Stockrosensamen aus dem Lindenweg in meinem Mahlbuch versteckt. Sie blühen an jedem Zaun, wenn jemand nur Erde lockert.' },
+      { text: 'Heute stand wieder Wasser im Graben, als hätte oben auf den Obstwiesen jemand das alte Wehr geöffnet. Vielleicht bleibt der Fluss diesmal nicht allein. — Jakob' },
+    ],
+  },
+  {
+    id: 'farms-well',
+    lines: [
+      { text: 'Ein runder Dorfbrunnen zwischen den drei Höfen. Auf seinem Rand stehen noch zwei Tontöpfe, in denen längst vertrockneter Rosmarin steckt — doch unten spiegelt sich frisches Flusswasser.' },
+    ],
+  },
+  {
+    id: 'farms-bell-quiet',
+    lines: [
+      { text: 'Eine kleine Hofglocke an einem verwitterten Eichenpfosten. Früher läutete sie, wenn frisches Brot aus dem Ofen kam oder die Nachbarn zusammen auf das Feld gingen.' },
+    ],
+  },
+  {
+    id: 'farms-bell-awakened',
+    lines: [
+      { text: 'Ein leichter Flusswind bewegt die Hofglocke über den erblühten Stockrosen — sie gibt einen einzelnen, hellen Klang über die Dächer ab.' },
+    ],
+  },
+  {
+    id: 'farms-house',
+    lines: [
+      { text: 'Die grünen Fensterläden des ersten Flusshofes sind fest verriegelt, doch auf der Schwelle hat jemand sorgfältig das Unkraut gezupft. Hier wurde lange auf Rückkehr gewartet.' },
+    ],
+  },
+  {
+    id: 'farms-boat',
+    lines: [
+      { text: 'Ein breiter Holzkahn schaukelt sanft am Steg. Seine Ruder liegen trocken unter der Bank — bereit für jeden, der wieder Säcke zwischen Höfen und Mühle hinüberfährt.' },
+    ],
+  },
+  {
+    id: 'journal-page-farms',
+    style: 'page',
+    title: 'Gedenknotiz · Die drei Flusshöfe',
+    lines: [
+      { text: 'Wir drei Höfe am unteren Flussbogen sind nicht aus Zorn gegangen, sondern weil nach der letzten Flut der Weg zum Markt verfiel und niemand mehr vom Garten zurückkam.' },
+      { text: 'Falls eines Tages wieder Stockrosen am Flussufer leuchten und das Mühlrad oben schlägt: Sagt in Erlenbrück Bescheid, dass die Saat noch lebt. Unsere Türen stehen wieder offen.' },
+    ],
+  },
+
+  // ── NPC Jakob & Finale im Botanischen Garten ─────────────────────────────
+  {
+    id: 'jakob-intro',
+    lines: [
+      { speaker: 'jakob', text: 'Nanu? Schritte auf dem Steg — und das nach all den Jahren, in denen mir höchstens einmal ein Reiher Gesellschaft geleistet hat.' },
+      { speaker: 'jakob', text: 'Ich bin Jakob. Diese alte Mühle hier mahlt seit dem großen Fortzug eigentlich nur noch Stille.' },
+      {
+        speaker: 'jakob',
+        text: 'Sag, woher kommst du denn herüber? Du riechst nach Apfelblüten und frischer Gartenerde.',
+        choices: [
+          { label: 'Von M. auf den Obstwiesen — wir haben den Mutterbaum wieder zum Blühen gebracht.', nextDialogueId: 'jakob-intro-orchard' },
+          { label: 'Aus dem Botanischen Garten in Erlenbrück. Wir wecken das Tal Beet für Beet.', nextDialogueId: 'jakob-intro-mill' },
+          { label: 'Ich habe deinen Eintrag über „Lindenweg 4 · Stockrose“ gefunden.', nextDialogueId: 'jakob-intro-lindenweg' },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'jakob-intro-orchard',
+    lines: [
+      { speaker: 'jakob', text: 'M. ist noch immer oben zwischen den alten Bäumen? Und der Mutterbaum blüht wieder?! Das erklärt das frische Wasser im Bach!' },
+      { speaker: 'jakob', text: 'Hör zu: Wenn die Obstwiesen leben, darf die Mühle nicht länger schlafen. Mein Wasserrad klemmt, auf der Wiese drüben wartet ein alter Wildling auf ein gutes Edelreis — und flussabwärts liegen noch drei stille Höfe.' },
+      { speaker: 'jakob', text: 'Nimm diese Stockrosen-Samen mit. Einer für unser Mühlenbeet hier und einer für die Höfe unten — und wirf gern auch einen Blick in meine Mahlstube.' },
+    ],
+  },
+  {
+    id: 'jakob-intro-mill',
+    lines: [
+      { speaker: 'jakob', text: 'Den alten Botanischen Garten in der Stadt gibt es noch? Früher habe ich jede Woche einen Sack Kompost gegen Gewürzkräuter getauscht.' },
+      { speaker: 'jakob', text: 'Wenn du mir hilfst, das Mühlrad anzuschieben, den alten Apfel-Wildling drüben zu veredeln und in der Mahlstube sowie bei den drei Höfen flussabwärts ein Zeichen zu setzen, wacht das ganze Tal wieder auf.' },
+      { speaker: 'jakob', text: 'Nimm diese Stockrosen-Samen aus dem Lindenweg mit: eine für den Hof hier und eine für den Flussgarten bei den drei Höfen.' },
+    ],
+  },
+  {
+    id: 'jakob-intro-lindenweg',
+    lines: [
+      { speaker: 'jakob', text: 'Haha! Da siehst du, wie nichts Gutes jemals ganz verloren geht, solange jemand ein kleines Notizbuch behält.' },
+      { speaker: 'jakob', text: 'Hier, nimm diese letzten beiden Tütchen Stockrosen-Samen an dich. Bring unser Mühlrad in Gang, veredle drüben den Apfel-Wildling, schau in der Mahlstube vorbei und trag die Stockrosen bis zu den drei Höfen flussabwärts!' },
+    ],
+  },
+  {
+    id: 'jakob-waiting',
+    lines: [
+      {
+        speaker: 'jakob',
+        text: 'Wie kommen wir voran? Das Mühlrad, der alte Apfel-Wildling auf der Wiese, die Stockrosen, meine Mahlstube und die drei Höfe flussabwärts warten noch auf unsere Hände.',
+        choices: [
+          { label: 'Was fehlt dem alten Wasserrad genau?', nextDialogueId: 'jakob-help-wheel' },
+          { label: 'Wo finde ich den Apfel-Wildling?', nextDialogueId: 'jakob-help-graft' },
+          { label: 'Wie komme ich zu den drei Höfen?', nextDialogueId: 'jakob-help-farms' },
+          { label: 'Ich bin schon unterwegs!', nextDialogueId: 'jakob-help-bye' },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'jakob-help-wheel',
+    lines: [
+      { speaker: 'jakob', text: 'Direkt an der Ostseite meines Hauses am Fluss. Für Lager und Holz brauchst du 3× Sonnenlicht, 3× Tau und 2× Fundstück.' },
+    ],
+  },
+  {
+    id: 'jakob-help-graft',
+    lines: [
+      { speaker: 'jakob', text: 'Überquere einfach die Steinbrücke hier nach Osten auf die Flusswiese. Dort steht der alte Wildling — genau richtig für das Edelreis, das M. dir geschenkt hat.' },
+    ],
+  },
+  {
+    id: 'jakob-help-farms',
+    lines: [
+      { speaker: 'jakob', text: 'Hinter der Flusswiese geht der Pfad nach Süden zu den drei Höfen. Für das zugewachsene Hoftor dort solltest du im Garten schon die Brombeerranke gezüchtet haben.' },
+    ],
+  },
+  {
+    id: 'jakob-help-bye',
+    lines: [
+      { speaker: 'jakob', text: 'Nur mit der Ruhe. Ein Müller lernt vom Fluss, dass Eile noch nie ein Rad schneller gedreht hat.' },
+    ],
+  },
+  {
+    id: 'jakob-return-finale',
+    lines: [
+      { speaker: 'jakob', text: 'Da bist du ja wieder! Hörst du das stetige Pochen unseres Wasserrads? Und bis hierher riecht man die Stockrosen vom Flussbogen.' },
+      { speaker: 'jakob', text: 'Dass auf den drei Höfen schon wieder auf den Weg geschaut wird und drüben sogar ein junger Goldreinettenbaum austreibt … mir fehlen fast die Worte.' },
+      {
+        speaker: 'jakob',
+        text: 'Wenn M. wirklich noch immer nach Erlenbrück zurückblickt — glaubst du, am runden Platz im Botanischen Garten wäre noch Platz für einen alten Müller?',
+        choices: [
+          { label: 'Unbedingt! Komm mit uns in den Botanischen Garten zurück.', nextDialogueId: 'jakob-return-garden' },
+          { label: 'Alle drei Orte gehören jetzt zusammen: Garten, Obstwiesen und Mühle.', nextDialogueId: 'jakob-return-mill' },
+          { label: 'Zur ersten Ernte bringen wir Körbe aus dem ganzen Tal zusammen.', nextDialogueId: 'jakob-return-harvest' },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'jakob-return-garden',
+    lines: [
+      { speaker: 'jakob', text: 'Dann schultere ich meinen alten Rucksack! Ich gehe schon über den Steg voraus zu M. — wir treffen uns alle am runden Platz im Botanischen Garten.' },
+    ],
+  },
+  {
+    id: 'jakob-return-mill',
+    lines: [
+      { speaker: 'jakob', text: 'Ja … nicht ein einzelner Zaun macht eine Stadt aus, sondern die Wege dazwischen. Ich hole meinen Hut und gehe voraus zum Botanischen Garten!' },
+    ],
+  },
+  {
+    id: 'jakob-return-harvest',
+    lines: [
+      { speaker: 'jakob', text: 'Auf den Tag freue ich mich schon! Geh du ruhig in Ruhe zurück — ich treffe dich mit M. und der Krähe am runden Platz im Botanischen Garten.' },
+    ],
+  },
+  {
+    id: 'jakob-garden-arrival',
+    lines: [
+      { speaker: 'jakob', text: 'Wie still und schön der Botanische Garten geworden ist … Sprich zuerst mit M., sie wartet schon auf dich am Platz.' },
+    ],
+  },
+  {
+    id: 'jakob-garden-after',
+    lines: [
+      { speaker: 'jakob', text: 'Weißt du, früher dachte ich, ich sei der Letzte draußen am Fluss. Dabei mussten unsere Gärten sich nur wieder gegenseitig finden.' },
+    ],
+  },
+  {
+    id: 'crow-garden-gathering-wait',
+    lines: [
+      { speaker: 'crow', text: 'Krah! Alle sind zurück am alten Treffpunkt. Selbst der alte Müller steht schon da und staunt über deine Beete!' },
+    ],
+  },
+  {
+    id: 'crow-garden-gathering',
+    lines: [
+      { speaker: 'crow', text: 'Krahaha! Vom Baumstumpf an der Hütte bis zur Alten Mühle — und jetzt schau dir an, wer wieder auf diesem Platz steht!' },
+      { speaker: 'crow', text: 'Wenn im Frühling die ersten Leute aus der Stadt zurückkommen, erzähle ich ihnen vielleicht, wer hier jeden einzelnen Samen gesät hat. Krah!' },
+    ],
+  },
+  {
+    id: 'owl-episode4-after',
+    lines: [
+      { speaker: 'owl', text: 'Von hier oben sehe ich heute nicht nur das Licht deines Gartens und des Gewächshauses, sondern auch die Obstwiesen in Blüte und die Lampen über der Alten Mühle. Erlenbrück schläft nicht mehr — es ruht nur.' },
+    ],
+  },
+  {
+    id: 'm-gathering-finale',
+    lines: [
+      { speaker: 'm', text: 'Schau dich einmal um … Vom verwilderten Tor damals bis heute: Das Glashaus leuchtet, die Beete stehen in Blüte, auf den Obstwiesen summt es — und Jakob steht wieder mitten unter uns.' },
+      { speaker: 'jakob', text: 'Und ich habe unterwegs sogar das alte Goldreinetten-Muster in deinen Notizen wiedergefunden, M. Jetzt hat das ganze Tal wieder eine Zukunft.' },
+      { speaker: 'crow', text: 'Krah! Vergesst nicht, wer am Anfang den Gewächshausschlüssel im Schnabel hüten musste!' },
+      {
+        speaker: 'm',
+        text: 'Sie hat recht. Alles hier begann mit deiner ersten Handvoll Erde. Welche Geschichte soll diese gemeinsame Chronik von Erlenbrück von heute an tragen?',
+        choices: [
+          {
+            label: 'Dass ein einziger gepflegter Garten ein ganzes stilles Tal wieder wecken kann.',
+            nextDialogueId: 'm-finale-garden',
+            setFlags: ['chronicle-ending-garden'],
+          },
+          {
+            label: 'Dass jeder vergessene Ort einen Namen hat — vom Wasserturm bis zu den Höfen.',
+            nextDialogueId: 'm-finale-valley',
+            setFlags: ['chronicle-ending-valley'],
+          },
+          {
+            label: 'Dass alle Türen in Erlenbrück jetzt weit offen stehen für jeden, der zurückkehrt.',
+            nextDialogueId: 'm-finale-future',
+            setFlags: ['chronicle-ending-future'],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'm-finale-garden',
+    lines: [
+      { speaker: 'm', text: 'Genau das werden die ersten Zeilen sein. Und hier — diese gemeinsame Chronik von Erlenbrück gehört dir, als Hüterin des letzten und nun wieder ersten Gartens.' },
+    ],
+  },
+  {
+    id: 'm-finale-valley',
+    lines: [
+      { speaker: 'm', text: 'Kein Name geht verloren, solange jemand ihn aufschreibt und gießt. Nimm unsere gemeinsame Chronik von Erlenbrück an dich.' },
+    ],
+  },
+  {
+    id: 'm-finale-future',
+    lines: [
+      { speaker: 'm', text: 'Die Türen sind entriegelt, die Wege sind frei, und im Boden steckt genug Saatgut für zehn Frühlinge. Nimm diese Chronik von Erlenbrück als unser gemeinsames Versprechen.' },
+    ],
+  },
+  {
+    id: 'm-garden-after',
+    lines: [
+      {
+        speaker: 'm',
+        text: 'Willkommen daheim im Botanischen Garten. Die Luft riecht nach Stockrosen, Lavendel und frischem Apfelholz.',
+        choices: [
+          { label: 'Wie fühlt sich Jakob hier im Garten?', nextDialogueId: 'm-garden-after-jakob' },
+          { label: 'Gibt es noch Beete, die wir frei bepflanzen können?', nextDialogueId: 'm-garden-after-seeds' },
+          { label: 'Ich möchte einfach noch durch das ganze Tal spazieren.', nextDialogueId: 'm-garden-after-peace' },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'm-garden-after-jakob',
+    lines: [
+      { speaker: 'm', text: 'Er hat heute Morgen schon heimlich nachgemessen, wo neben der Gartenhütte Platz für ein schmales Korn- und Stockrosenbeet wäre. So schnell rostet kein Müller ein.' },
+    ],
+  },
+  {
+    id: 'm-garden-after-seeds',
+    lines: [
+      { speaker: 'm', text: 'Ja! Im Garten, im Gewächshaus-Vorraum, auf dem Hügelpfad, den Obstwiesen und der Flusswiese warten noch freie Beete für deine Lieblingssorten.' },
+    ],
+  },
+  {
+    id: 'm-garden-after-peace',
+    lines: [
+      { speaker: 'm', text: 'Nimm dir alle Zeit der Welt. Jeder Weg zwischen Gewächshaus, Wasserturm, Obstwiesen, Mühle und den Höfen gehört nun dir.' },
+    ],
+  },
 ];
