@@ -13,7 +13,8 @@ const DAY_LENGTH_MS = 4 * 60_000;
  */
 export class AtmosphereLayer {
   private readonly shade: Phaser.GameObjects.RenderTexture;
-  private readonly eraser: Phaser.GameObjects.Image;
+  private readonly haloWidth: number;
+  private readonly haloHeight: number;
   private readonly motes: Phaser.GameObjects.Particles.ParticleEmitter;
   private elapsed = 0;
   private lastAlpha = -1;
@@ -26,7 +27,9 @@ export class AtmosphereLayer {
     const width = map.width * TILE_SIZE;
     const height = map.height * TILE_SIZE;
     this.shade = scene.add.renderTexture(0, 0, width, height).setOrigin(0, 0).setDepth(90_000);
-    this.eraser = scene.make.image({ key: 'light-halo', add: false }).setOrigin(0.5, 0.5);
+    const haloFrame = scene.textures.getFrame('light-halo');
+    this.haloWidth = haloFrame?.width || 128;
+    this.haloHeight = haloFrame?.height || 128;
     this.motes = scene.add
       .particles(0, 0, 'sparkle', {
         x: { min: 0, max: width },
@@ -44,7 +47,6 @@ export class AtmosphereLayer {
 
     scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.shade.destroy();
-      this.eraser.destroy();
       this.motes.destroy();
     });
   }
@@ -74,8 +76,13 @@ export class AtmosphereLayer {
       if (!bed) continue;
       const x = (bed.rect.x + bed.rect.w / 2) * TILE_SIZE;
       const y = (bed.rect.y + bed.rect.h / 2) * TILE_SIZE - 16;
-      this.eraser.setDisplaySize(source.lightRadius * 2, source.lightRadius * 2);
-      this.shade.erase(this.eraser, x, y);
+      const diameter = source.lightRadius * 2;
+      this.shade.stamp('light-halo', undefined, x, y, {
+        scaleX: diameter / this.haloWidth,
+        scaleY: diameter / this.haloHeight,
+        blendMode: Phaser.BlendModes.ERASE,
+      });
     }
+    this.shade.render();
   }
 }
