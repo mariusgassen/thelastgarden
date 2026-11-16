@@ -62,4 +62,28 @@ describe('wiki', () => {
     expect(knownKeys()).toContain('test:thing');
     expect(toasts).toContain('Neu im Almanach: Testding');
   });
+
+  it('covers people, places and story, unlocked by playing', () => {
+    const keys = getWikiEntries().map((e) => e.key);
+    for (const n of content.npcs.all()) expect(keys).toContain(`persons:${n.id}`);
+    for (const q of content.quests.all()) expect(keys).toContain(`story:${q.id}`);
+    expect(keys).toContain('places:garden');
+    expect(knownKeys()).not.toContain('persons:crow');
+    bus.emit('interacted', { id: 'npc:crow' });
+    expect(knownKeys()).toContain('persons:crow');
+    gameState.markZoneVisited('garden');
+    refreshWiki();
+    expect(knownKeys()).toContain('places:garden');
+    gameState.markQuestActive('q-meet-crow');
+    refreshWiki();
+    expect(knownKeys()).toContain('story:q-meet-crow');
+  });
+
+  it('explains tools, meals and the new mechanics', () => {
+    const sickle = getWikiEntries().find((e) => e.key === 'items:tool-sickle')!;
+    expect(sickle.lines.join(' ')).toContain(content.tools.get('tool-sickle').hint);
+    expect(knownKeys()).not.toContain('topics:animals');
+    gameState.setFlag('built:beehive');
+    expect(knownKeys()).toContain('topics:animals');
+  });
 });

@@ -11,11 +11,16 @@ export interface WikiTopicDef {
   lines: string[];
   /** The topic is listed once this flag is set; omit for always known. */
   requiresFlag?: string;
+  /** Alternative to `requiresFlag`: listed once ANY of these is set. */
+  requiresAnyFlag?: string[];
 }
 
 /** Section titles by id. Registries nobody listed here show up under their capitalised key. */
 export const WIKI_SECTION_TITLES: Record<string, string> = {
   topics: 'So funktioniert’s',
+  persons: 'Personen',
+  places: 'Orte',
+  story: 'Geschichte',
   plants: 'Pflanzen',
   animals: 'Tiere',
   machines: 'Maschinen',
@@ -28,15 +33,20 @@ export const WIKI_SECTION_TITLES: Record<string, string> = {
   'items:material': 'Baumaterial',
   'items:tool': 'Werkzeug & Zubehör',
   'items:key': 'Schlüssel & Andenken',
+  'items:meal': 'Mahlzeiten',
 };
 
 /** Display order of the sections; anything not listed follows in the order it appears. */
 export const WIKI_SECTION_ORDER = [
   'topics',
+  'persons',
+  'places',
+  'story',
   'plants',
   'items:seed',
   'items:produce',
   'items:resource',
+  'items:meal',
   'items:material',
   'recipes',
   'buildables',
@@ -113,6 +123,42 @@ export const WIKI_TOPICS: WikiTopicDef[] = [
     requiresFlag: 'greenhouse-hint-read',
     lines: [
       'Die Karte öffnest du mit M oder dem Kartenknopf. Sie zeigt jede Gegend, die du schon besucht hast; ein Tipp darauf bringt dich sofort dorthin. Das ist kostenlos und geht auch ohne Pferd.',
+    ],
+  },
+  {
+    id: 'tools',
+    title: 'Werkzeuge',
+    requiresFlag: 'harvested-once',
+    lines: [
+      'Werkzeuge baust du an der Werkbank. Sie werden nie verbraucht, und jedes gibt es nur einmal. Mit T öffnest du die Werkzeugleiste (oder tippst auf den Knopf); Taste 1–4 wählt eines.',
+      'Sichel, Spaten und Saatbeutel wirken beim Tippen oder mit E rund um dich. Die Stablaterne leuchtet einfach mit, wohin du gehst, und trocknet Welke in ihrer Nähe aus.',
+    ],
+  },
+  {
+    id: 'animals',
+    title: 'Helfende Tiere',
+    requiresAnyFlag: ['built:beehive', 'built:henhouse', 'built:goatpen', 'built:stable'],
+    lines: [
+      'Tiere ziehen von selbst in ein Zuhause, das du baust. Du musst sie nicht füttern, und nichts geht verloren, wenn du sie alleinlässt.',
+      'Bienen beschleunigen Beete in der Nähe und füllen den Stock mit Honig. Hühner halten Schnecken von Beeten fern und legen Eier. Die Ziege frisst jede Nacht Welke weg und öffnet Dornengestrüpp. Ein Stall hält Mohn ausgeruht und schneller.',
+    ],
+  },
+  {
+    id: 'machines',
+    title: 'Arbeitende Bauten',
+    requiresAnyFlag: ['built:rain-barrel', 'built:compost', 'built:drying-rack', 'built:windmill'],
+    lines: [
+      'Regentonne und Komposthaufen lassen Beete in der Nähe schneller wachsen. Das Trockengestell macht aus einer Ernte Samen, die Windmühle aus Ernte Blütenmehl.',
+      'Tippe auf die Anlage, um sie zu füllen oder etwas abzuholen. Sie arbeiten auch weiter, während du woanders bist.',
+    ],
+  },
+  {
+    id: 'meals',
+    title: 'Essen',
+    requiresAnyFlag: ['harvested:produce-honeyberry', 'harvested:produce-gold-turnip'],
+    lines: [
+      'Nahrhafte Ernte wird an der Werkbank zu Mahlzeiten. Du isst sie im Beutel mit dem Essen-Knopf; ihre Wirkung hält ein paar Minuten.',
+      'Hunger gibt es nicht. Essen ist eine kleine Hilfe, keine Pflicht.',
     ],
   },
 ];

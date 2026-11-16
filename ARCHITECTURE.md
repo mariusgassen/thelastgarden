@@ -580,8 +580,9 @@ live in `content/wiki.ts` (`WIKI_TOPICS`, optional `requiresFlag`), as do German
 and order (`WIKI_SECTION_TITLES`, `WIKI_SECTION_ORDER`). Items get "grows into / used for"
 lines derived from plants, recipes and buildables.
 
+- **People, places, story.** `persons:<npc>` from `content.npcs` (found on which maps comes from `MapDef.npcs`; known after talking to them, remembered in `ext.wiki`), `places:<map>` from `MAPS` (known once a zone is visited), `story:<quest>` from `content.quests` (known once started; shows objectives and status). Tools are items, so their entries get the tool's `hint`; meals show their effect.
 - **Discovery.** Items when owned, plants when their seed or produce is known, recipes when
-  unlocked, build pieces once build mode is unlocked, topics by flag. Generic registries are
+  unlocked, build pieces once build mode is unlocked, topics by flag (`requiresFlag` or `requiresAnyFlag`). Generic registries are
   always listed. To gate or customise, call `registerWikiSource(() => WikiEntry[])` at module load.
   Locked entries show as "???". Discovery is sticky.
 - **Save.** `ext.wiki = { seen: string[] }`, no migration; the first scan after loading picks up

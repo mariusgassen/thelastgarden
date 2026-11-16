@@ -11,6 +11,7 @@
  * after loading picks up everything they already own or unlocked).
  */
 import { content } from '../content';
+import { MAPS } from '../world';
 import type { BuildableDef, ItemDef, PlantDef, RecipeDef } from '../content/types';
 import { WIKI_SECTION_ORDER, WIKI_SECTION_TITLES, WIKI_TOPICS } from '../content/wiki';
 import { isBuildUnlocked } from './building';
@@ -36,13 +37,18 @@ export interface WikiSection {
   entries: { entry: WikiEntry; known: boolean }[];
 }
 
-/** Content registries handled below or meant to stay out of the wiki. */
-const SKIPPED_REGISTRIES = new Set(['quests', 'dialogues', 'npcs']);
+/** Content registries handled above or meant to stay out of the generic path (tools are items too). */
+const SKIPPED_REGISTRIES = new Set(['quests', 'dialogues', 'npcs', 'tools']);
 const OBSTACLE_NAMES: Record<string, string> = {
   bramble: 'Brombeergestrüpp',
   fallenTree: 'umgestürzte Bäume',
   tallGrass: 'hohes Gras',
   denseFog: 'dichten Nebel',
+};
+
+const MEAL_TEXT: Record<string, string> = {
+  swift: '25 % schneller laufen',
+  blightproof: 'die Welke bremst dich nicht',
 };
 
 const extraSources: (() => WikiEntry[])[] = [];
@@ -66,6 +72,9 @@ function owned(itemId: string): boolean {
 
 function itemEntry(item: ItemDef): WikiEntry {
   const lines = [item.description];
+  const tool = content.tools.find(item.id);
+  if (tool) lines.push(tool.hint);
+  if (item.meal) lines.push(`Essen im Beutel: ${MEAL_TEXT[item.meal.effect] ?? item.meal.effect}, ${item.meal.minutes} Minuten.`);
   const seedOf = content.plants.all().filter((p) => p.seedItemId === item.id);
   const yieldOf = content.plants.all().filter((p) => p.produceItemId === item.id);
   if (seedOf.length) lines.push(`Daraus wächst: ${seedOf.map((p) => p.name).join(', ')}.`);
@@ -86,7 +95,7 @@ function plantEntry(plant: PlantDef): WikiEntry {
   lines.push(`Wächst in ${plant.growthStages} Stufen.`);
   if (plant.clears?.length) lines.push(`Räumt, wenn ausgewachsen: ${plant.clears.map((k) => OBSTACLE_NAMES[k] ?? k).join(', ')}.`);
   if (plant.lightRadius) lines.push('Leuchtet nachts und hält die Dunkelheit zurück.');
-  lines.push('Reife Pflanzen halten die Welke von ihrem Beet fern.');
+  lines.push(`Hält als reife Pflanze die Welke im Umkreis von ${plant.wardRadius ?? 3} Feldern fern.`);
   const seeds = [plant.seedItemId, plant.produceItemId].filter((id): id is string => Boolean(id));
   return {
     key: `plants:${plant.id}`,
@@ -117,6 +126,54 @@ function buildableEntry(piece: BuildableDef): WikiEntry {
   return { key: `buildables:${piece.id}`, section: 'buildables', title: piece.name, lines, known: isBuildUnlocked };
 }
 
+function npcEntries(): WikiEntry[] {
+  return content.npcs.all().map((npc) => {
+    const maps = Object.values(MAPS)
+      .filter((m) => m.npcs?.some((p) => p.npcId === npc.id))
+      .map((m) => m.name);
+    const lines = [npc.description];
+    if (maps.length) lines.push(`Zu finden: ${maps.join(', ')}.`);
+    return { key: `persons:${npc.id}`, section: 'persons', title: npc.name, lines, known: () => false };
+  });
+}
+
+function placeEntries(): WikiEntry[] {
+  return Object.values(MAPS).map((map) => {
+    const visited = map.zones.filter((z) => gameState.hasVisitedZone(z.id)).map((z) => z.name);
+    const lines = [
+      map.indoor ? 'Ein Raum drinnen: Mohn wartet draußen, und gebaut wird hier nicht.' : 'Draußen: hier kannst du reiten und bauen.',
+    ];
+    if (visited.length) lines.push(`Schon besucht: ${visited.join(', ')}.`);
+    if (map.blightHearts?.length) lines.push(`Die Welke hat hier ${map.blightHearts.length === 1 ? 'ein Herz' : `${map.blightHearts.length} Herzen`}.`);
+    const people = (map.npcs ?? []).map((p) => content.npcs.find(p.npcId)?.name).filter((n): n is string => Boolean(n));
+    if (people.length) lines.push(`Hier triffst du: ${[...new Set(people)].join(', ')}.`);
+    return {
+      key: `places:${map.id}`,
+      section: 'places',
+      title: map.name,
+      lines,
+      known: () => map.zones.some((z) => gameState.hasVisitedZone(z.id)),
+    };
+  });
+}
+
+function storyEntries(): WikiEntry[] {
+  return content.quests.all().map((quest) => {
+    const done = gameState.isQuestCompleted(quest.id);
+    const lines = [quest.summary, ...quest.objectives.map((o) => `• ${o.description}`)];
+    const reward = quest.rewardItems?.length ? `Belohnung: ${stack(quest.rewardItems)}.` : '';
+    if (reward) lines.push(reward);
+    lines.push(done ? 'Erledigt.' : 'Noch offen.');
+    return {
+      key: `story:${quest.id}`,
+      section: 'story',
+      title: quest.title,
+      lines,
+      known: () => done || gameState.isQuestActive(quest.id),
+    };
+  });
+}
+
 function genericEntries(registry: string, defs: Record<string, unknown>[]): WikiEntry[] {
   return defs.map((def) => {
     const lines = [String(def.description ?? '')].filter(Boolean);
@@ -139,12 +196,16 @@ export function getWikiEntries(): WikiEntry[] {
     section: 'topics',
     title: t.title,
     lines: t.lines,
-    known: () => !t.requiresFlag || gameState.hasFlag(t.requiresFlag),
+    known: () =>
+      t.requiresAnyFlag
+        ? t.requiresAnyFlag.some((f) => gameState.hasFlag(f))
+        : !t.requiresFlag || gameState.hasFlag(t.requiresFlag),
   }));
   out.push(...content.plants.all().map(plantEntry));
   out.push(...content.items.all().filter((i) => i.category !== 'note').map(itemEntry));
   out.push(...content.recipes.all().map(recipeEntry));
   out.push(...content.buildables.all().map(buildableEntry));
+  out.push(...npcEntries(), ...placeEntries(), ...storyEntries());
   for (const [registry, reg] of Object.entries(content)) {
     if (['plants', 'items', 'recipes', 'buildables'].includes(registry) || SKIPPED_REGISTRIES.has(registry)) continue;
     out.push(...genericEntries(registry, (reg as unknown as { all(): Record<string, unknown>[] }).all()));
@@ -210,11 +271,23 @@ export function refreshWiki(): void {
   scanned = true;
 }
 
+/** Persons are met by talking to them, which no game state records, so remember it here. */
+function markKnown(key: string): void {
+  const have = seen();
+  if (have.has(key)) return;
+  gameState.setExt<WikiExt>('wiki', { seen: [...have, key] });
+  const entry = getWikiEntries().find((e) => e.key === key);
+  if (entry) bus.emit('toast', { text: `Neu im Almanach: ${entry.title}` });
+}
+
 /** Wire up discovery. Call once at boot, after the bus and game state exist. */
 export function startWiki(): void {
-  for (const event of ['inventory-changed', 'flag-changed', 'build-changed', 'plant-planted', 'item-crafted'] as const) {
+  for (const event of ['inventory-changed', 'flag-changed', 'build-changed', 'plant-planted', 'item-crafted', 'quest-updated', 'area-changed'] as const) {
     bus.on(event, refreshWiki);
   }
+  bus.on('interacted', ({ id }) => {
+    if (id.startsWith('npc:')) markKnown(`persons:${id.slice(4)}`);
+  });
   bus.on('save-loaded', () => {
     scanned = false;
     refreshWiki();
