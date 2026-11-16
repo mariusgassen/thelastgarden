@@ -73,6 +73,7 @@ export const TRAMLINE_MAP: MapDef = {
   ],
   plantingBeds: [{ id: 'bed-tram-bramble', rect: { x: 16, y: 15, w: 4, h: 2 }, plantId: 'bramble-vine' }],
   resourceNodes: [
+    { id: 'tram-seed-glowcap', itemId: 'seed-glowcap', at: { x: 30.5, y: 11 }, label: 'Samen einsammeln' },
     { id: 'tram-seed-bramble', itemId: 'seed-bramble-vine', at: { x: 13.5, y: 16 }, label: 'Samen einsammeln' },
     { id: 'sun-tram-1', itemId: 'resource-sunlight', at: { x: 21, y: 16 }, label: 'Sonnenlicht sammeln', respawnMs: 45_000 },
     { id: 'dew-tram-1', itemId: 'resource-dew', at: { x: 36, y: 13.5 }, label: 'Tau sammeln', respawnMs: 45_000 },

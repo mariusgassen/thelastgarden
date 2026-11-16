@@ -3,6 +3,7 @@ import { content, type DialogueLine } from '../content';
 import { isBlightedPx } from '../systems/blight';
 import { isHorseRested, RESTED_SPEED_FACTOR } from '../systems/animals';
 import { AnimalLayer } from '../systems/animalLayer';
+import { getMealSpeedFactor, isBlightproof } from '../systems/meals';
 import { BlightLayer } from '../systems/blightLayer';
 import { getBuildMode, isTileWalkable } from '../systems/building';
 import { BuildLayer } from '../systems/buildLayer';
@@ -198,7 +199,8 @@ export class WorldScene extends Phaser.Scene implements WorldApi {
     const building = getBuildMode().active;
     const onBlight = isBlightedPx(this.map.id, this.player.feetX, this.player.feetY);
     const restedHorse = isRidingHere(this.map.id) && isHorseRested() ? RESTED_SPEED_FACTOR : 1;
-    this.player.update(delta, frozen, (onBlight ? BLIGHT_SPEED_FACTOR : 1) * restedHorse);
+    const blightDrag = onBlight && !isBlightproof() ? BLIGHT_SPEED_FACTOR : 1;
+    this.player.update(delta, frozen, blightDrag * restedHorse * getMealSpeedFactor());
     this.animals.update(delta);
     this.building.update(!frozen);
     this.horse.update(this.player.feetX, this.player.feetY, delta, frozen);

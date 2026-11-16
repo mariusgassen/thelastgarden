@@ -10,6 +10,7 @@ const PAD = 20;
 const LIST_TOP = PAD + 36;
 const CRAFT_W = 92;
 const CRAFT_H = 30;
+const EAT_W = 66;
 const SLOT_GAP = 8;
 const PREVIEW_SIZE = 46;
 const DRAG_THRESHOLD_PX = 6;
@@ -47,6 +48,8 @@ export class InventoryPanel {
   private readonly footer: Phaser.GameObjects.Container;
   private readonly previewBg: Phaser.GameObjects.Image;
   private readonly previewIcon: Phaser.GameObjects.Image;
+  private readonly eatBg: Phaser.GameObjects.Graphics;
+  private readonly eatText: Phaser.GameObjects.Text;
   private readonly detailTitle: Phaser.GameObjects.Text;
   private readonly detailDesc: Phaser.GameObjects.Text;
 
@@ -73,6 +76,8 @@ export class InventoryPanel {
     /** True while the player owns the pocket workbench. */
     private readonly canCraft: () => boolean,
     private readonly onCraft: () => void,
+    /** Eats the meal with this item id (systems/meals.ts). */
+    private readonly onEat: (itemId: string) => void,
   ) {
     this.backdrop = scene.add.rectangle(0, 0, 10, 10, 0x000000, 0.45).setOrigin(0).setDepth(95_999).setVisible(false);
     this.panelBg = scene.add.graphics();
@@ -88,6 +93,10 @@ export class InventoryPanel {
     this.craftBg = scene.add.graphics();
     this.craftText = scene.add
       .text(0, 0, 'Werkeln', { fontFamily: THEME.font, fontSize: '14px', fontStyle: 'bold', color: THEME.inkCss })
+      .setOrigin(0.5);
+    this.eatBg = scene.add.graphics();
+    this.eatText = scene.add
+      .text(0, 0, 'Essen', { fontFamily: THEME.font, fontSize: '14px', fontStyle: 'bold', color: THEME.inkCss })
       .setOrigin(0.5);
     this.list = scene.add.container(0, 0);
 
@@ -113,7 +122,7 @@ export class InventoryPanel {
       .setVisible(false);
 
     this.panel = scene.add
-      .container(0, 0, [this.panelBg, title, this.closeText, this.craftBg, this.craftText, this.list, this.footer])
+      .container(0, 0, [this.panelBg, title, this.closeText, this.craftBg, this.craftText, this.eatBg, this.eatText, this.list, this.footer])
       .setDepth(96_000)
       .setVisible(false);
   }
@@ -215,10 +224,33 @@ export class InventoryPanel {
       this.onCraft();
       return true;
     }
+    const e = this.eatRect();
+    if (this.selectedMealId() && lx >= e.x - 6 && lx <= e.x + e.w + 6 && ly >= e.y - 8 && ly <= e.y + e.h + 8) {
+      this.eatSelected();
+      return true;
+    }
     this.dragStartY = y;
     this.dragLastY = y;
     this.dragMoved = false;
     return true;
+  }
+
+  /** Eats the selected meal, if one is selected. */
+  eatSelected(): void {
+    const id = this.selectedMealId();
+    if (!id) return;
+    this.onEat(id);
+    this.refresh();
+  }
+
+  private selectedMealId(): string | null {
+    const item = this.slots.find((s) => s.item.id === this.selectedId)?.item;
+    return item?.meal ? item.id : null;
+  }
+
+  private eatRect(): { x: number; y: number; w: number; h: number } {
+    const c = this.craftRect();
+    return { x: (this.canCraft() ? c.x - 8 : c.x + c.w) - EAT_W, y: c.y, w: EAT_W, h: c.h };
   }
 
   pointerMove(y: number): void {
@@ -420,6 +452,16 @@ export class InventoryPanel {
       this.craftBg.fillRoundedRect(c.x, c.y, c.w, c.h, c.h / 2);
       this.craftBg.lineStyle(2, THEME.sun, 1);
       this.craftBg.strokeRoundedRect(c.x, c.y, c.w, c.h, c.h / 2);
+    }
+    const eat = this.selectedMealId() !== null;
+    const e = this.eatRect();
+    this.eatBg.clear().setVisible(eat);
+    this.eatText.setVisible(eat).setPosition(e.x + e.w / 2, e.y + e.h / 2);
+    if (eat) {
+      this.eatBg.fillStyle(THEME.sun, 0.95);
+      this.eatBg.fillRoundedRect(e.x, e.y, e.w, e.h, e.h / 2);
+      this.eatBg.lineStyle(2, THEME.cream, 1);
+      this.eatBg.strokeRoundedRect(e.x, e.y, e.w, e.h, e.h / 2);
     }
     this.applyScroll();
   }

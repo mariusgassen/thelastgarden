@@ -24,9 +24,14 @@ export interface PlantDef {
   color: number;
   /** Light radius in px a mature plant emits (hook for Wave 4's day/night layer; see systems/plants.ts getLightSources). */
   lightRadius?: number;
+  /** Tiles around its bed a mature plant keeps free of blight; omit for the default (see systems/blight.ts). */
+  wardRadius?: number;
 }
 
-export type ItemCategory = 'seed' | 'tool' | 'key' | 'material' | 'note' | 'resource' | 'produce';
+export type ItemCategory = 'seed' | 'tool' | 'key' | 'material' | 'note' | 'resource' | 'produce' | 'meal';
+
+/** What eating a meal does for a while (systems/meals.ts). */
+export type MealEffect = 'swift' | 'blightproof';
 
 export interface ItemDef {
   id: string;
@@ -36,6 +41,8 @@ export interface ItemDef {
   stackable: boolean;
   /** Primary display color (hex) for placeholder icons. */
   color: number;
+  /** Set on `meal` items: eaten from the bag (systems/meals.ts). */
+  meal?: { effect: MealEffect; minutes: number };
 }
 
 /** A workbench recipe (content/recipes.ts, systems/crafting.ts). */

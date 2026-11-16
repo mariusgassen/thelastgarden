@@ -407,6 +407,9 @@ push back a grey wilt that creeps in at night. No money, no chores, no fail stat
   | Pflanzkübel | 2 Holz, 1 Feldstein | a planting bed; a mature plant in it wards like any bed |
   | Steg | 2 Holz | on water next to the bank or another plank; makes it walkable |
   | Unterstand | 4 Holz, 2 Feldstein, 1 Schrott | wards 3.5 tiles; *Rasten* skips to 07:00 |
+  | Dornenhecke | 2 Dornenranke | wall, wards 2.5 tiles (see "Guarding, building and food plants") |
+  | Flechtzaun | 2 Weidenrute | wall, wards 1 tile |
+  | Schilfsteg | 2 Schilfbündel | like the Steg |
 
 - **System.** `systems/building.ts` (no Phaser): `whyNotPlace` / `placePiece` / `removePiece`
   (full refund; a planter also returns its seed), `isTileWalkable`, `getPieces`, and the
@@ -422,7 +425,7 @@ push back a grey wilt that creeps in at night. No money, no chores, no fail stat
   desktop, and a shelter's *Rasten* interactable. While build mode is on, E and taps place or
   remove instead of interacting.
 - **HUD.** Hammer `HudButton` (**B**) above the horse and map buttons, outdoors once unlocked.
-  `ui/BuildBar.ts` is the piece picker at the bottom (tap a slot or 1–6; Esc/B closes).
+  `ui/BuildBar.ts` is the piece picker at the bottom (tap a slot or 1–9; Esc/B closes).
 - **The blight.** `systems/blight.ts` (logic) and `systems/blightLayer.ts` (patches, spores,
   hearts). It wakes with `episode-1-complete`. `MapDef.blightHearts` (`{ id, at, reach }`, whole
   tiles; garden ×3, tramline, orchard, old mill) each take `GROWTH_PER_NIGHT` (6) tiles per
@@ -443,6 +446,33 @@ push back a grey wilt that creeps in at night. No money, no chores, no fail stat
   `blightNightfall()`, `refreshBlight(mapId)`, `getBlightTiles(mapId)`.
 - **New outdoor map?** Optionally add `blightHearts`; a unit test checks hearts sit on open
   ground, away from spawns and beds.
+
+## Guarding, building and food plants
+
+Six more species in `content/plants.ts`, each with one job. They use the ordinary seed loop
+(plant, grow, harvest, every third harvest drops a seed) and accept any open bed or planter
+(`ANY_BED_SPECIES_ORDER` in `systems/plants.ts`).
+
+| Species | Produce | Job |
+|---|---|---|
+| Leuchtkappe `glowcap` | Leuchtkappe | `lightRadius` 140 opens the night veil; wards 5 tiles |
+| Dornwurz `thornroot` | Dornenranke | wards 4.5 tiles; canes build the Dornenhecke |
+| Schilf `reed` | Schilfbündel | builds the Schilfsteg |
+| Korbweide `willow` | Weidenrute | builds the Flechtzaun |
+| Honigbeere `honeyberry` | Honigbeere | food, cooked into Beerenmus |
+| Goldrübe `gold-turnip` | Goldrübe | food, cooked into Rübeneintopf |
+
+- **Wards.** `PlantDef.wardRadius` overrides the default 3 tiles a mature plant keeps free of
+  blight (`getWards` in `systems/blight.ts`).
+- **Seeds.** One-time `ResourceNodeDef`s: honeyberry and gold turnip in the garden, thornroot on
+  the hill path, glowcap on the tramline, willow at the river farms, reed at the old mill.
+- **Meals.** `ItemDef.meal = { effect, minutes }` on `category: 'meal'` items; `systems/meals.ts`
+  (`eatMeal`, `getMealSpeedFactor`, `isBlightproof`) keeps `ext.meal = { effect, until }`.
+  `swift` (Beerenmus, 3 min) walks 25 % faster; `blightproof` (Rübeneintopf, 4 min) ignores the
+  blight's slowdown. The bag's *Essen* button eats the selected meal. No hunger, no fail state.
+- **Cooking.** Workbench recipes without a journal page: `requiresFlag` is
+  `harvested:<produce item>`, which the first harvest of the crop sets.
+- **Save.** Only `ext.meal`; old saves have none and need no migration.
 
 ## Helper animals
 

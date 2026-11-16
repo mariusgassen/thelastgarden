@@ -93,6 +93,7 @@ export const RIVER_FARMS_MAP: MapDef = {
     },
   ],
   resourceNodes: [
+    { id: 'farms-seed-willow', itemId: 'seed-willow', at: { x: 20.5, y: 15 }, label: 'Samen einsammeln' },
     { id: 'farms-seed-hollyhock', itemId: 'seed-hollyhock', at: { x: 9.0, y: 14.5 }, label: 'Samen einsammeln' },
     { id: 'sun-farms-1', itemId: 'resource-sunlight', at: { x: 15.0, y: 16.5 }, label: 'Sonnenlicht sammeln', respawnMs: 45_000 },
     { id: 'dew-farms-1', itemId: 'resource-dew', at: { x: 32.0, y: 17.5 }, label: 'Tau sammeln', respawnMs: 45_000 },
