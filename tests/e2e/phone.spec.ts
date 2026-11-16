@@ -234,7 +234,11 @@ test.describe('Phone touch controls', () => {
     await page.goto('/');
     await waitForGameBoot(page);
 
-    // Open build bar (bottom-right hammer button at 345, 687)
+    // Open build bar (bottom-right hammer button at 345, 687), tap the exact same spot to verify no jump, then re-open
+    await page.touchscreen.tap(345, 687);
+    await page.waitForTimeout(200);
+    await page.touchscreen.tap(345, 687);
+    await page.waitForTimeout(200);
     await page.touchscreen.tap(345, 687);
     await page.waitForTimeout(200);
 
@@ -248,14 +252,14 @@ test.describe('Phone touch controls', () => {
     expect(fit.scrollWidth).toBeLessThanOrEqual(fit.innerWidth);
     expect(fit.scrollHeight).toBeLessThanOrEqual(fit.innerHeight);
 
-    // Pick Beet (slot index 4 in BuildBar: 270, 652), then tap tile right of player (~232, 422)
+    // Pick Beet (slot index 4 in left-tucked BuildBar: 205, 680), then tap tile right of player (~232, 422)
     await expect
       .poll(
         async () => {
           const pieces = ((await flushAndReadSave(page))?.ext.building as { pieces?: { garden?: { id: string }[] } } | undefined)
             ?.pieces?.garden;
           if (pieces?.some((p) => p.id === 'planter')) return true;
-          await page.touchscreen.tap(270, 652);
+          await page.touchscreen.tap(205, 680);
           await page.waitForTimeout(150);
           await page.touchscreen.tap(232, 422);
           await page.waitForTimeout(300);
@@ -500,8 +504,8 @@ test.describe('Phone touch controls', () => {
     // Hammer button sits at the bottom of the right HUD column (345, 687) since only buildButton is visible
     await page.touchscreen.tap(345, 687);
     await page.waitForTimeout(250);
-    // Pick Zaun (slot 1 = 2nd slot in 4-row BuildBar row 0 -> (120, 652))
-    await page.touchscreen.tap(120, 652);
+    // Pick Zaun (slot 1 = 2nd slot in left-tucked BuildBar row 0 -> (78, 680))
+    await page.touchscreen.tap(78, 680);
     await page.waitForTimeout(150);
 
     // Tap tile (25, 39) east of the player ((227, 434) in CSS px) to build fence

@@ -406,7 +406,6 @@ export class UIScene extends Phaser.Scene {
     this.mapPanel.layout(w, h, safe);
     this.wiki.layout(w, h, safe);
     this.menu.layout(w, h, safe);
-    this.buildBar.layout(w, h, safe);
     this.areaBanner.setMaxWidth(maxBannerW);
     this.toast.setMaxWidth(maxBannerW);
     this.tutorial.layout(w, 0, centerX, maxBannerW);
@@ -485,12 +484,9 @@ export class UIScene extends Phaser.Scene {
     this.rideButton.setVisible(!hidden && (hasHorse() || boating));
     this.rideButton.setState(boating || isRiding(), canRideHere());
     const r = this.button.radius;
-    const bar = this.buildBar.visible ? this.buildBar : undefined;
-    // BuildBar takes the bottom edge on narrow screens; vertical ToolBar sits parallel to the button column without shifting anything.
-    let buttonY = this.viewH - this.safe.bottom - r - 34;
-    if (bar) buttonY = Math.min(buttonY, this.viewH - this.safe.bottom - bar.height - 14 - r);
-    inputState.bottomInset = bar ? this.safe.bottom + bar.height + 10 : 0;
-    this.button.setPosition(this.viewW - this.safe.right - r - 22, buttonY);
+    const buttonX = this.viewW - this.safe.right - r - 22;
+    const buttonY = this.viewH - this.safe.bottom - r - 34;
+    this.button.setPosition(buttonX, buttonY);
     let x = this.viewW - this.safe.right - 22 - HudButton.RADIUS;
     const startY = buttonY - r - 16 - HudButton.RADIUS;
     let y = startY;
@@ -498,6 +494,7 @@ export class UIScene extends Phaser.Scene {
     // A short (landscape) screen starts a second column to the left instead of running into the clock.
     const topLimit = this.dayClock.bottom + 12 + HudButton.RADIUS;
     const columnTop = y;
+    let hudLeft = buttonX - r;
     for (const b of [this.toolButton, this.buildButton, this.rideButton]) {
       if (!b.visible) continue;
       if (y < topLimit && y !== columnTop) {
@@ -505,8 +502,11 @@ export class UIScene extends Phaser.Scene {
         y = columnTop;
       }
       b.setPosition(x, y);
+      hudLeft = Math.min(hudLeft, x - HudButton.RADIUS);
       y -= step;
     }
+    this.buildBar.layout(this.viewW, this.viewH, this.safe, hudLeft - 10, this.dayClock.bottom + 10);
+    inputState.bottomInset = this.buildBar.visible ? this.safe.bottom + this.buildBar.scaledHeight + 10 : 0;
     if (this.toolButton.visible) {
       this.toolBar.positionNear(this.toolButton.x, this.toolButton.y, this.dayClock.bottom + 10, this.viewH, this.safe);
     }
