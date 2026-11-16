@@ -219,7 +219,7 @@ describe('quests, NPCs, journal, resources, and interaction', () => {
     gameState.setFlag('crow-met');
     expect(pickNpcDialogue(crow)).toBeUndefined(); // falls back to crow.dialogueId = 'crow-waiting'
 
-    gameState.setFlag('journal-read:page-bramble');
+    gameState.setFlag('bed-restored:bed-bramble');
     expect(pickNpcDialogue(crow)?.dialogueId).toBe('crow-progress');
 
     gameState.setFlag('quest-completed:q-restore-beds');
