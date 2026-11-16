@@ -83,7 +83,7 @@ test.describe('Phone touch controls', () => {
     expect(errors).toEqual([]);
   });
 
-  test('opens the bag by tapping the resource bar and crafts via touch', async ({ page }) => {
+  test('opens the bag by tapping the bag button and crafts via touch', async ({ page }) => {
     const errors = trackErrors(page);
 
     await page.addInitScript((key) => {
@@ -109,13 +109,13 @@ test.describe('Phone touch controls', () => {
     await page.goto('/');
     await waitForGameBoot(page);
 
-    // Tap ResourceBar (top-left) -> Beutel opens; tap Werkeln button -> Werkbank opens; tap Herstellen
+    // Tap the bag button (top-left) -> Beutel opens; tap Werkeln button -> Werkbank opens; tap Herstellen
     await expect
       .poll(
         async () => {
           const have = (await flushAndReadSave(page))?.inventory.items['craft-bramble-cutting'] ?? 0;
           if (have > 0) return have;
-          await page.touchscreen.tap(80, 40);
+          await page.touchscreen.tap(28, 40);
           await page.waitForTimeout(250);
           await page.touchscreen.tap(268, 255);
           await page.waitForTimeout(250);
