@@ -1,12 +1,14 @@
 import Phaser from 'phaser';
 import { content } from '../content';
-import { allResourceNodes, findResourceNode } from '../world';
-import { TILE_SIZE } from '../world/tiles';
+import { MAPS, allResourceNodes } from '../world';
+import { seededRandom } from '../world/grid';
+import { TILE_SIZE, TILES } from '../world/tiles';
 import type { ResourceNodeDef } from '../world/types';
 import { isBlighted } from './blight';
-import { BUILD_UNLOCK_FLAG } from './building';
+import { BUILD_UNLOCK_FLAG, addPlacementBlocker, baseTileAt, getPieceAt, isKeepClearTile } from './building';
 import { bus } from './events';
 import type { InteractionSystem } from './interaction';
+import { isBlocked } from './obstacles';
 import { gameState } from './state';
 
 /*
@@ -14,13 +16,24 @@ import { gameState } from './state';
  *
  *   collectNode(id)         -> boolean   adds the item, marks the node consumed/respawning
  *   isNodeAvailable(def)     -> boolean
- *   getResourceNodes(mapId?) -> node defs incl. mapId
+ *   getResourceNodes(mapId?) -> node defs incl. mapId and current position
+ *
+ * Renewable nodes (those with `respawnMs`) do not regrow in the same spot: when one is
+ * collected, its next spot is drawn from a seeded RNG (`ext.resources.seed`) among open grass
+ * within ROAM_TILES of its home in the map data. One-time finds and seeds never move.
  */
+
+/** How far (tiles) a renewable pickup may wander from the spot written in the map data. */
+export const ROAM_TILES = 8;
+/** A new spot is at least this far from the old one, so the move is noticeable. */
+const MIN_MOVE_TILES = 3;
+const ROAM_GROUND = new Set<string>(['grass', 'wildGrass', 'orchardGrass']);
 
 export type ResourceNodeWithMap = ResourceNodeDef & { mapId: string };
 
 export function getResourceNodes(mapId?: string): ResourceNodeWithMap[] {
-  const all = allResourceNodes();
+  const state = readState();
+  const all = allResourceNodes().map((n) => place(n, state));
   return mapId ? all.filter((n) => n.mapId === mapId) : all;
 }
 
@@ -29,11 +42,124 @@ interface ResourceExt {
   collected: string[];
   /** nodeId -> epoch ms of last collection, for respawnable nodes. */
   lastCollectedAt: Record<string, number>;
+  /** Seed of the spawn RNG; drawn once per save (absent in old saves). */
+  seed?: number;
+  /** nodeId -> how often it has been re-rolled; with the seed it fixes the next spot. */
+  rolls?: Record<string, number>;
+  /** nodeId -> whole tile it currently sits on (absent = the spot in the map data). */
+  spots?: Record<string, { x: number; y: number }>;
 }
 
 function readState(): ResourceExt {
-  return gameState.getExt<ResourceExt>('resources', { collected: [], lastCollectedAt: {} });
+  const state = gameState.getExt<ResourceExt>('resources', { collected: [], lastCollectedAt: {} });
+  if (state.seed === undefined) {
+    state.seed = Math.floor(Math.random() * 0x7fffffff);
+    gameState.setExt('resources', state);
+  }
+  return state;
 }
+
+/** Pins the spawn RNG (tests, debugging). Does not move nodes that already sit somewhere. */
+export function setSpawnSeed(seed: number): void {
+  const state = readState();
+  state.seed = seed >>> 0;
+  writeState(state);
+}
+
+/** The node with its current spot applied. */
+function place(def: ResourceNodeWithMap, state: ResourceExt): ResourceNodeWithMap {
+  const spot = state.spots?.[def.id];
+  return spot ? { ...def, at: { x: spot.x + 0.5, y: spot.y + 0.5 } } : def;
+}
+
+function hashId(id: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < id.length; i++) h = Math.imul(h ^ id.charCodeAt(i), 16777619);
+  return h >>> 0;
+}
+
+const tileKey = (x: number, y: number): string => `${x},${y}`;
+
+function blockedObstacleTiles(mapId: string): Set<string> {
+  const out = new Set<string>();
+  for (const o of MAPS[mapId]?.obstacles ?? []) {
+    if (!isBlocked(o.id)) continue;
+    for (let y = Math.floor(o.rect.y); y < Math.ceil(o.rect.y + o.rect.h); y++)
+      for (let x = Math.floor(o.rect.x); x < Math.ceil(o.rect.x + o.rect.w); x++) out.add(tileKey(x, y));
+  }
+  return out;
+}
+
+/** Open grass the player can walk to from the node's home, within roaming range and free of everything else. */
+function candidateSpots(def: ResourceNodeWithMap, state: ResourceExt): { x: number; y: number }[] {
+  const base = allResourceNodes().find((n) => n.id === def.id) ?? def;
+  const home = { x: Math.floor(base.at.x), y: Math.floor(base.at.y) };
+  const walls = blockedObstacleTiles(def.mapId);
+  const taken = new Set<string>();
+  for (const other of allResourceNodes()) {
+    if (other.mapId !== def.mapId || other.id === def.id) continue;
+    const at = place(other, state).at;
+    taken.add(tileKey(Math.floor(at.x), Math.floor(at.y)));
+  }
+  const from = { x: Math.floor(def.at.x), y: Math.floor(def.at.y) };
+  const seen = new Set([tileKey(home.x, home.y)]);
+  const queue = [home];
+  const out: { x: number; y: number }[] = [];
+  for (let i = 0; i < queue.length; i++) {
+    const { x, y } = queue[i];
+    const tile = baseTileAt(def.mapId, x, y);
+    if (
+      tile !== undefined &&
+      ROAM_GROUND.has(tile) &&
+      !isKeepClearTile(def.mapId, x, y) &&
+      !taken.has(tileKey(x, y)) &&
+      !getPieceAt(def.mapId, x, y) &&
+      !isBlighted(def.mapId, x, y) &&
+      Math.hypot(x - from.x, y - from.y) >= MIN_MOVE_TILES
+    ) {
+      out.push({ x, y });
+    }
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const nx = x + dx;
+      const ny = y + dy;
+      const k = tileKey(nx, ny);
+      if (seen.has(k) || walls.has(k) || Math.hypot(nx - home.x, ny - home.y) > ROAM_TILES) continue;
+      const t = baseTileAt(def.mapId, nx, ny);
+      if (t === undefined || TILES[t].solid) continue;
+      seen.add(k);
+      queue.push({ x: nx, y: ny });
+    }
+  }
+  return out;
+}
+
+/** Draws the next spot for a renewable node. Keeps the current one if nothing else is free. */
+function reroll(def: ResourceNodeWithMap, state: ResourceExt): void {
+  const rolls = (state.rolls ??= {});
+  const n = rolls[def.id] ?? 0;
+  rolls[def.id] = n + 1;
+  const spots = candidateSpots(def, state);
+  if (spots.length === 0) return;
+  const rnd = seededRandom((state.seed ?? 0) ^ hashId(def.id) ^ Math.imul(n + 1, 0x9e3779b1));
+  (state.spots ??= {})[def.id] = spots[Math.floor(rnd() * spots.length)];
+}
+
+/** Where `id` stands right now (tile coordinates), or undefined for an unknown node. */
+export function getNodeSpot(id: string): { x: number; y: number } | undefined {
+  const def = allResourceNodes().find((n) => n.id === id);
+  return def ? place(def, readState()).at : undefined;
+}
+
+// Nothing may be built on the tile a pickup currently occupies.
+addPlacementBlocker((mapId, x, y) => {
+  const state = readState();
+  const hit = allResourceNodes().some((n) => {
+    if (n.mapId !== mapId) return false;
+    const at = place(n, state).at;
+    return Math.floor(at.x) === x && Math.floor(at.y) === y;
+  });
+  return hit ? 'Hier liegt etwas.' : null;
+});
 
 function writeState(state: ResourceExt): void {
   gameState.setExt('resources', state);
@@ -53,11 +179,14 @@ export function isNodeBlighted(def: ResourceNodeWithMap): boolean {
 
 /** Adds the node's item to the inventory and persists its consumed/respawn state. */
 export function collectNode(id: string): boolean {
-  const def = findResourceNode(id);
+  const def = getResourceNodes().find((n) => n.id === id);
   if (!def || !isNodeAvailable(def) || isNodeBlighted(def)) return false;
   const state = readState();
   if (def.respawnMs === undefined) state.collected.push(id);
-  else state.lastCollectedAt[id] = Date.now();
+  else {
+    state.lastCollectedAt[id] = Date.now();
+    reroll(def, state);
+  }
   writeState(state);
   gameState.addItem(def.itemId, def.count ?? 1);
   if (content.items.get(def.itemId).category === 'material') gameState.setFlag(BUILD_UNLOCK_FLAG);

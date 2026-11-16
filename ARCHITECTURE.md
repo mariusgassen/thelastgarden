@@ -396,6 +396,13 @@ push back a grey wilt that creeps in at night. No money, no chores, no fail stat
   from piles: ordinary `ResourceNodeDef`s with two new optional fields, `texture` (`node-wood`,
   `node-stone`, `node-scrap` instead of the glowing orb) and `count` (wood gives 2). They regrow
   after 60 s. The first material sets `gathered-material`, which unlocks build mode.
+- **Roaming pickups.** Every node with `respawnMs` (light, dew, piles) is drawn to a new spot
+  each time it is collected: open grass within `ROAM_TILES` (8) of its home in the map data,
+  reachable from home, off beds, props, doors, NPCs, spawns, built pieces, blight, other pickups
+  and at least 3 tiles from where it was. The first appearance is always the map spot. Seeded
+  by `ext.resources.seed` (drawn once per save; `setSpawnSeed` pins it in tests), with
+  `rolls` and `spots` beside it. One-time finds and seeds never move. Nothing can be built on a
+  pickup's current tile.
 - **Pieces.** `content/buildables.ts` → `content.buildables`, each a `BuildableDef { cost, on,
   solid?, wardRadius?, lightRadius?, planter?, rest? }`:
 
