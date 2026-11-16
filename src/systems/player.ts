@@ -23,8 +23,8 @@ export class PlayerController {
   /** x/y = feet position in px. */
   constructor(scene: Phaser.Scene, x: number, y: number, facing: Facing) {
     this.facing = facing;
-    this.shadow = scene.add.image(x, y + 4, 'shadow').setScale(0.75);
-    this.sprite = scene.physics.add.sprite(x, y - FEET_OFFSET_Y, 'player');
+    this.shadow = scene.add.image(x, y + 4, 'shadow').setScale(0.75).setDepth(y - 1);
+    this.sprite = scene.physics.add.sprite(x, y - FEET_OFFSET_Y, 'player').setDepth(y);
     const body = this.sprite.body as Phaser.Physics.Arcade.Body;
     body.setCircle(8, 6, 24);
     body.setCollideWorldBounds(true);

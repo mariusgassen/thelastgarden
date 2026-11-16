@@ -99,7 +99,7 @@ export const RIVER_FARMS_MAP: MapDef = {
     { id: 'curio-farms-1', itemId: 'resource-curio', at: { x: 26.5, y: 18.0 }, label: 'Aufheben' },
   ],
   spawns: {
-    default: { x: 12.5, y: 2.0 },
-    north: { x: 12.5, y: 2.0 },
+    default: { x: 12.5, y: 10.2 },
+    north: { x: 12.5, y: 10.2 },
   },
 };

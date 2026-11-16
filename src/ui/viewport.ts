@@ -33,3 +33,7 @@ export function readSafeArea(): SafeArea {
 }
 
 export const isTouchDevice = (): boolean => 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+
+export const prefersReducedMotion = (): boolean =>
+  typeof window !== 'undefined' && (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false);
+

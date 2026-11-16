@@ -129,4 +129,61 @@ describe('horse and fast travel', () => {
     expect(isRiding()).toBe(false);
     expect(travelTo('garden')).toBe(true);
   });
+
+  it('shows follower horse only when tamed, outdoors, and not mounted', async () => {
+    const { shouldShowFollowerHorse, pickHorseSpawn } = await import('../../src/systems/horse');
+    expect(shouldShowFollowerHorse('garden')).toBe(false);
+
+    gameState.setFlag('horse-tamed');
+    expect(shouldShowFollowerHorse('garden')).toBe(true);
+    expect(shouldShowFollowerHorse('workshop')).toBe(false);
+    expect(isRidingHere('garden')).toBe(false);
+
+    expect(setRiding(true)).toBe(true);
+    expect(shouldShowFollowerHorse('garden')).toBe(false);
+    expect(isRidingHere('workshop')).toBe(false);
+    expect(isRidingHere('garden')).toBe(true);
+
+    // Pick first walkable spot behind player, falling back if blocked
+    expect(pickHorseSpawn(100, 100, 'right', () => true)).toEqual({ x: 72, y: 100 });
+    expect(pickHorseSpawn(100, 100, 'right', (x) => x >= 100)).toEqual({ x: 128, y: 100 });
+    expect(pickHorseSpawn(100, 100, 'left', () => true)).toEqual({ x: 128, y: 100 });
+  });
+
+  it('follows the player along breadcrumbs, stops at follow distance, and respects frozen state', async () => {
+    const { HorseFollowPath, HORSE_FOLLOW_GAP } = await import('../../src/systems/horse');
+    const follower = new HorseFollowPath(72, 100, 'right', 100, 100);
+
+    // Within follow gap: stays still
+    expect(follower.step(100, 100, 100, false)).toEqual({ x: 72, y: 100, moving: false, facing: 'right' });
+
+    // Player walks right, then turns north around a corner
+    let px = 100;
+    let py = 100;
+    for (let i = 0; i < 6; i++) {
+      px += 20;
+      follower.step(px, py, 16, false);
+    }
+    for (let i = 0; i < 6; i++) {
+      py -= 20;
+      follower.step(px, py, 16, false);
+    }
+
+    // Frozen: does not move
+    const beforeFreeze = { x: follower.x, y: follower.y };
+    const frozenStep = follower.step(px, py, 500, true);
+    expect(frozenStep.moving).toBe(false);
+    expect(frozenStep.x).toBe(beforeFreeze.x);
+    expect(frozenStep.y).toBe(beforeFreeze.y);
+
+    // Advance simulation until Mohn catches up and settles within follow gap
+    for (let i = 0; i < 60; i++) {
+      follower.step(px, py, 50, false);
+    }
+    const finalDist = Math.hypot(px - follower.x, py - follower.y);
+    expect(finalDist).toBeLessThanOrEqual(HORSE_FOLLOW_GAP + 1);
+    expect(finalDist).toBeGreaterThanOrEqual(HORSE_FOLLOW_GAP - 25);
+    expect(follower.step(px, py, 50, false).moving).toBe(false);
+  });
 });
+
