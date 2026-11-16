@@ -6,7 +6,8 @@ import { PLANTS } from './plants';
 import { QUESTS } from './quests';
 import { RECIPES } from './recipes';
 import { TOOLS } from './tools';
-import type { BuildableDef, DialogueDef, ItemDef, NpcDef, PlantDef, QuestDef, RecipeDef, ToolDef } from './types';
+import { VILLAGE_PARTS, villageDialogues, villageQuests, villagerNpcs } from './village';
+import type { BuildableDef, DialogueDef, ItemDef, NpcDef, PlantDef, QuestDef, RecipeDef, ToolDef, VillagePartDef } from './types';
 
 export * from './types';
 
@@ -48,10 +49,11 @@ export class Registry<T extends { id: string }> {
 export const content = {
   plants: new Registry<PlantDef>('plant', PLANTS),
   items: new Registry<ItemDef>('item', ITEMS),
-  quests: new Registry<QuestDef>('quest', QUESTS),
-  dialogues: new Registry<DialogueDef>('dialogue', DIALOGUES),
-  npcs: new Registry<NpcDef>('npc', NPCS),
+  quests: new Registry<QuestDef>('quest', [...QUESTS, ...villageQuests()]),
+  dialogues: new Registry<DialogueDef>('dialogue', [...DIALOGUES, ...villageDialogues()]),
+  npcs: new Registry<NpcDef>('npc', [...NPCS, ...villagerNpcs()]),
   recipes: new Registry<RecipeDef>('recipe', RECIPES),
   buildables: new Registry<BuildableDef>('buildable', BUILDABLES),
   tools: new Registry<ToolDef>('tool', TOOLS),
+  villageParts: new Registry<VillagePartDef>('village part', VILLAGE_PARTS),
 };

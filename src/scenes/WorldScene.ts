@@ -66,7 +66,7 @@ export class WorldScene extends Phaser.Scene implements WorldApi {
   private marker!: Phaser.GameObjects.Image;
   private horse!: HorseFollower;
   private isWalkablePx: (x: number, y: number) => boolean = () => true;
-  private flagProps: { image: Phaser.GameObjects.Image; showWhenFlag?: string; hideWhenFlag?: string }[] = [];
+  private flagProps: { image: Phaser.GameObjects.Image; showWhenFlag?: string; hideWhenFlag?: string; collider?: Phaser.GameObjects.Zone }[] = [];
   private currentZone: ZoneDef | null = null;
   private transitioning = false;
 
@@ -333,13 +333,15 @@ export class WorldScene extends Phaser.Scene implements WorldApi {
         .setScale(prop.scale ?? 1)
         .setFlipX(prop.flipX ?? false)
         .setDepth(prop.ground ? -5 : y);
-      if (prop.showWhenFlag || prop.hideWhenFlag) {
-        this.flagProps.push({ image, showWhenFlag: prop.showWhenFlag, hideWhenFlag: prop.hideWhenFlag });
-      }
+      const flagProp: (typeof this.flagProps)[number] | undefined =
+        prop.showWhenFlag || prop.hideWhenFlag ? { image, showWhenFlag: prop.showWhenFlag, hideWhenFlag: prop.hideWhenFlag } : undefined;
+      if (flagProp) this.flagProps.push(flagProp);
       if (prop.solid) {
         const r = prop.solid;
         const zone = this.add.zone((r.x + r.w / 2) * TILE_SIZE, (r.y + r.h / 2) * TILE_SIZE, r.w * TILE_SIZE, r.h * TILE_SIZE);
         this.solids.add(zone);
+        // A prop that only appears later (a restored building) is not in the way before that.
+        if (flagProp && prop.showWhenFlag) flagProp.collider = zone;
       }
     }
     this.applyPropFlags();
@@ -351,6 +353,7 @@ export class WorldScene extends Phaser.Scene implements WorldApi {
       const visible =
         (!p.showWhenFlag || gameState.hasFlag(p.showWhenFlag)) && (!p.hideWhenFlag || !gameState.hasFlag(p.hideWhenFlag));
       p.image.setVisible(visible);
+      if (p.collider) (p.collider.body as Phaser.Physics.Arcade.StaticBody).enable = visible;
     }
   }
 

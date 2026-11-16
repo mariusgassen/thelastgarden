@@ -38,7 +38,7 @@ export interface WikiSection {
 }
 
 /** Content registries handled above or meant to stay out of the generic path (tools are items too). */
-const SKIPPED_REGISTRIES = new Set(['quests', 'dialogues', 'npcs', 'tools']);
+const SKIPPED_REGISTRIES = new Set(['quests', 'dialogues', 'npcs', 'tools', 'villageParts']);
 const OBSTACLE_NAMES: Record<string, string> = {
   bramble: 'Brombeergestrüpp',
   fallenTree: 'umgestürzte Bäume',

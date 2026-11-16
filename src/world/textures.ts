@@ -1,4 +1,6 @@
 import Phaser from 'phaser';
+import type { VillagerLook } from '../content/types';
+import { VILLAGERS } from '../content/village';
 import { seededRandom } from './grid';
 import { TILE_IDS, TILE_SIZE, TILES, TILESET_MARGIN, TILESET_SPACING, type TileDef } from './tiles';
 
@@ -28,6 +30,7 @@ export function generateTextures(scene: Phaser.Scene): void {
   generateItemAndUiTextures(make);
   generateBuildAndBlightTextures(make);
   generateCropTextures(make);
+  generateVillageTextures(make);
 
   make('shadow', 32, 12, (g) => {
     g.fillStyle(0x000000, 0.22);
@@ -3322,5 +3325,285 @@ function generateCropTextures(make: MakeFn): void {
     g.fillEllipse(18, 31, 14, 8);
     g.fillStyle(0xf8de94, 0.8);
     g.fillEllipse(15, 29.5, 4, 2.5);
+  });
+}
+
+
+/** A villager in a 28 × 40 box, facing right (same proportions as the gardener and Jakob). */
+function drawVillager(g: G, look: VillagerLook): void {
+  g.fillStyle(0x3a2a1e, 1); // boots
+  g.fillRoundedRect(8, 34, 5, 5, 2);
+  g.fillRoundedRect(15, 34, 5, 5, 2);
+  g.fillStyle(look.bottom, 1);
+  g.fillRoundedRect(8, 26, 5, 10, 2);
+  g.fillRoundedRect(15, 26, 5, 10, 2);
+  g.fillStyle(look.top, 1);
+  g.fillRoundedRect(5, 15, 18, 15, 5);
+  if (look.apron !== undefined) {
+    g.fillStyle(look.apron, 1);
+    g.fillRoundedRect(8, 17, 12, 15, 3);
+  }
+  g.fillStyle(look.hair, 1);
+  g.fillCircle(14, 9.5, 7.6);
+  g.fillStyle(look.skin, 1);
+  g.fillCircle(14.5, 11.5, 6.3);
+  if (look.beard) {
+    g.fillStyle(look.hair, 1);
+    g.fillEllipse(14.5, 16, 10, 6);
+  }
+  drawVillagerHat(g, look, 1);
+  g.fillStyle(0x3a2a1e, 1);
+  g.fillCircle(17.2, 11.5, 1.2);
+}
+
+/** Headwear; `s` scales the 28 × 40 sprite coordinates (the portrait draws it again at 2.1×). */
+function drawVillagerHat(g: G, look: VillagerLook, s: number, dx = 0, dy = 0): void {
+  const x = (v: number): number => dx + v * s;
+  const y = (v: number): number => dy + v * s;
+  g.fillStyle(look.hatColor, 1);
+  switch (look.hat) {
+    case 'cap':
+      g.fillRoundedRect(x(7), y(2), 14 * s, 6 * s, 3 * s);
+      g.fillRect(x(11), y(6), 11 * s, 2.5 * s);
+      break;
+    case 'scarf':
+      g.fillEllipse(x(14), y(6), 17 * s, 8 * s);
+      g.fillCircle(x(21), y(8), 2.6 * s);
+      break;
+    case 'straw':
+      g.fillEllipse(x(14), y(7), 24 * s, 8 * s);
+      g.fillRoundedRect(x(8), y(0), 12 * s, 8 * s, 4 * s);
+      g.fillStyle(0xb5533c, 1);
+      g.fillRect(x(8), y(5), 12 * s, 2 * s);
+      break;
+    case 'beret':
+      g.fillEllipse(x(15), y(5), 20 * s, 7 * s);
+      g.fillCircle(x(14), y(1.6), 1.6 * s);
+      break;
+    case 'bun':
+      g.fillCircle(x(14), y(2.6), 3.6 * s);
+      break;
+    case 'none':
+      break;
+  }
+}
+
+function drawVillagerPortrait(g: G, look: VillagerLook): void {
+  g.fillStyle(0x2f3b40, 1);
+  g.fillRoundedRect(0, 0, 64, 64, 10);
+  g.fillStyle(look.top, 0.25);
+  g.fillCircle(48, 16, 16);
+  g.fillStyle(look.top, 1);
+  g.fillEllipse(32, 56, 46, 24);
+  if (look.apron !== undefined) {
+    g.fillStyle(look.apron, 1);
+    g.fillRoundedRect(22, 44, 20, 18, 5);
+  }
+  g.fillStyle(look.hair, 1);
+  g.fillCircle(32, 27, 15);
+  g.fillStyle(look.skin, 1);
+  g.fillCircle(32, 32, 12.5);
+  if (look.beard) {
+    g.fillStyle(look.hair, 1);
+    g.fillEllipse(32, 41, 20, 12);
+  }
+  g.fillStyle(0x3a2a1e, 1);
+  g.fillCircle(27, 30, 2);
+  g.fillCircle(37, 30, 2);
+  g.fillStyle(0xb5694f, 1);
+  g.fillRoundedRect(29, 37, 7, 2, 1);
+  drawVillagerHat(g, look, 2.1, 2, 2);
+}
+
+/** The villagers (NPC id = texture key) and the buildings that appear when a quarter is restored (content/village.ts). */
+function generateVillageTextures(make: MakeFn): void {
+  for (const v of VILLAGERS) {
+    make(v.id, 28, 40, (g) => drawVillager(g, v.look));
+    make(`portrait-${v.id}`, 64, 64, (g) => drawVillagerPortrait(g, v.look));
+  }
+  const shadow = (g: G, w: number, h: number, depth = 12): void => {
+    g.fillStyle(0x000000, 0.2);
+    g.fillEllipse(w / 2, h - depth / 2, w - 8, depth);
+  };
+
+  make('village-bakery', 132, 112, (g) => {
+    shadow(g, 132, 112);
+    g.fillStyle(0xd9c3a0, 1); // plaster walls with timber beams
+    g.fillRoundedRect(8, 40, 116, 64, 4);
+    g.fillStyle(0x7a5538, 1);
+    g.fillRect(8, 40, 116, 4);
+    g.fillRect(8, 100, 116, 4);
+    g.fillRect(40, 44, 4, 56);
+    g.fillRect(88, 44, 4, 56);
+    g.fillStyle(0xa5523a, 1); // roof
+    g.fillTriangle(0, 46, 132, 46, 66, 6);
+    g.fillStyle(0xbd6446, 1);
+    for (let row = 0; row < 4; row++) for (let col = 0; col < 9; col++) {
+      const rx = 12 + col * 12 + (row % 2) * 6;
+      const ry = 16 + row * 7;
+      if (Math.abs(rx + 4 - 66) < 52 - row * 11.5 + 8) g.fillRoundedRect(rx, ry, 10, 5, 2);
+    }
+    g.fillStyle(0x8a5a4a, 1); // chimney
+    g.fillRect(94, 6, 12, 26);
+    g.fillStyle(0xdad6d0, 0.7); // smoke
+    g.fillCircle(100, 3, 4);
+    g.fillCircle(104, -1, 3);
+    g.fillStyle(0x6e4529, 1); // door
+    g.fillRoundedRect(52, 64, 28, 40, 6);
+    g.fillStyle(0xc9a227, 1);
+    g.fillCircle(75, 86, 2);
+    g.fillStyle(0xf6d98a, 1); // warm windows
+    g.fillRect(16, 62, 22, 22);
+    g.fillRect(94, 62, 22, 22);
+    g.fillStyle(0x7a5538, 1);
+    g.fillRect(26, 62, 2, 22);
+    g.fillRect(16, 72, 22, 2);
+    g.fillRect(104, 62, 2, 22);
+    g.fillRect(94, 72, 22, 2);
+    for (let i = 0; i < 6; i++) { // striped awning over the door
+      g.fillStyle(i % 2 ? 0xf3ead6 : 0xb5533c, 1);
+      g.fillRect(46 + i * 7, 54, 7, 9);
+    }
+    g.fillStyle(0xd9a45a, 1); // loaf sign
+    g.fillEllipse(108, 52, 16, 9);
+    g.fillStyle(0xb57a3a, 1);
+    g.fillRect(100, 51, 16, 1.5);
+  });
+
+  make('village-lamp', 22, 64, (g) => {
+    shadow(g, 22, 64, 6);
+    g.fillStyle(0xf6d98a, 0.22); // glow
+    g.fillCircle(11, 16, 12);
+    g.fillStyle(0x3a3a3f, 1);
+    g.fillRect(9, 24, 4, 36);
+    g.fillRoundedRect(6, 56, 10, 5, 2);
+    g.fillRect(4, 8, 14, 3);
+    g.fillTriangle(3, 8, 19, 8, 11, 1);
+    g.fillStyle(0xf6d98a, 1);
+    g.fillRoundedRect(6, 11, 10, 13, 2);
+    g.fillStyle(0xfff3c4, 1);
+    g.fillRect(9, 14, 4, 7);
+  });
+
+  make('village-stall', 92, 68, (g) => {
+    shadow(g, 92, 68);
+    g.fillStyle(0x5c3b25, 1); // posts
+    g.fillRect(6, 14, 4, 50);
+    g.fillRect(82, 14, 4, 50);
+    for (let i = 0; i < 8; i++) { // awning stripes
+      g.fillStyle(i % 2 ? 0xf3ead6 : 0xb5533c, 1);
+      g.fillRect(2 + i * 11, 4, 11, 16);
+    }
+    g.fillStyle(0xb5533c, 1);
+    for (let i = 0; i < 8; i += 2) g.fillTriangle(2 + i * 11, 20, 13 + i * 11, 20, 7.5 + i * 11, 26);
+    g.fillStyle(0x8a603d, 1); // counter
+    g.fillRoundedRect(8, 42, 76, 20, 3);
+    g.fillStyle(0xa8753f, 1);
+    g.fillRect(8, 42, 76, 4);
+    g.fillStyle(0xd9a45a, 1); // loaves
+    g.fillEllipse(26, 38, 14, 8);
+    g.fillEllipse(44, 39, 16, 8);
+    g.fillEllipse(62, 38, 14, 8);
+    g.fillStyle(0xb57a3a, 1);
+    g.fillRect(24, 37, 8, 1.5);
+    g.fillRect(41, 38, 10, 1.5);
+    g.fillRect(59, 37, 8, 1.5);
+  });
+
+  make('village-shop', 132, 112, (g) => {
+    shadow(g, 132, 112);
+    g.fillStyle(0x9a6a45, 1); // barn planks
+    g.fillRoundedRect(8, 36, 116, 68, 3);
+    g.fillStyle(0x7a5538, 1);
+    for (let i = 0; i < 12; i++) g.fillRect(12 + i * 9.6, 38, 1.5, 64);
+    g.fillStyle(0x7d3f32, 1); // roof
+    g.fillTriangle(0, 42, 132, 42, 66, 4);
+    g.fillStyle(0x93503f, 1);
+    g.fillTriangle(10, 40, 122, 40, 66, 12);
+    g.fillStyle(0x3a2a1e, 1); // loft hatch with hay
+    g.fillRect(58, 22, 16, 14);
+    g.fillStyle(0xd9c070, 1);
+    g.fillRect(60, 30, 12, 6);
+    g.fillStyle(0x6e4529, 1); // double door
+    g.fillRoundedRect(36, 58, 44, 46, 3);
+    g.fillStyle(0x4a2f1d, 1);
+    g.fillRect(57, 58, 2, 46);
+    g.lineStyle(2, 0x4a2f1d, 1);
+    g.lineBetween(38, 60, 56, 102);
+    g.lineBetween(56, 60, 38, 102);
+    g.lineBetween(60, 60, 78, 102);
+    g.lineBetween(78, 60, 60, 102);
+    g.fillStyle(0x5c3b25, 1); // shop counter + basket
+    g.fillRoundedRect(88, 80, 30, 24, 2);
+    g.fillStyle(0xefc45c, 1);
+    g.fillCircle(96, 78, 5);
+    g.fillCircle(104, 79, 5);
+    g.fillStyle(0xe8739c, 1);
+    g.fillCircle(111, 77, 4);
+    g.fillStyle(0xf3ead6, 1); // chalk sign
+    g.fillRoundedRect(12, 66, 18, 14, 2);
+    g.fillStyle(0x6e4529, 1);
+    g.fillRect(14, 70, 14, 1.5);
+    g.fillRect(14, 74, 10, 1.5);
+  });
+
+  make('village-washing', 80, 56, (g) => {
+    shadow(g, 80, 56, 6);
+    g.fillStyle(0x5c3b25, 1);
+    g.fillRect(6, 8, 4, 46);
+    g.fillRect(70, 8, 4, 46);
+    g.lineStyle(1.5, 0xc9c1a8, 1);
+    g.lineBetween(8, 12, 72, 14);
+    const cloth = (x: number, w: number, c: number): void => {
+      g.fillStyle(c, 1);
+      g.fillRect(x, 13, w, 20);
+    };
+    cloth(14, 14, 0xf3ead6);
+    cloth(32, 12, 0x7fa8c9);
+    cloth(48, 16, 0xe8a5a0);
+  });
+
+  make('village-press-house', 120, 100, (g) => {
+    shadow(g, 120, 100);
+    g.fillStyle(0xb68a5a, 1); // timber hut
+    g.fillRoundedRect(10, 38, 100, 54, 3);
+    g.fillStyle(0x8a603d, 1);
+    g.fillRect(10, 38, 100, 4);
+    g.fillRect(10, 88, 100, 4);
+    g.fillStyle(0xc9b074, 1); // thatched roof
+    g.fillTriangle(0, 44, 120, 44, 60, 4);
+    g.fillStyle(0xa8925a, 1);
+    for (let i = 0; i < 5; i++) g.fillRect(12 + i * 4, 40 - i * 7, 96 - i * 8, 1.5);
+    g.fillStyle(0x6e4529, 1); // door
+    g.fillRoundedRect(44, 58, 26, 34, 5);
+    g.fillStyle(0xf6d98a, 1); // window
+    g.fillRect(80, 54, 22, 18);
+    g.fillStyle(0x7a5538, 1);
+    g.fillRect(90, 54, 2, 18);
+    g.fillRect(80, 62, 22, 2);
+    g.fillStyle(0x8a603d, 1); // barrel
+    g.fillRoundedRect(14, 66, 22, 26, 6);
+    g.fillStyle(0x3a2a1e, 1);
+    g.fillRect(14, 72, 22, 2);
+    g.fillRect(14, 84, 22, 2);
+    g.fillStyle(0xc9a227, 1); // honey jar on the sill
+    g.fillRoundedRect(84, 66, 8, 7, 2);
+  });
+
+  make('village-crates', 52, 34, (g) => {
+    shadow(g, 52, 34, 6);
+    g.fillStyle(0x8a603d, 1);
+    g.fillRoundedRect(2, 14, 22, 16, 2);
+    g.fillRoundedRect(26, 18, 22, 12, 2);
+    g.fillStyle(0xd9553f, 1);
+    g.fillCircle(8, 12, 4.5);
+    g.fillCircle(16, 11, 4.5);
+    g.fillCircle(12, 8, 4.5);
+    g.fillStyle(0x9bc25c, 1);
+    g.fillCircle(32, 16, 4.5);
+    g.fillCircle(41, 15, 4.5);
+    g.fillStyle(0x6e4529, 1);
+    g.fillRect(2, 20, 22, 2);
+    g.fillRect(26, 23, 22, 2);
   });
 }

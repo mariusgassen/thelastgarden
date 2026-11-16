@@ -113,6 +113,10 @@ export const ORCHARD_MAP: MapDef = {
       at: { x: 35.5, y: 7.4 },
       showWhenFlag: 'episode-3-complete',
     },
+
+    // The orchard farm, restored by q-village-orchard (content/village.ts).
+    { texture: 'village-press-house', at: { x: 31.2, y: 27.6 }, solid: { x: 29.2, y: 26, w: 4.0, h: 1.5 }, showWhenFlag: 'village-restored:orchard' },
+    { texture: 'village-crates', at: { x: 34.4, y: 27.0 }, solid: { x: 33.6, y: 26.5, w: 1.6, h: 0.5 }, showWhenFlag: 'village-restored:orchard' },
   ],
   interactables: [
     {
@@ -187,10 +191,20 @@ export const ORCHARD_MAP: MapDef = {
       variants: [{ dialogueId: 'mother-tree-bloom', requires: ['episode-3-complete'] }],
       radius: 68,
     },
+    {
+      id: 'village-orchard-press',
+      type: 'dialogue',
+      at: { x: 31.2, y: 27.9 },
+      label: 'Ansehen',
+      dialogueId: 'village-orchard-press',
+      showWhenFlag: 'village-restored:orchard',
+    },
   ],
   npcs: [
     { npcId: 'crow', at: { x: 13.2, y: 24.9 }, radius: 70, wander: 2.5, showWhenFlag: 'episode-2-complete', hideWhenFlag: 'jakob-ready-to-return' },
     { npcId: 'm', at: { x: 38.2, y: 8.4 }, radius: 74, wander: 2.5, hideWhenFlag: 'jakob-ready-to-return' },
+    { npcId: 'ottilie', at: { x: 38.2, y: 21.8 }, radius: 68, wander: 1.5, showWhenFlag: 'village-open:orchard' },
+    { npcId: 'konrad', at: { x: 42.6, y: 23.4 }, radius: 68, wander: 1.5, showWhenFlag: 'village-open:orchard' },
   ],
   plantingBeds: [
     { id: 'bed-orchard-extra', rect: { x: 10, y: 20, w: 4, h: 2 } },
