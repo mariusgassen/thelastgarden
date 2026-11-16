@@ -121,7 +121,7 @@ function buildableEntry(piece: BuildableDef): WikiEntry {
   lines.push(piece.on === 'water' ? 'Wird auf Wasser neben dem Ufer gebaut.' : 'Wird auf freiem Boden gebaut.');
   if (piece.wardRadius) lines.push(`Hält die Welke im Umkreis von ${piece.wardRadius} Feldern fern.`);
   if (piece.lightRadius) lines.push('Leuchtet nachts.');
-  if (piece.planter) lines.push('Hier kannst du eine Pflanze einsetzen.');
+  if (piece.planter) lines.push(`Hier wachsen bis zu ${piece.planter.cols * piece.planter.rows} Pflanzen nebeneinander.`);
   if (piece.rest) lines.push('Hier kannst du rasten: Die Nacht vergeht bis 7 Uhr.');
   return { key: `buildables:${piece.id}`, section: 'buildables', title: piece.name, lines, known: isBuildUnlocked };
 }

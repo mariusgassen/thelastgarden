@@ -358,8 +358,8 @@ test.describe('Desktop gameplay and PWA', () => {
         JSON.stringify({
           version: 1,
           savedAt: Date.now(),
-          // Standing just below bed-bramble (tiles 16..20 × 29..31)
-          player: { mapId: 'garden', x: 18 * 32, y: 32 * 32, facing: 'right' },
+          // Standing at the first plant slot of bed-bramble (tiles 16..20 × 29..31, one slot per tile)
+          player: { mapId: 'garden', x: 16.5 * 32, y: 30 * 32, facing: 'right' },
           world: { unblockedPaths: [], visitedZones: ['garden'], flags: { 'crow-met': true, 'bed-restored:bed-bramble': true } },
           inventory: { items: {} },
           quests: { active: ['q-restore-beds'], completed: ['q-meet-crow'], progress: {} },
@@ -404,8 +404,8 @@ test.describe('Desktop gameplay and PWA', () => {
         JSON.stringify({
           version: 1,
           savedAt: Date.now(),
-          // Standing just below bed-extra (tiles 30..34 × 41..43)
-          player: { mapId: 'garden', x: 32 * 32, y: 44 * 32, facing: 'right' },
+          // Standing at the first plant slot of bed-extra (tiles 30..34 × 41..43, one slot per tile)
+          player: { mapId: 'garden', x: 30.5 * 32, y: 42 * 32, facing: 'right' },
           world: { unblockedPaths: [], visitedZones: ['garden'], flags: { 'crow-met': true } },
           inventory: { items: { 'seed-glow-lily': 1, 'seed-lavender': 2 } },
           quests: { active: ['q-restore-beds'], completed: ['q-meet-crow'], progress: {} },

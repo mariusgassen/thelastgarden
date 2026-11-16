@@ -111,6 +111,21 @@ describe('free building', () => {
     expect(gameState.getItemCount('mat-wood')).toBe(2);
   });
 
+  it('holds four plants per planter and gives every seed back when it is taken down', () => {
+    give({ 'mat-wood': 2, 'mat-stone': 1, 'seed-lavender': 4 });
+    placePiece('garden', 'planter', SPOT.x, SPOT.y);
+    const base = planterBedId('garden', SPOT.x, SPOT.y);
+    const ids = [base, `${base}#1`, `${base}#2`, `${base}#3`];
+    for (const id of ids) {
+      expect(allPlantingBeds().some((b) => b.id === id)).toBe(true);
+      expect(plantSeed(id)).toBe(true);
+    }
+    expect(ids.every((id) => isBedPlanted(id))).toBe(true);
+    expect(removePiece('garden', SPOT.x, SPOT.y)).toBeNull();
+    expect(ids.some((id) => isBedPlanted(id) || allPlantingBeds().some((b) => b.id === id))).toBe(false);
+    expect(gameState.getItemCount('seed-lavender')).toBe(4);
+  });
+
   it('has an item for every cost and puts every pile on walkable ground', () => {
     for (const piece of content.buildables.all()) {
       for (const c of piece.cost) expect(content.items.has(c.itemId), `${piece.id}: ${c.itemId}`).toBe(true);

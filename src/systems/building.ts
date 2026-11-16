@@ -66,9 +66,11 @@ setDynamicBedProvider(() => {
   const beds: (PlantingBedDef & { mapId: string })[] = [];
   for (const [mapId, pieces] of Object.entries(readState().pieces)) {
     for (const p of pieces) {
-      if (!content.buildables.find(p.id)?.planter) continue;
-      // The plant stands on the soil in the box, a little above the tile's lower edge.
-      beds.push({ id: planterBedId(mapId, p.x, p.y), mapId, rect: { x: p.x, y: p.y - 0.3, w: 1, h: 1 } });
+      const slots = content.buildables.find(p.id)?.planter;
+      if (!slots) continue;
+      // The plants stand on the soil in the box, a little above the tile's lower edge. Slot 0 keeps
+      // the id the single-plant planter had, so plants from older saves stay where they were.
+      beds.push({ id: planterBedId(mapId, p.x, p.y), mapId, rect: { x: p.x, y: p.y - 0.3, w: 1, h: 1 }, slots, plantScale: 0.6 });
     }
   }
   return beds;
@@ -250,9 +252,11 @@ export function removePiece(mapId: string, x: number, y: number, player?: Builde
   const piece = getPieceAt(mapId, x, y) as PlacedPiece;
   const def = content.buildables.get(piece.id);
   if (def.planter) {
-    const plantId = clearBed(planterBedId(mapId, x, y));
-    const seedItemId = plantId && content.plants.get(plantId).seedItemId;
-    if (seedItemId) gameState.addItem(seedItemId, 1);
+    for (let n = 0; n < def.planter.cols * def.planter.rows; n++) {
+      const plantId = clearBed(n === 0 ? planterBedId(mapId, x, y) : `${planterBedId(mapId, x, y)}#${n}`);
+      const seedItemId = plantId && content.plants.get(plantId).seedItemId;
+      if (seedItemId) gameState.addItem(seedItemId, 1);
+    }
   }
   for (const c of def.cost) gameState.addItem(c.itemId, c.count);
   writePieces(

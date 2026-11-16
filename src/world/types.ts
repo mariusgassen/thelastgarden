@@ -54,6 +54,15 @@ export interface PlantingBedDef {
   rect: TileRect;
   /** Species this bed accepts; omit to accept the first species the player owns a seed for. */
   plantId?: string;
+  /**
+   * Splits the bed into a `cols` × `rows` grid with one plant per cell. Cell 0 (top left) keeps
+   * the bed's own id, so old saves and quest markers still find it; the others are `<id>#<n>`.
+   */
+  slots?: { cols: number; rows: number };
+  /** Size of a plant in this bed relative to a full-size one (1 = default). */
+  plantScale?: number;
+  /** Set on a cell of a split bed: the whole bed's area (wards and prompts size themselves by it). */
+  bounds?: TileRect;
 }
 
 /** A collectible resource or seed in the world (src/systems/resources.ts). */

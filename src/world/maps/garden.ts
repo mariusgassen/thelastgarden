@@ -197,10 +197,10 @@ export const GARDEN_MAP: MapDef = {
   // The 3 "verwilderte Beete" Quest 3 (Wave 3) restores, plus one open bed. See
   // ARCHITECTURE.md § Plant Abilities for how Wave 3 should check restoration.
   plantingBeds: [
-    { id: 'bed-bramble', rect: { x: 16, y: 29, w: 4, h: 2 }, plantId: 'bramble-vine' },
-    { id: 'bed-lily', rect: { x: 30, y: 29, w: 4, h: 2 }, plantId: 'glow-lily' },
-    { id: 'bed-lavender', rect: { x: 16, y: 41, w: 4, h: 2 }, plantId: 'lavender' },
-    { id: 'bed-extra', rect: { x: 30, y: 41, w: 4, h: 2 } },
+    { id: 'bed-bramble', rect: { x: 16, y: 29, w: 4, h: 2 }, slots: { cols: 4, rows: 2 }, plantScale: 0.75, plantId: 'bramble-vine' },
+    { id: 'bed-lily', rect: { x: 30, y: 29, w: 4, h: 2 }, slots: { cols: 4, rows: 2 }, plantScale: 0.75, plantId: 'glow-lily' },
+    { id: 'bed-lavender', rect: { x: 16, y: 41, w: 4, h: 2 }, slots: { cols: 4, rows: 2 }, plantScale: 0.75, plantId: 'lavender' },
+    { id: 'bed-extra', rect: { x: 30, y: 41, w: 4, h: 2 }, slots: { cols: 4, rows: 2 }, plantScale: 0.75 },
   ],
   resourceNodes: [
     { id: 'garden-seed-honeyberry', itemId: 'seed-honeyberry', at: { x: 36.5, y: 33.5 }, label: 'Samen einsammeln' },
