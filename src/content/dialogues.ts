@@ -227,7 +227,7 @@ export const DIALOGUES: DialogueDef[] = [
     id: 'night-crows-friend',
     lines: [
       { text: 'Krähen kreisten über dem Garten. Dann ein scharfes Krah vom Hüttendach — und sie zogen ab.' },
-      { text: 'Vor der Hüttentür liegt etwas Glänzendes. Deine Krähe hat es dir hingelegt. Als Pfand, oder als Entschuldigung für die Verwandtschaft.' },
+      { text: 'In deiner Tasche liegt plötzlich etwas Glänzendes. Deine Krähe hat es dir von der Hüttentür hineingelegt. Als Pfand, oder als Entschuldigung für die Verwandtschaft.' },
     ],
   },
   {
