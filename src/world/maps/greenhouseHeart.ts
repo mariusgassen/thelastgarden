@@ -40,7 +40,7 @@ export const GREENHOUSE_HEART_MAP: MapDef = {
       target: { mapId: 'greenhouse-vestibule', spawn: 'inner-door' },
     },
   ],
-  npcs: [{ npcId: 'crow', at: { x: 13, y: 8.5 }, radius: 72, showWhenFlag: 'greenhouse-inner-unlocked', hideWhenFlag: 'hill-crow-talked' }],
+  npcs: [{ npcId: 'crow', at: { x: 13, y: 8.5 }, radius: 72, wander: 1.5, showWhenFlag: 'greenhouse-inner-unlocked', hideWhenFlag: 'hill-crow-talked' }],
   journalPages: [
     {
       id: 'page-heart',

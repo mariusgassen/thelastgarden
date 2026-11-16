@@ -84,7 +84,7 @@ export const TRAMLINE_MAP: MapDef = {
     { id: 'scrap-tram-1', itemId: 'mat-scrap', at: { x: 33, y: 7.5 }, label: 'Schrott bergen', respawnMs: 60_000, texture: 'node-scrap' },
   ],
   // Mohn grazes here until she is befriended; afterwards she travels with the player (systems/horse.ts).
-  npcs: [{ npcId: 'mohn', at: { x: 23, y: 16.9 }, radius: 72, hideWhenFlag: 'horse-tamed' }],
+  npcs: [{ npcId: 'mohn', at: { x: 23, y: 16.9 }, radius: 72, wander: 3, hideWhenFlag: 'horse-tamed' }],
   journalPages: [
     {
       id: 'page-mohn',
