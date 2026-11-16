@@ -66,6 +66,8 @@ export interface BuildableDef {
   planter?: boolean;
   /** Resting here skips to the next morning. */
   rest?: boolean;
+  /** A home for helper animals (systems/animals.ts); the animals move in on their own. */
+  home?: { animal: 'bees' | 'hens' | 'goat' | 'horse' };
 }
 
 interface QuestObjectiveBase {

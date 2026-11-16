@@ -322,4 +322,20 @@ export const ITEMS: ItemDef[] = [
     stackable: true,
     color: 0xb07a52,
   },
+  {
+    id: 'produce-egg',
+    name: 'Ei',
+    description: 'Noch warm. Ein Huhn hat es ins Stroh gelegt, als hätte es gewusst, dass du kommst.',
+    category: 'produce',
+    stackable: true,
+    color: 0xf2e4c9,
+  },
+  {
+    id: 'produce-honey',
+    name: 'Honig',
+    description: 'Dunkel und zäh wie Bernstein. Er schmeckt nach den Blüten rund um den Stock.',
+    category: 'produce',
+    stackable: true,
+    color: 0xe0a02b,
+  },
 ];
