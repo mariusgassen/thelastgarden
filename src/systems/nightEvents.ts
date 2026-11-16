@@ -141,7 +141,7 @@ const resolvers: Record<NightEventKind, Resolver> = {
     const player = gameState.data.player;
     const feather = { texture: 'feather' as const, x: player.x + 18, y: player.y + 8 };
     if (gameState.hasFlag('crow-met')) {
-      gameState.addItem('resource-curio', 1);
+      gameState.setFlag('crow-gift-waiting'); // lies by the hut door until picked up (garden.ts)
       return { kind: 'crows', dialogueId: 'night-crows-friend', affectedBedIds: [], remnants: [feather], protectedBy: 'crow' };
     }
     if (matureBedsWithAbility(mapId, 'emit-light').length > 0) {

@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { bus, type NightOutcome } from '../../src/systems/events';
 import { isNightActive, triggerNightEvent } from '../../src/systems/nightEvents';
+import { collectNode } from '../../src/systems/resources';
 import { debugRewindGrowth, getBedState, plantSeed, shiftGrowth, STAGE_DURATION_MS } from '../../src/systems/plants';
 import { gameState } from '../../src/systems/state';
 
@@ -140,7 +141,12 @@ describe('night events system', () => {
     const friend = await runNight('crows');
     expect(friend.dialogueId).toBe('night-crows-friend');
     expect(friend.protectedBy).toBe('crow');
+    expect(gameState.hasFlag('crow-gift-waiting')).toBe(true);
+    expect(gameState.getItemCount('resource-curio')).toBe(1);
+    expect(collectNode('crow-gift-hut')).toBe(true);
+    expect(gameState.hasFlag('crow-gift-waiting')).toBe(false);
     expect(gameState.getItemCount('resource-curio')).toBe(2);
+    expect(collectNode('crow-gift-hut')).toBe(false);
   });
 
   it('boosts tender beds during rain nights and handles empty beds cleanly', async () => {
