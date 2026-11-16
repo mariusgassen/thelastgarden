@@ -70,6 +70,24 @@ describe('new plants', () => {
     expect(gameState.getItemCount('meal-berry-mash')).toBe(1);
     expect(getInventoryGroups().some((g) => g.title === 'Speisen')).toBe(true);
   });
+
+  it('teaches honey-cake and turnip-bread when flour is collected', () => {
+    give({
+      'craft-flour': 2,
+      'produce-honey': 1,
+      'produce-egg': 1,
+      'produce-gold-turnip': 2,
+      'resource-dew': 1,
+    });
+    expect(craft('honey-cake')).toBe(false);
+    expect(craft('turnip-bread')).toBe(false);
+
+    gameState.setFlag('collected-flour');
+    expect(craft('honey-cake')).toBe(true);
+    expect(craft('turnip-bread')).toBe(true);
+    expect(gameState.getItemCount('meal-honey-cake')).toBe(1);
+    expect(gameState.getItemCount('meal-turnip-bread')).toBe(1);
+  });
 });
 
 describe('meals', () => {

@@ -77,6 +77,8 @@ export class CraftingPanel {
   private viewH = 0;
   private safe: SafeArea = { top: 0, right: 0, bottom: 0, left: 0 };
   private open = false;
+  private filterIds: Set<string> | null = null;
+  private readonly titleText: Phaser.GameObjects.Text;
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -86,7 +88,7 @@ export class CraftingPanel {
   ) {
     this.backdrop = scene.add.rectangle(0, 0, 10, 10, 0x000000, 0.45).setOrigin(0).setDepth(95_999).setVisible(false);
     this.panelBg = scene.add.graphics();
-    const title = scene.add.text(PAD, PAD - 2, 'Werkbank', {
+    this.titleText = scene.add.text(PAD, PAD - 2, 'Werkbank', {
       fontFamily: THEME.font,
       fontSize: '20px',
       fontStyle: 'bold',
@@ -107,7 +109,7 @@ export class CraftingPanel {
       .setVisible(false);
 
     this.panel = scene.add
-      .container(0, 0, [this.panelBg, title, this.closeText, this.list, this.footer])
+      .container(0, 0, [this.panelBg, this.titleText, this.closeText, this.list, this.footer])
       .setDepth(96_000)
       .setVisible(false);
   }
@@ -121,7 +123,7 @@ export class CraftingPanel {
     this.viewH = viewH;
     this.safe = safe;
     this.backdrop.setSize(viewW, viewH);
-    const panelW = Math.min(PANEL_MAX_W, Math.max(250, viewW - safe.left - safe.right - 24));
+    const panelW = Math.min(PANEL_MAX_W, Math.max(240, viewW - safe.left - safe.right - 24));
     if (panelW !== this.panelW) {
       this.panelW = panelW;
       this.rebuildList();
@@ -141,14 +143,26 @@ export class CraftingPanel {
     this.drawPanel();
   }
 
-  setOpen(open: boolean): void {
-    if (this.open === open) return;
+  private visibleRecipes(): RecipeDef[] {
+    const all = getUnlockedRecipes();
+    return this.filterIds ? all.filter((r) => this.filterIds!.has(r.id)) : all;
+  }
+
+  setOpen(open: boolean, options?: { recipeIds?: string[]; title?: string }): void {
+    if (this.open === open && !open) return;
+    if (open) {
+      this.filterIds = options?.recipeIds ? new Set(options.recipeIds) : null;
+      this.titleText.setText(options?.title ?? 'Werkbank');
+    } else {
+      this.filterIds = null;
+      this.titleText.setText('Werkbank');
+    }
     this.open = open;
     this.backdrop.setVisible(open);
     this.panel.setVisible(open);
     if (open) {
       this.scrollY = 0;
-      const recipes = getUnlockedRecipes();
+      const recipes = this.visibleRecipes();
       const firstReady = recipes.find((r) => getMissing(r).length === 0);
       this.selectedId = firstReady?.id ?? recipes[0]?.id ?? null;
       this.refresh();
@@ -314,7 +328,7 @@ export class CraftingPanel {
     this.clipItems = [];
 
     const innerW = this.panelW - PAD * 2;
-    const recipes = getUnlockedRecipes();
+    const recipes = this.visibleRecipes();
 
     if (recipes.length === 0) {
       this.selectedId = null;

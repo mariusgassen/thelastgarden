@@ -37,7 +37,21 @@ export const WORKSHOP_MAP: MapDef = {
         },
       ],
     },
-    { id: 'workshop-shelf', type: 'dialogue', at: { x: 9, y: 3.7 }, label: 'Ansehen', dialogueId: 'workshop-shelf' },
+    {
+      id: 'workshop-shelf',
+      type: 'dialogue',
+      at: { x: 9, y: 3.7 },
+      label: 'Ansehen',
+      dialogueId: 'workshop-shelf',
+      variants: [
+        {
+          dialogueId: 'workshop-shelf-trowel',
+          forbids: ['trowel-found'],
+          setFlags: ['trowel-found'],
+          giveItems: [{ itemId: 'trowel', count: 1 }],
+        },
+      ],
+    },
     {
       id: 'workshop-exit',
       type: 'door',

@@ -243,16 +243,32 @@ export function villageDialogues(): DialogueDef[] {
       lines: [{ text: 'Durch die Tür der Bäckerei weht der Duft von frischem Brot. Auf dem Fensterbrett liegt ein Zettel: "Heute für alle."' }],
     },
     {
+      id: 'village-plaza-bakery-gift',
+      lines: [{ text: 'Aus dem großen Backofen zieht ein goldbrauner Duft über den Platz. Hanne winkt dir zu und schiebt dir ein warmes Stück Honigkuchen über das Fensterbrett.' }],
+    },
+    {
       id: 'village-plaza-stall',
       lines: [{ text: 'Auf dem Marktstand liegen drei Brote. Ein Schild daneben: "Nimm, was du brauchst. Bring, was du hast." Hier wird nichts verkauft.' }],
+    },
+    {
+      id: 'village-plaza-stall-gift',
+      lines: [{ text: 'Auf dem Marktstand wartet ein frisch abgefülltes Schälchen Beerenmus zwischen den Broten. „Greif zu, wir haben reichlich eingekocht“, steht auf der kleinen Tafel.' }],
     },
     {
       id: 'village-farms-shop',
       lines: [{ text: 'Im Hofladen stehen Körbe mit Rüben und Beeren. An der Tür hängt eine Kreidetafel: "Immer offen. Nichts kostet etwas."' }],
     },
     {
+      id: 'village-farms-shop-gift',
+      lines: [{ text: 'In den Körben des Hofladens leuchten frische Goldrüben neben warmen Eiern. Wilma legt dir lächelnd eine kleine Wegzehrung in deinen Beutel.' }],
+    },
+    {
       id: 'village-orchard-press',
       lines: [{ text: 'Aus der Mosthütte duftet es nach Äpfeln und Honig. Auf einem Fass steht ein Zinnbecher, halb voll und noch warm.' }],
+    },
+    {
+      id: 'village-orchard-press-gift',
+      lines: [{ text: 'Vor der Mosthütte glänzen frisch abgefüllte Gläser zwischen den Weidenkörben. Ottilie hat ein Glas klaren Waldhonig für dich beiseitegestellt.' }],
     },
     {
       id: 'm-village-hint-garden',

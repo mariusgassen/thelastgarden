@@ -15,6 +15,8 @@ export interface WorldApi {
   /** Show ad-hoc text lines in the dialogue box (e.g. obstacle hints). */
   showLines(id: string, lines: DialogueLine[]): void;
   toast(text: string): void;
+  /** Rest until morning (optional in pure unit mocks). */
+  rest?(message: string): void;
 }
 
 export interface InteractionContext {
@@ -147,6 +149,44 @@ type SpecHandler<K extends InteractableSpec['type']> = (
   ctx: InteractionContext,
 ) => void;
 
+interface InteractableExt {
+  cooldowns: Record<string, number>;
+}
+
+function readCooldowns(): Record<string, number> {
+  return gameState.getExt<InteractableExt>('interactables', { cooldowns: {} }).cooldowns;
+}
+
+function recordCooldown(key: string, now: number): void {
+  const ext = gameState.getExt<InteractableExt>('interactables', { cooldowns: {} });
+  gameState.setExt('interactables', { ...ext, cooldowns: { ...ext.cooldowns, [key]: now } });
+}
+
+function carriedProduceStacks(): { itemId: string; count: number }[] {
+  return content.items
+    .all()
+    .filter((i) => i.category === 'produce')
+    .map((i) => ({ itemId: i.id, count: gameState.getItemCount(i.id) }))
+    .filter((s) => s.count > 0)
+    .sort((a, b) => b.count - a.count);
+}
+
+function carriedProduceCount(): number {
+  return carriedProduceStacks().reduce((sum, s) => sum + s.count, 0);
+}
+
+function spendProduce(count: number): boolean {
+  if (carriedProduceCount() < count) return false;
+  let need = count;
+  for (const s of carriedProduceStacks()) {
+    const n = Math.min(need, s.count);
+    gameState.removeItem(s.itemId, n);
+    need -= n;
+    if (need === 0) break;
+  }
+  return true;
+}
+
 /** Runs `fn` once, when the dialogue with this id closes. */
 export function onDialogueClosed(id: string, fn: () => void): void {
   const handler = (payload: { id: string }) => {
@@ -159,19 +199,35 @@ export function onDialogueClosed(id: string, fn: () => void): void {
 
 /** Shows the first variant whose conditions hold and applies its effects on close. False if none matches. */
 function showVariant(variants: DialogueVariant[] | undefined, ctx: InteractionContext): boolean {
-  const variant = variants?.find(
-    (v) =>
-      (v.requires ?? []).every((f) => gameState.hasFlag(f)) && !(v.forbids ?? []).some((f) => gameState.hasFlag(f)),
-  );
+  const now = Date.now();
+  const cooldowns = readCooldowns();
+  const variant = variants?.find((v) => {
+    if (!(v.requires ?? []).every((f) => gameState.hasFlag(f))) return false;
+    if ((v.forbids ?? []).some((f) => gameState.hasFlag(f))) return false;
+    if (!(v.requiresItems ?? []).every((i) => gameState.getItemCount(i.itemId) >= i.count)) return false;
+    if (!(v.takeItems ?? []).every((i) => gameState.getItemCount(i.itemId) >= i.count)) return false;
+    if (v.takeProduce !== undefined && carriedProduceCount() < v.takeProduce) return false;
+    if (v.cooldownKey && v.cooldownMs && now < (cooldowns[v.cooldownKey] ?? 0) + v.cooldownMs) return false;
+    return true;
+  });
   if (!variant) return false;
   ctx.world.showDialogue(variant.dialogueId);
-  if (variant.setFlags?.length || variant.giveItems?.length) {
+  if (
+    variant.setFlags?.length ||
+    variant.giveItems?.length ||
+    variant.takeItems?.length ||
+    variant.takeProduce ||
+    variant.cooldownKey
+  ) {
     onDialogueClosed(variant.dialogueId, () => {
+      for (const item of variant.takeItems ?? []) gameState.removeItem(item.itemId, item.count);
+      if (variant.takeProduce) spendProduce(variant.takeProduce);
       for (const item of variant.giveItems ?? []) {
         gameState.addItem(item.itemId, item.count);
         ctx.world.toast(`+${item.count} ${content.items.get(item.itemId).name}`);
       }
       for (const flag of variant.setFlags ?? []) gameState.setFlag(flag);
+      if (variant.cooldownKey) recordCooldown(variant.cooldownKey, Date.now());
       gameState.save();
     });
   }
@@ -231,8 +287,19 @@ const specHandlers: { [K in InteractableSpec['type']]: SpecHandler<K> } = {
   },
   craft: (spec, ctx) => {
     if (showVariant(spec.variants, ctx)) return;
-    if (getUnlockedRecipes().length > 0) bus.emit('crafting-open', undefined);
-    else ctx.world.showDialogue(spec.emptyDialogueId);
+    let recipes = getUnlockedRecipes();
+    if (spec.recipeIds) {
+      const allowed = new Set(spec.recipeIds);
+      recipes = recipes.filter((r) => allowed.has(r.id));
+    }
+    if (recipes.length > 0) {
+      bus.emit('crafting-open', spec.recipeIds || spec.title ? { recipeIds: spec.recipeIds, title: spec.title } : undefined);
+    } else ctx.world.showDialogue(spec.emptyDialogueId);
+  },
+  rest: (spec, ctx) => {
+    const msg = spec.message ?? 'Du ruhst dich auf der Bank aus, bis der Morgen anbricht.';
+    if (ctx.world.rest) ctx.world.rest(msg);
+    else ctx.world.toast(msg);
   },
   boat: (_spec, ctx) => {
     ctx.world.toast('Das Boot liegt vertäut.');

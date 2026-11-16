@@ -200,7 +200,7 @@ export class WikiPanel {
       const back = add('‹  Zurück', { fontSize: '15px', fontStyle: 'bold', color: THEME.sunCss });
       this.rows.push({ key: BACK, top: -4, height: back.height + 14 });
       y += 14;
-      this.renderDetail(found.entry, add, (dy) => (y += dy));
+      this.renderDetail(found.entry, found.known, add, (dy) => (y += dy));
     } else {
       this.detail = null;
       this.title.setText('Almanach');
@@ -210,16 +210,17 @@ export class WikiPanel {
         add(`${section.title}  ${knownCount}/${section.entries.length}`, { fontSize: '13px', fontStyle: 'bold', color: '#9fb98a' });
         y += 4;
         for (const { entry, known } of section.entries) {
-          if (known) this.order.push(entry.key);
-          const isSel = known && entry.key === this.selected;
+          this.order.push(entry.key);
+          const isSel = entry.key === this.selected;
           const top = y;
-          const t = add(`${isSel ? '▸ ' : '   '}${known ? entry.title : '???'}`, {
+          const label = known ? entry.title : '???  · Hinweis';
+          const t = add(`${isSel ? '▸ ' : '   '}${label}`, {
             fontSize: '16px',
             fontStyle: isSel ? 'bold' : 'normal',
-            color: isSel ? THEME.sunCss : known ? THEME.creamCss : '#6f7a66',
+            color: isSel ? THEME.sunCss : known ? THEME.creamCss : '#8f9b82',
           });
           y += 7;
-          if (known) this.rows.push({ key: entry.key, top: top - 3, height: t.height + 13 });
+          this.rows.push({ key: entry.key, top: top - 3, height: t.height + 13 });
         }
       }
       if (this.selected && !this.order.includes(this.selected)) this.selected = null;
@@ -230,9 +231,23 @@ export class WikiPanel {
 
   private renderDetail(
     entry: WikiEntry,
+    known: boolean,
     add: (text: string, style: Phaser.Types.GameObjects.Text.TextStyle) => Phaser.GameObjects.Text,
     gap: (dy: number) => void,
   ): void {
+    if (!known) {
+      add('???', { fontSize: '20px', fontStyle: 'bold', color: THEME.sunCss });
+      gap(8);
+      add('Noch unentdeckt.', { fontSize: '14px', fontStyle: 'italic', color: '#9fb98a' });
+      gap(12);
+      add(`Hinweis: ${entry.hint ?? 'Erkunde Erlenbrück weiter und erfülle offene Aufgaben.'}`, {
+        fontSize: '15px',
+        color: THEME.creamCss,
+        lineSpacing: 3,
+      });
+      gap(10);
+      return;
+    }
     add(entry.title, { fontSize: '20px', fontStyle: 'bold', color: THEME.sunCss });
     gap(10);
     for (const line of entry.lines) {

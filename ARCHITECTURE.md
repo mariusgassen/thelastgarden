@@ -129,8 +129,10 @@ To get the scene: `game.scene.getScene('World') as WorldScene`, or receive it in
 - Each frame, the system focuses the nearest in-range item. It emits `interaction-focus` (which shows the context button) and draws a bouncing marker over that item.
 - An item is triggered by the context button, by **E / Space / Enter**, or by **tapping** it while the player is in range. Every trigger emits `interacted { id }`.
 - **Data-driven specs** (`MapDef.interactables`):
-  - `dialogue` shows `content.dialogues[dialogueId]`.
+  - `dialogue` shows `content.dialogues[dialogueId]` (with optional `variants` supporting `requires`/`forbids` flags, `requiresItems`/`takeItems`/`takeProduce`, and `cooldownKey`/`cooldownMs`).
   - `door` moves to `target.mapId`/`spawn`. If the door is `locked`, it opens only once `gameState.hasFlag(unlockFlag)` is true; otherwise it shows `lockedDialogueId`. The greenhouse door uses `locked: true, unlockFlag: 'greenhouse-unlocked'` and has no `target` yet.
+  - `craft` opens the workbench/stove panel (`recipeIds` and `title` narrow it to matching recipes, e.g. cooking at `cottage-stove`).
+  - `rest` rests on benches until morning (`restUntilMorning()`).
   - To change how a built-in spec type behaves: `setSpecHandler('door', fn)`.
   - To add a new spec type: add a variant to `InteractableSpec` and add an entry to `specHandlers`.
 
@@ -603,7 +605,7 @@ harvest into something else.
   turning in a tween (not under reduced motion). The first time a machine is built, its
   description is toasted.
 - **Build bar.** `ui/BuildBar.ts` wraps into rows of six; keys 1–9 pick the first nine slots.
-- **Flour** is a plain `craft-flour` material for cooking recipes; nothing consumes it yet.
+- **Flour** (`craft-flour`, ground in a windmill or at the repaired Old Mill's millstone) unlocks `honey-cake` (Honigkuchen, `swift` 5 min) and `turnip-bread` (Rübenbrot, `blightproof` 6 min) for cooking at the stove or workbench.
 ## Almanach (in-game wiki)
 
 `systems/wiki.ts` (no Phaser) builds entries from the content registries, so new content shows
@@ -618,7 +620,7 @@ lines derived from plants, recipes and buildables.
 - **Discovery.** Items when owned, plants when their seed or produce is known, recipes when
   unlocked, build pieces once build mode is unlocked, topics by flag (`requiresFlag` or `requiresAnyFlag`). Generic registries are
   always listed. To gate or customise, call `registerWikiSource(() => WikiEntry[])` at module load.
-  Locked entries show as "???". Discovery is sticky.
+  Locked entries show as "???  · Hinweis" and can be opened to view a spoiler-safe German discovery hint (`hint` on `WikiEntry` / `WikiTopicDef`) without revealing the title or full text. Discovery is sticky.
 - **Save.** `ext.wiki = { seen: string[] }`, no migration; the first scan after loading picks up
   what an old save already has.
 - **UI.** `ui/WikiPanel.ts`, Menü button (top left, opens the menu list; Almanach is its first entry) and **H**. Esc steps back from an

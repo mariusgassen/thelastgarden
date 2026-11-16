@@ -46,12 +46,14 @@ describe('quests, NPCs, journal, resources, and interaction', () => {
     gameState.setFlag('bed-restored:bed-lily');
     gameState.setFlag('bed-restored:bed-lavender');
     expect(getCompletedQuests().map((q) => q.id)).toEqual(['q-meet-crow', 'q-restore-beds']);
-    expect(getActiveQuests().map((q) => q.id)).toEqual(['q-first-harvest', 'q-journal-pages']);
+    expect(getActiveQuests().map((q) => q.id)).toEqual(['q-first-harvest', 'q-old-trowel', 'q-journal-pages']);
     expect(getTrackedObjective()?.quest.id).toBe('q-journal-pages');
 
-    // Optional harvest side quest: the first harvest completes it and pays one dew
+    // Optional harvest & old trowel side quests: completing both pays dew and sunlight
     gameState.setFlag('harvested-once');
+    gameState.setFlag('trowel-found');
     expect(gameState.getItemCount('resource-dew')).toBe(1);
+    expect(gameState.getItemCount('resource-sunlight')).toBe(1);
     expect(getActiveQuests().map((q) => q.id)).toEqual(['q-journal-pages']);
 
     // Read the 3 Episode 1 journal pages (and verify markPageRead is idempotent)
@@ -82,8 +84,14 @@ describe('quests, NPCs, journal, resources, and interaction', () => {
     expect(gameState.hasFlag('episode-1-complete')).toBe(true);
     expect(gameState.hasFlag('quest-completed:q-greenhouse')).toBe(true);
     expect(startQuest('q-greenhouse')).toBe(false); // already completed
-    expect(getActiveQuests().map((q) => q.id)).toEqual(['q-canal-path', 'q-horse', 'q-blight', 'q-tramline']);
+    expect(getActiveQuests().map((q) => q.id)).toEqual(['q-canal-path', 'q-horse', 'q-blight', 'q-honeyberry-mash', 'q-tramline']);
     expect(getTrackedObjective()?.quest.id).toBe('q-tramline');
+
+    // Complete q-honeyberry-mash: harvest honeyberries -> craft berry-mash -> eat meal
+    gameState.setFlag('harvested:produce-honeyberry');
+    gameState.setFlag('crafted:berry-mash');
+    gameState.setFlag('ate-meal');
+    expect(getCompletedQuests().map((q) => q.id)).toContain('q-honeyberry-mash');
 
     // Complete the optional q-horse: meet Mohn, read the note, craft the treat, hand it over
     gameState.setFlag('horse-met');
@@ -92,10 +100,31 @@ describe('quests, NPCs, journal, resources, and interaction', () => {
     gameState.setFlag('horse-tamed');
     expect(getCompletedQuests().map((q) => q.id)).toContain('q-horse');
 
-    // Complete the optional q-blight: gather, build, look at a heart, seal it -> grants building material
+    // Complete the optional q-blight -> grants building material and starts animals & tool quests
     for (const flag of ['gathered-material', 'built-once', 'blight-seen', 'blight-heart-sealed']) gameState.setFlag(flag);
     expect(getCompletedQuests().map((q) => q.id)).toContain('q-blight');
     expect(gameState.getItemCount('mat-wood')).toBe(4);
+    expect(getActiveQuests().map((q) => q.id)).toContain('q-bees-and-hens');
+    expect(getActiveQuests().map((q) => q.id)).toContain('q-tools-field');
+    expect(getActiveQuests().map((q) => q.id)).toContain('q-tool-pole-lantern');
+
+    // Complete q-bees-and-hens, q-tools-field, and q-tool-pole-lantern
+    for (const flag of [
+      'built:beehive',
+      'animal-produce:produce-honey',
+      'built:henhouse',
+      'animal-produce:produce-egg',
+      'crafted:tool-sickle',
+      'crafted:tool-shovel',
+      'crafted:tool-satchel',
+      'built:lantern',
+      'crafted:tool-pole-lantern',
+    ]) {
+      gameState.setFlag(flag);
+    }
+    expect(getCompletedQuests().map((q) => q.id)).toContain('q-bees-and-hens');
+    expect(getCompletedQuests().map((q) => q.id)).toContain('q-tools-field');
+    expect(getCompletedQuests().map((q) => q.id)).toContain('q-tool-pole-lantern');
 
     // Complete q-canal-path -> grants reward items
     gameState.setFlag('saw-found');
@@ -104,13 +133,22 @@ describe('quests, NPCs, journal, resources, and interaction', () => {
     expect(getCompletedQuests().map((q) => q.id)).toContain('q-canal-path');
     expect(gameState.getItemCount('resource-curio')).toBe(1);
 
-    // Complete q-tramline -> starts q-water-tower
+    // Complete q-tramline -> starts q-glowcap and q-water-tower (tracker stays on q-water-tower)
     gameState.markZoneVisited('tram-tracks');
     gameState.markPathUnblocked('bramble-tram-switch');
     gameState.markZoneVisited('water-tower-plaza');
     bus.emit('area-changed', { mapId: 'water-tower', zoneId: 'water-tower-plaza', name: 'Am Wasserturm' });
     expect(getCompletedQuests().map((q) => q.id)).toContain('q-tramline');
-    expect(getActiveQuests().map((q) => q.id)).toEqual(['q-water-tower']);
+    expect(getActiveQuests().map((q) => q.id)).toEqual(['q-glowcap', 'q-water-tower']);
+    expect(getTrackedObjective()?.quest.id).toBe('q-water-tower');
+
+    // Complete q-glowcap -> starts q-turnip-stew
+    gameState.setFlag('harvested:produce-glowcap');
+    expect(getCompletedQuests().map((q) => q.id)).toContain('q-glowcap');
+    expect(getActiveQuests().map((q) => q.id)).toContain('q-turnip-stew');
+    gameState.setFlag('harvested:produce-gold-turnip');
+    gameState.setFlag('crafted:turnip-stew');
+    expect(getCompletedQuests().map((q) => q.id)).toContain('q-turnip-stew');
 
     // Complete q-water-tower -> starts q-inner-greenhouse
     gameState.setFlag('water-tower-crow-met');
@@ -128,11 +166,15 @@ describe('quests, NPCs, journal, resources, and interaction', () => {
     gameState.setFlag('bed-restored:bed-heart-fern');
     gameState.setFlag('crow-heart-talked');
     expect(gameState.hasFlag('episode-2-complete')).toBe(true);
-    expect(getActiveQuests().map((q) => q.id)).toEqual(['q-vestibule-garden', 'q-hill-mist']);
+    expect(getActiveQuests().map((q) => q.id)).toEqual(['q-vestibule-garden', 'q-thornroot', 'q-hill-mist']);
+    expect(getTrackedObjective()?.quest.id).toBe('q-hill-mist');
 
-    // Complete q-vestibule-garden side quest
+    // Complete q-vestibule-garden and q-thornroot side quests
     gameState.setFlag('bed-restored:bed-vestibule');
+    gameState.setFlag('harvested:produce-thorn-cane');
+    gameState.setFlag('built:thorn-hedge');
     expect(getCompletedQuests().map((q) => q.id)).toContain('q-vestibule-garden');
+    expect(getCompletedQuests().map((q) => q.id)).toContain('q-thornroot');
     expect(getActiveQuests().map((q) => q.id)).toEqual(['q-hill-mist']);
 
     // Complete q-hill-mist -> starts q-find-m
@@ -157,29 +199,41 @@ describe('quests, NPCs, journal, resources, and interaction', () => {
     gameState.setFlag('m-orchard-celebrated');
     expect(gameState.hasFlag('episode-3-complete')).toBe(true);
     expect(gameState.getItemCount('orchard-apple-graft')).toBe(1);
-    expect(getActiveQuests().map((q) => q.id)).toEqual(['q-orchard-meadow-bed', 'q-valley-mill']);
+    expect(getActiveQuests().map((q) => q.id)).toEqual(['q-orchard-meadow-bed', 'q-reed', 'q-valley-mill']);
     expect(getTrackedObjective()?.quest.id).toBe('q-valley-mill');
 
-    // Complete q-orchard-meadow-bed side quest
+    // Complete q-orchard-meadow-bed and q-reed side quests
     gameState.setFlag('bed-restored:bed-orchard-extra');
+    gameState.setFlag('harvested:produce-reed-bundle');
+    gameState.setFlag('built:reed-bridge');
     expect(getCompletedQuests().map((q) => q.id)).toContain('q-orchard-meadow-bed');
+    expect(getCompletedQuests().map((q) => q.id)).toContain('q-reed');
     expect(gameState.getItemCount('seed-hollyhock')).toBe(1);
 
-    // Complete q-valley-mill -> starts q-mill-and-farms
+    // Complete q-valley-mill -> starts q-windmill-flour and q-mill-and-farms
     gameState.markZoneVisited('mill-riverbank');
     gameState.setFlag('jakob-met');
     expect(getCompletedQuests().map((q) => q.id)).toContain('q-valley-mill');
-    expect(getActiveQuests().map((q) => q.id)).toEqual(['q-mill-and-farms']);
+    expect(getActiveQuests().map((q) => q.id)).toEqual(['q-windmill-flour', 'q-mill-and-farms']);
+    expect(getTrackedObjective()?.quest.id).toBe('q-mill-and-farms');
 
-    // Complete q-mill-and-farms -> starts q-erlenbrueck-awakens
+    // Complete q-windmill-flour -> collects flour in windmill
+    gameState.setFlag('built:windmill');
+    gameState.setFlag('collected-flour');
+    expect(getCompletedQuests().map((q) => q.id)).toContain('q-windmill-flour');
+
+    // Complete q-mill-and-farms -> starts q-craft-seed-mix, q-willow, and q-erlenbrueck-awakens
     gameState.setFlag('mill-wheel-repaired');
     gameState.setFlag('mill-apple-grafted');
     gameState.setFlag('bed-restored:bed-mill-hollyhock');
     gameState.setFlag('journal-read:page-mill');
-    expect(getActiveQuests().map((q) => q.id)).toEqual(['q-mill-and-farms', 'q-craft-seed-mix']);
+    expect(getActiveQuests().map((q) => q.id)).toEqual(['q-mill-and-farms', 'q-craft-seed-mix', 'q-willow']);
     gameState.setFlag('harvested:produce-seed-pod');
     gameState.setFlag('crafted:seed-mix');
+    gameState.setFlag('harvested:produce-willow-switch');
+    gameState.setFlag('built:wattle');
     expect(getCompletedQuests().map((q) => q.id)).toContain('q-craft-seed-mix');
+    expect(getCompletedQuests().map((q) => q.id)).toContain('q-willow');
     gameState.markZoneVisited('river-farms-yard');
     gameState.markPathUnblocked('bramble-farm-gate');
     gameState.setFlag('bed-restored:bed-farms-hollyhock');

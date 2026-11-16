@@ -29,9 +29,31 @@ export const GREENHOUSE_HEART_MAP: MapDef = {
     { texture: 'bush', at: { x: 17, y: 8 } },
   ],
   interactables: [
-    { id: 'fountain-basin', type: 'dialogue', at: { x: 4.5, y: 5.8 }, label: 'Ansehen', dialogueId: 'fountain-basin', radius: 64 },
+    {
+      id: 'fountain-basin',
+      type: 'dialogue',
+      at: { x: 4.5, y: 5.8 },
+      label: 'Schöpfen',
+      dialogueId: 'fountain-basin',
+      radius: 64,
+      variants: [
+        {
+          dialogueId: 'fountain-basin-draw',
+          giveItems: [{ itemId: 'resource-dew', count: 1 }],
+          cooldownKey: 'well:fountain-basin',
+          cooldownMs: 60_000,
+        },
+      ],
+    },
     { id: 'seed-archive', type: 'dialogue', at: { x: 15.2, y: 4.5 }, label: 'Ansehen', dialogueId: 'seed-archive', radius: 64 },
     { id: 'moon-desk', type: 'dialogue', at: { x: 5, y: 12.5 }, label: 'Ansehen', dialogueId: 'moon-desk' },
+    {
+      id: 'bench-heart',
+      type: 'rest',
+      at: { x: 15, y: 12.6 },
+      label: 'Ausruhen',
+      message: 'Du ruhst dich auf der Bank im warmen Licht des Herzraums aus, bis der Morgen anbricht.',
+    },
     {
       id: 'heart-exit',
       type: 'door',

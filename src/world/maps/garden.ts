@@ -34,6 +34,7 @@ export const GARDEN_MAP: MapDef = {
 
     // Hidden yard behind the bramble
     { op: 'rect', tile: 'wildGrass', rect: { x: 37, y: 11, w: 9, h: 9 } },
+    { op: 'rect', tile: 'soil', rect: { x: 38, y: 12, w: 4, h: 2 } },
     { op: 'rect', tile: 'overgrownPath', rect: { x: 33, y: 14, w: 5, h: 3 } },
 
     // Pond + canal
@@ -44,6 +45,7 @@ export const GARDEN_MAP: MapDef = {
     { op: 'rect', tile: 'overgrownPath', rect: { x: 39, y: 45, w: 2, h: 13 } },
     // Secluded eastern canal bank clearing reachable by boat or bridge
     { op: 'rect', tile: 'wildGrass', rect: { x: 44, y: 47, w: 5, h: 8 } },
+    { op: 'rect', tile: 'soil', rect: { x: 45, y: 52, w: 2, h: 2 } },
 
     // Workshop hut yard
     { op: 'rect', tile: 'grass', rect: { x: 2, y: 25, w: 11, h: 14 } },
@@ -118,6 +120,7 @@ export const GARDEN_MAP: MapDef = {
     { texture: 'sign', at: { x: 28.2, y: 33.2 }, solid: { x: 27.9, y: 32.8, w: 0.6, h: 0.4 } },
     { texture: 'bench', at: { x: 21, y: 32.4 }, solid: { x: 19.9, y: 31.6, w: 2.2, h: 0.8 } },
     { texture: 'bench', at: { x: 30, y: 39.6 }, solid: { x: 28.9, y: 38.8, w: 2.2, h: 0.8 }, flipX: true },
+    { texture: 'bench', at: { x: 43.8, y: 12.6 }, solid: { x: 42.7, y: 11.8, w: 2.2, h: 0.8 }, flipX: true },
     { texture: 'well', at: { x: 41.5, y: 15.6 }, solid: { x: 40.7, y: 14.6, w: 1.6, h: 1 } },
     { texture: 'lily-pad', at: { x: 40.8, y: 35.2 }, ground: true },
     { texture: 'lily-pad', at: { x: 44, y: 37.4 }, scale: 0.8, ground: true },
@@ -138,6 +141,27 @@ export const GARDEN_MAP: MapDef = {
   interactables: [
     { id: 'sign-garden', type: 'dialogue', at: { x: 28.2, y: 33.4 }, label: 'Lesen', dialogueId: 'sign-garden' },
     {
+      id: 'bench-garden-west',
+      type: 'rest',
+      at: { x: 21, y: 32.6 },
+      label: 'Ausruhen',
+      message: 'Du ruhst dich auf der Gartenbank unter den Bäumen aus, bis der Morgen anbricht.',
+    },
+    {
+      id: 'bench-garden-east',
+      type: 'rest',
+      at: { x: 30, y: 39.8 },
+      label: 'Ausruhen',
+      message: 'Du ruhst dich auf der Bank am Hauptgarten aus, bis der Morgen anbricht.',
+    },
+    {
+      id: 'bench-greenhouse-yard',
+      type: 'rest',
+      at: { x: 43.8, y: 12.8 },
+      label: 'Ausruhen',
+      message: 'Du ruhst dich im stillen Winkel hinter dem Gewächshaus aus, bis der Morgen anbricht.',
+    },
+    {
       id: 'greenhouse-door',
       type: 'door',
       at: { x: 25, y: 20.3 },
@@ -157,7 +181,21 @@ export const GARDEN_MAP: MapDef = {
       target: { mapId: 'workshop', spawn: 'entrance' },
     },
     { id: 'pond-edge', type: 'dialogue', at: { x: 38.6, y: 36.5 }, label: 'Ansehen', dialogueId: 'pond-edge' },
-    { id: 'old-well', type: 'dialogue', at: { x: 41.5, y: 15.8 }, label: 'Ansehen', dialogueId: 'old-well' },
+    {
+      id: 'old-well',
+      type: 'dialogue',
+      at: { x: 41.5, y: 15.8 },
+      label: 'Schöpfen',
+      dialogueId: 'old-well',
+      variants: [
+        {
+          dialogueId: 'old-well-draw',
+          giveItems: [{ itemId: 'resource-dew', count: 1 }],
+          cooldownKey: 'well:old-well',
+          cooldownMs: 60_000,
+        },
+      ],
+    },
     { id: 'bus-stop-sign', type: 'dialogue', at: { x: 23.4, y: 62.2 }, label: 'Lesen', dialogueId: 'bus-stop-sign' },
     {
       id: 'crow-stump-note',
@@ -184,17 +222,33 @@ export const GARDEN_MAP: MapDef = {
       id: 'village-bakery-door',
       type: 'dialogue',
       at: { x: 27.6, y: 61.8 },
-      label: 'Ansehen',
+      label: 'Besuchen',
       dialogueId: 'village-plaza-bakery',
       showWhenFlag: 'village-restored:plaza',
+      variants: [
+        {
+          dialogueId: 'village-plaza-bakery-gift',
+          giveItems: [{ itemId: 'meal-honey-cake', count: 1 }],
+          cooldownKey: 'village-bakery',
+          cooldownMs: 180_000,
+        },
+      ],
     },
     {
       id: 'village-market-stall',
       type: 'dialogue',
       at: { x: 14.6, y: 62.1 },
-      label: 'Ansehen',
+      label: 'Besuchen',
       dialogueId: 'village-plaza-stall',
       showWhenFlag: 'village-restored:plaza',
+      variants: [
+        {
+          dialogueId: 'village-plaza-stall-gift',
+          giveItems: [{ itemId: 'meal-berry-mash', count: 1 }],
+          cooldownKey: 'village-market',
+          cooldownMs: 180_000,
+        },
+      ],
     },
   ],
   // The 3 "verwilderte Beete" Quest 3 (Wave 3) restores, plus one open bed. See
@@ -204,14 +258,17 @@ export const GARDEN_MAP: MapDef = {
     { id: 'bed-lily', rect: { x: 30, y: 29, w: 4, h: 2 }, slots: { cols: 4, rows: 2 }, plantScale: 0.75, plantId: 'glow-lily' },
     { id: 'bed-lavender', rect: { x: 16, y: 41, w: 4, h: 2 }, slots: { cols: 4, rows: 2 }, plantScale: 0.75, plantId: 'lavender' },
     { id: 'bed-extra', rect: { x: 30, y: 41, w: 4, h: 2 }, slots: { cols: 4, rows: 2 }, plantScale: 0.75 },
+    { id: 'bed-greenhouse-yard', rect: { x: 38, y: 12, w: 4, h: 2 } },
+    { id: 'bed-canal-island', rect: { x: 45, y: 52, w: 2, h: 2 } },
   ],
   resourceNodes: [
-    { id: 'garden-seed-honeyberry', itemId: 'seed-honeyberry', at: { x: 36.5, y: 33.5 }, label: 'Samen einsammeln' },
-    { id: 'garden-seed-gold-turnip', itemId: 'seed-gold-turnip', at: { x: 13.5, y: 44.5 }, label: 'Samen einsammeln' },
+    { id: 'garden-seed-honeyberry', itemId: 'seed-honeyberry', at: { x: 37.5, y: 33.5 }, label: 'Samen einsammeln' },
+    { id: 'garden-seed-gold-turnip', itemId: 'seed-gold-turnip', at: { x: 14.5, y: 44.2 }, label: 'Samen einsammeln' },
     // Sonnenlicht — sunny open spots, respawn.
     { id: 'sun-1', itemId: 'resource-sunlight', at: { x: 17, y: 22 }, label: 'Sonnenlicht sammeln', respawnMs: 45_000 },
     { id: 'sun-2', itemId: 'resource-sunlight', at: { x: 20, y: 34 }, label: 'Sonnenlicht sammeln', respawnMs: 45_000 },
     { id: 'sun-3', itemId: 'resource-sunlight', at: { x: 10, y: 61 }, label: 'Sonnenlicht sammeln', respawnMs: 45_000 },
+    { id: 'sun-canal-island', itemId: 'resource-sunlight', at: { x: 47.5, y: 49.5 }, label: 'Sonnenlicht sammeln', respawnMs: 45_000 },
     // Tau — near water and wild grass, respawn.
     { id: 'dew-1', itemId: 'resource-dew', at: { x: 38, y: 31 }, label: 'Tau sammeln', respawnMs: 45_000 },
     { id: 'dew-2', itemId: 'resource-dew', at: { x: 44, y: 17 }, label: 'Tau sammeln', respawnMs: 45_000 },

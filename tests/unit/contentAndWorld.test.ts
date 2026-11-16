@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { content, Registry } from '../../src/content';
+import { VILLAGERS } from '../../src/content/village';
 import {
   allJournalPages,
   allObstacles,
@@ -48,10 +49,10 @@ describe('content registries', () => {
         expect(entry.count).toBeGreaterThan(0);
       }
       // Page-taught recipes need a journal page that exists somewhere in the world; cooking is taught by its first
-      // harvest, tools by playing (a flag).
+      // harvest (or milling flour), tools by playing (a flag).
       if (!recipe.requiresFlag?.startsWith('journal-read:')) {
         if (content.tools.has(recipe.id)) expect(recipe.requiresFlag, recipe.id).toBeTruthy();
-        else expect(recipe.requiresFlag, recipe.id).toMatch(/^harvested:/);
+        else expect(recipe.requiresFlag, recipe.id).toMatch(/^(harvested:|collected-flour$)/);
         continue;
       }
       const pageId = recipe.requiresFlag.replace('journal-read:', '');
@@ -155,6 +156,10 @@ describe('world maps and grid rasterizer', () => {
           expect(content.dialogues.has(spec.dialogueId)).toBe(true);
           for (const variant of spec.variants ?? []) {
             expect(content.dialogues.has(variant.dialogueId)).toBe(true);
+            for (const req of [...(variant.requiresItems ?? []), ...(variant.takeItems ?? [])]) {
+              expect(content.items.has(req.itemId)).toBe(true);
+              expect(req.count).toBeGreaterThan(0);
+            }
             for (const gift of variant.giveItems ?? []) {
               expect(content.items.has(gift.itemId)).toBe(true);
               expect(gift.count).toBeGreaterThan(0);
@@ -170,7 +175,18 @@ describe('world maps and grid rasterizer', () => {
           }
         } else if (spec.type === 'craft') {
           expect(content.dialogues.has(spec.emptyDialogueId)).toBe(true);
-          for (const variant of spec.variants ?? []) expect(content.dialogues.has(variant.dialogueId)).toBe(true);
+          for (const id of spec.recipeIds ?? []) expect(content.recipes.has(id)).toBe(true);
+          for (const variant of spec.variants ?? []) {
+            expect(content.dialogues.has(variant.dialogueId)).toBe(true);
+            for (const req of [...(variant.requiresItems ?? []), ...(variant.takeItems ?? [])]) {
+              expect(content.items.has(req.itemId)).toBe(true);
+              expect(req.count).toBeGreaterThan(0);
+            }
+            for (const gift of variant.giveItems ?? []) {
+              expect(content.items.has(gift.itemId)).toBe(true);
+              expect(gift.count).toBeGreaterThan(0);
+            }
+          }
         } else if (spec.type === 'repair') {
           expect(content.dialogues.has(spec.missingDialogueId)).toBe(true);
           expect(content.dialogues.has(spec.repairedDialogueId)).toBe(true);
@@ -200,6 +216,9 @@ describe('world maps and grid rasterizer', () => {
         expect(node.at.x).toBeLessThan(map.width);
         expect(node.at.y).toBeGreaterThanOrEqual(0);
         expect(node.at.y).toBeLessThan(map.height);
+        const tx = Math.floor(node.at.x);
+        const ty = Math.floor(node.at.y);
+        expect(TILES[grid[ty][tx]].solid, `${map.id}.${node.id} (${tx},${ty}) is solid (${grid[ty][tx]})`).toBe(false);
       }
 
       for (const npc of map.npcs ?? []) {
@@ -210,6 +229,42 @@ describe('world maps and grid rasterizer', () => {
         expect(content.dialogues.has(page.dialogueId)).toBe(true);
         if (page.itemId) expect(content.items.has(page.itemId)).toBe(true);
       }
+    }
+
+    // Every non-note item can actually be obtained in-game
+    const obtainable = new Set<string>(['produce-egg', 'produce-honey', 'craft-flour']);
+    for (const plant of content.plants.all()) {
+      if (plant.produceItemId) obtainable.add(plant.produceItemId);
+    }
+    for (const node of allResourceNodes()) obtainable.add(node.itemId);
+    for (const recipe of content.recipes.all()) {
+      for (const r of recipe.result) obtainable.add(r.itemId);
+    }
+    for (const quest of content.quests.all()) {
+      for (const r of quest.rewardItems ?? []) obtainable.add(r.itemId);
+    }
+    for (const npc of content.npcs.all()) {
+      for (const rule of npc.dialogues ?? []) {
+        for (const g of rule.giveItems ?? []) obtainable.add(g.itemId);
+      }
+    }
+    for (const v of VILLAGERS) {
+      for (const g of v.gift) obtainable.add(g.itemId);
+    }
+    for (const map of Object.values(MAPS)) {
+      for (const spec of map.interactables) {
+        if (spec.type === 'repair') {
+          for (const g of spec.giveItems ?? []) obtainable.add(g.itemId);
+        } else if (spec.type === 'dialogue' || spec.type === 'craft') {
+          for (const variant of spec.variants ?? []) {
+            for (const g of variant.giveItems ?? []) obtainable.add(g.itemId);
+          }
+        }
+      }
+    }
+    for (const item of content.items.all()) {
+      if (item.category === 'note') continue;
+      expect(obtainable.has(item.id), `item "${item.id}" has no source in world/quests/recipes`).toBe(true);
     }
 
     expect(allObstacles().length).toBeGreaterThanOrEqual(4);

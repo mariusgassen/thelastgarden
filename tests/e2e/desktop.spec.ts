@@ -1347,8 +1347,184 @@ test.describe('Desktop gameplay and PWA', () => {
       )
       .toBe('workshop');
 
-    const save = await flushAndReadSave(page);
-    expect((save?.ext.tools as { equipped?: string } | undefined)?.equipped).toBe('tool-sickle');
+    const doorSave = await flushAndReadSave(page);
+    expect((doorSave?.ext.tools as { equipped?: string } | undefined)?.equipped).toBe('tool-sickle');
+    expect(errors).toEqual([]);
+  });
+
+  test('opens Almanach with H to read ??? hint and finds old trowel on workshop shelf', async ({ page }) => {
+    const errors = trackErrors(page);
+
+    await page.addInitScript((key) => {
+      if (localStorage.getItem(key)) return;
+      localStorage.setItem(
+        key,
+        JSON.stringify({
+          version: 1,
+          savedAt: Date.now(),
+          player: { mapId: 'workshop', x: 9 * 32, y: 4.5 * 32, facing: 'up' },
+          world: { unblockedPaths: [], visitedZones: ['garden', 'workshop'], flags: { 'crow-met': true } },
+          inventory: { items: {} },
+          quests: { active: ['q-restore-beds'], completed: ['q-meet-crow'], progress: {} },
+          ext: {},
+        }),
+      );
+    }, SAVE_KEY);
+
+    await page.goto('/');
+    await waitForGameBoot(page);
+
+    const startX = (await flushAndReadSave(page))!.player.x;
+
+    // Open Almanach with H, verify modal blocks movement, step down to an unknown ??? entry, open hint, and close
+    await page.keyboard.press('KeyH');
+    await page.waitForTimeout(250);
+    await page.keyboard.down('KeyD');
+    await page.waitForTimeout(300);
+    await page.keyboard.up('KeyD');
+    expect(((await flushAndReadSave(page)) as SaveSnapshot).player.x).toBe(startX);
+
+    for (let i = 0; i < 5; i++) {
+      await page.keyboard.press('ArrowDown');
+      await page.waitForTimeout(60);
+    }
+    await page.keyboard.press('KeyE');
+    await page.waitForTimeout(200);
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(150);
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(200);
+
+    // Interact with workshop-shelf -> receives Alte Pflanzkelle (trowel) and sets trowel-found
+    await expect
+      .poll(
+        async () => {
+          const s = await flushAndReadSave(page);
+          if ((s?.inventory.items['trowel'] ?? 0) >= 1) return true;
+          await page.keyboard.press('KeyE');
+          await page.waitForTimeout(300);
+          return ((await flushAndReadSave(page))?.inventory.items['trowel'] ?? 0) >= 1;
+        },
+        { timeout: 15_000, intervals: [150] },
+      )
+      .toBe(true);
+
+    // Dismiss remaining dialogue lines
+    await page.keyboard.press('KeyE');
+    await page.waitForTimeout(200);
+    await page.keyboard.press('KeyE');
+    await page.waitForTimeout(200);
+
+    const save = (await flushAndReadSave(page)) as SaveSnapshot;
+    expect(save.inventory.items['trowel']).toBe(1);
+    expect(save.world.flags['trowel-found']).toBe(true);
+    expect(errors).toEqual([]);
+  });
+
+  test('draws dew from old well and respects cooldown on repeat interaction', async ({ page }) => {
+    const errors = trackErrors(page);
+
+    await page.addInitScript((key) => {
+      if (localStorage.getItem(key)) return;
+      localStorage.setItem(
+        key,
+        JSON.stringify({
+          version: 1,
+          savedAt: Date.now(),
+          player: { mapId: 'garden', x: 41.5 * 32, y: 16.4 * 32, facing: 'up' },
+          world: {
+            unblockedPaths: ['bramble-greenhouse-yard'],
+            visitedZones: ['garden', 'greenhouse-yard'],
+            flags: { 'crow-met': true },
+          },
+          inventory: { items: {} },
+          quests: { active: [], completed: ['q-meet-crow'], progress: {} },
+          ext: {},
+        }),
+      );
+    }, SAVE_KEY);
+
+    await page.goto('/');
+    await waitForGameBoot(page);
+
+    // Draw 1× Tau from old-well -> cooldown recorded and resource-dew increases by 1
+    await expect
+      .poll(
+        async () => {
+          const s = await flushAndReadSave(page);
+          if ((s?.inventory.items['resource-dew'] ?? 0) >= 1) return true;
+          await page.keyboard.press('KeyE');
+          await page.waitForTimeout(300);
+          return ((await flushAndReadSave(page))?.inventory.items['resource-dew'] ?? 0) >= 1;
+        },
+        { timeout: 15_000, intervals: [150] },
+      )
+      .toBe(true);
+
+    let save = (await flushAndReadSave(page)) as SaveSnapshot;
+    const cooldowns = (save.ext.interactables as { cooldowns?: Record<string, number> } | undefined)?.cooldowns;
+    expect(cooldowns?.['well:old-well']).toBeGreaterThan(0);
+
+    // Dismiss draw dialogue and interact again -> cooldown prevents a second immediate draw
+    await page.keyboard.press('KeyE');
+    await page.waitForTimeout(200);
+    await page.keyboard.press('KeyE');
+    await page.waitForTimeout(250);
+    await page.keyboard.press('KeyE');
+    await page.waitForTimeout(200);
+
+    save = (await flushAndReadSave(page)) as SaveSnapshot;
+    expect(save.inventory.items['resource-dew']).toBe(1);
+    expect(errors).toEqual([]);
+  });
+
+  test('cooks honey cake at M.s stove using filtered stove recipes', async ({ page }) => {
+    const errors = trackErrors(page);
+
+    await page.addInitScript((key) => {
+      if (localStorage.getItem(key)) return;
+      localStorage.setItem(
+        key,
+        JSON.stringify({
+          version: 1,
+          savedAt: Date.now(),
+          player: { mapId: 'orchard-cottage', x: 2.8 * 32, y: 4.8 * 32, facing: 'up' },
+          world: {
+            unblockedPaths: [],
+            visitedZones: ['orchard-cottage'],
+            flags: { 'crow-met': true, 'collected-flour': true, 'harvested-once': true },
+          },
+          inventory: { items: { 'craft-flour': 1, 'produce-honey': 1, 'produce-egg': 1, 'mat-wood': 2, 'mat-scrap': 1 } },
+          quests: { active: [], completed: ['q-meet-crow'], progress: {} },
+          ext: {},
+        }),
+      );
+    }, SAVE_KEY);
+
+    await page.goto('/');
+    await waitForGameBoot(page);
+
+    // Press E to open filtered stove cooking panel, then Digit1 to cook Honigkuchen (not workbench tools)
+    await expect
+      .poll(
+        async () => {
+          const s = await flushAndReadSave(page);
+          if ((s?.inventory.items['meal-honey-cake'] ?? 0) >= 1) return true;
+          await page.keyboard.press('KeyE');
+          await page.waitForTimeout(200);
+          await page.keyboard.press('Digit1');
+          await page.waitForTimeout(250);
+          return ((await flushAndReadSave(page))?.inventory.items['meal-honey-cake'] ?? 0) >= 1;
+        },
+        { timeout: 15_000, intervals: [150] },
+      )
+      .toBe(true);
+
+    await page.keyboard.press('Escape');
+    const save = (await flushAndReadSave(page)) as SaveSnapshot;
+    expect(save.inventory.items['meal-honey-cake']).toBe(1);
+    expect(save.inventory.items['craft-flour']).toBeUndefined();
+    expect(save.inventory.items['tool-sickle']).toBeUndefined();
     expect(errors).toEqual([]);
   });
 });

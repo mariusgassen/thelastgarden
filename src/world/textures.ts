@@ -2558,6 +2558,29 @@ const ITEM_ICON_DRAWERS: Record<string, (g: G) => void> = {
     g.lineBetween(19, 11, 20, 5);
     g.lineBetween(25, 11, 26, 6);
   },
+  'meal-honey-cake': (g) => {
+    g.fillStyle(0x000000, 0.2);
+    g.fillEllipse(18, 29, 24, 5);
+    g.fillStyle(0xc88432, 1);
+    g.fillRoundedRect(7, 14, 22, 14, 4);
+    g.fillStyle(0xf0b84a, 1);
+    g.fillRoundedRect(8, 12, 20, 6, 3);
+    g.fillStyle(0xf8dc82, 0.9);
+    g.fillEllipse(15, 14, 6, 2.5);
+    g.fillCircle(23, 18, 1.8);
+  },
+  'meal-turnip-bread': (g) => {
+    g.fillStyle(0x000000, 0.2);
+    g.fillEllipse(18, 29, 26, 5);
+    g.fillStyle(0x9d6435, 1);
+    g.fillEllipse(18, 20, 24, 15);
+    g.fillStyle(0xd99e58, 1);
+    g.fillEllipse(18, 18, 22, 11);
+    g.lineStyle(1.6, 0x7a4b24, 0.85);
+    g.lineBetween(12, 15, 15, 20);
+    g.lineBetween(18, 14, 21, 19);
+    g.lineBetween(23, 15, 25, 19);
+  },
 };
 
 

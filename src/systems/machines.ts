@@ -150,6 +150,7 @@ function millAction(key: string, station: Station | undefined, now: number): Mac
       label: 'Mehl holen',
       act: () => {
         gameState.addItem(FLOUR_ITEM_ID, 1);
+        gameState.setFlag('collected-flour');
         writeStation(key, undefined);
         return `+1 ${content.items.get(FLOUR_ITEM_ID).name}`;
       },
@@ -289,8 +290,10 @@ function refund(station: Station, now: number): void {
     if (done && plant.seedItemId) gameState.addItem(plant.seedItemId, RACK_SEEDS);
     else if (!done && plant.produceItemId) gameState.addItem(plant.produceItemId, 1);
   } else if (station.inputs) {
-    if (done) gameState.addItem(FLOUR_ITEM_ID, 1);
-    else for (const i of station.inputs) gameState.addItem(i.itemId, i.count);
+    if (done) {
+      gameState.addItem(FLOUR_ITEM_ID, 1);
+      gameState.setFlag('collected-flour');
+    } else for (const i of station.inputs) gameState.addItem(i.itemId, i.count);
   } else if (station.startedAt !== undefined) {
     const { ready, catchCount } = driftCatches(station, now);
     if (ready > 0) for (const g of collectDrift(ready, catchCount)) gameState.addItem(g.itemId, g.count);

@@ -35,6 +35,7 @@ export const RIVER_FARMS_MAP: MapDef = {
 
     // Secluded eastern river island reachable by boat (or bridge)
     { op: 'rect', tile: 'orchardGrass', rect: { x: 40, y: 6, w: 4, h: 13 } },
+    { op: 'rect', tile: 'soil', rect: { x: 41, y: 12, w: 2, h: 2 } },
   ],
   zones: [
     { id: 'river-farms-yard', name: 'Die drei Höfe · Dorfplatz', rect: { x: 0, y: 0, w: 22, h: 26 } },
@@ -73,7 +74,21 @@ export const RIVER_FARMS_MAP: MapDef = {
       target: { mapId: 'old-mill', spawn: 'south' },
     },
     { id: 'farms-house-door', type: 'dialogue', at: { x: 7.5, y: 9.3 }, label: 'Ansehen', dialogueId: 'farms-house' },
-    { id: 'farms-well', type: 'dialogue', at: { x: 12.5, y: 13.3 }, label: 'Ansehen', dialogueId: 'farms-well' },
+    {
+      id: 'farms-well',
+      type: 'dialogue',
+      at: { x: 12.5, y: 13.3 },
+      label: 'Schöpfen',
+      dialogueId: 'farms-well',
+      variants: [
+        {
+          dialogueId: 'farms-well-draw',
+          giveItems: [{ itemId: 'resource-dew', count: 1 }],
+          cooldownKey: 'well:farms-well',
+          cooldownMs: 60_000,
+        },
+      ],
+    },
     {
       id: 'farms-bell',
       type: 'dialogue',
@@ -81,6 +96,13 @@ export const RIVER_FARMS_MAP: MapDef = {
       label: 'Ansehen',
       dialogueId: 'farms-bell-quiet',
       variants: [{ dialogueId: 'farms-bell-awakened', requires: ['bed-restored:bed-farms-hollyhock'] }],
+    },
+    {
+      id: 'bench-river-farms',
+      type: 'rest',
+      at: { x: 29.0, y: 9.2 },
+      label: 'Ausruhen',
+      message: 'Du ruhst dich auf der Bank im Flussgarten der drei Höfe aus, bis der Morgen anbricht.',
     },
     {
       id: 'farms-boat',
@@ -96,16 +118,30 @@ export const RIVER_FARMS_MAP: MapDef = {
       id: 'village-farm-shop',
       type: 'dialogue',
       at: { x: 11.4, y: 19.3 },
-      label: 'Ansehen',
+      label: 'Besuchen',
       dialogueId: 'village-farms-shop',
       showWhenFlag: 'village-restored:farms',
+      variants: [
+        {
+          dialogueId: 'village-farms-shop-gift',
+          giveItems: [
+            { itemId: 'produce-gold-turnip', count: 1 },
+            { itemId: 'produce-egg', count: 1 },
+          ],
+          cooldownKey: 'village-farm-shop',
+          cooldownMs: 180_000,
+        },
+      ],
     },
   ],
   npcs: [
     { npcId: 'wilma', at: { x: 9.6, y: 12.6 }, radius: 68, wander: 1.5, showWhenFlag: 'village-open:farms' },
     { npcId: 'bruno', at: { x: 14.8, y: 14.6 }, radius: 68, wander: 1.5, showWhenFlag: 'village-open:farms' },
   ],
-  plantingBeds: [{ id: 'bed-farms-hollyhock', rect: { x: 27, y: 11, w: 4, h: 2 }, plantId: 'hollyhock' }],
+  plantingBeds: [
+    { id: 'bed-farms-hollyhock', rect: { x: 27, y: 11, w: 4, h: 2 }, plantId: 'hollyhock' },
+    { id: 'bed-farms-island', rect: { x: 41, y: 12, w: 2, h: 2 } },
+  ],
   journalPages: [
     {
       id: 'page-farms',
@@ -116,7 +152,7 @@ export const RIVER_FARMS_MAP: MapDef = {
     },
   ],
   resourceNodes: [
-    { id: 'farms-seed-willow', itemId: 'seed-willow', at: { x: 20.5, y: 15 }, label: 'Samen einsammeln' },
+    { id: 'farms-seed-willow', itemId: 'seed-willow', at: { x: 19.2, y: 15.0 }, label: 'Samen einsammeln' },
     { id: 'farms-seed-hollyhock', itemId: 'seed-hollyhock', at: { x: 9.0, y: 14.5 }, label: 'Samen einsammeln' },
     { id: 'sun-farms-1', itemId: 'resource-sunlight', at: { x: 15.0, y: 16.5 }, label: 'Sonnenlicht sammeln', respawnMs: 45_000 },
     { id: 'dew-farms-1', itemId: 'resource-dew', at: { x: 32.0, y: 17.5 }, label: 'Tau sammeln', respawnMs: 45_000 },

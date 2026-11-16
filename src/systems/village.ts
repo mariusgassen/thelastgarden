@@ -88,6 +88,7 @@ registerWikiSource(() =>
     key: `village:${part.id}`,
     section: 'village',
     title: part.name,
+    hint: 'Wacht Viertel für Viertel auf, nachdem die Chronik von Erlenbrück am Ende von Episode 4 begonnen wurde.',
     lines: [
       part.description,
       ...getVillagers(part.id).map((v) => `${v.name}: ${villagerRequestText(v.request)}${isVillagerHelped(v.id) ? ' (erledigt)' : ''}.`),
