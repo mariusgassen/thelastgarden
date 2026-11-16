@@ -15,6 +15,7 @@ import {
 import { parseSave } from '../../src/systems/save';
 import { gameState } from '../../src/systems/state';
 import {
+  AUTO_TOOL,
   cycleSeed,
   equipTool,
   getCarriedLight,
@@ -23,6 +24,7 @@ import {
   getOwnedTools,
   getSowSeed,
   getToolMode,
+  isAutoTool,
   isToolActing,
   setToolMode,
   useTool,
@@ -129,6 +131,27 @@ describe('tools', () => {
     expect(isProduceReady(planter(0))).toBe(false);
     expect(useTool('garden', feet(0.5)).ok).toBe(false);
     expect(gameState.hasFlag('used-tool:sickle')).toBe(true);
+  });
+
+  it('has an all-round hand that harvests what is ripe and sows the rest', () => {
+    buildPlanters(2);
+    give({ 'seed-lavender': 2, 'tool-sickle': 1, 'tool-satchel': 1 });
+    expect(equipTool(AUTO_TOOL)).toBe(true);
+    setToolMode(true);
+    expect(isAutoTool() && isToolActing()).toBe(true);
+    const sown = useTool('garden', feet(0.5));
+    expect(sown.ok && sown.used).toBe('satchel');
+    expect(isBedPlanted(planter(0)) && isBedPlanted(planter(1))).toBe(true);
+    expect(useTool('garden', feet(0.5)).ok).toBe(false); // nothing ripe, no free bed
+    debugRewindGrowth(10 * STAGE_DURATION_MS);
+    const reaped = useTool('garden', feet(0.5));
+    expect(reaped.ok && reaped.used).toBe('sickle');
+  });
+
+  it('opens the tool mode with the all-round hand when nothing is in hand yet', () => {
+    give({ 'tool-sickle': 1 });
+    setToolMode(true);
+    expect(isAutoTool()).toBe(true);
   });
 
   it('lets the shovel move a plant without losing its growth', () => {

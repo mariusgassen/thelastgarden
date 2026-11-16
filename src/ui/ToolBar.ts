@@ -1,14 +1,13 @@
 import Phaser from 'phaser';
 import { content } from '../content';
-import { describeTool, getEquippedTool, getOwnedTools } from '../systems/tools';
+import { AUTO_TOOL, canUseAutoTool, describeTool, getEquippedTool, getOwnedTools, getSowSeed, isAutoTool } from '../systems/tools';
 import { itemTextureKey } from '../world/textures';
+import { drawAutoIcon } from './HudButton';
 import { THEME } from './theme';
 import type { SafeArea } from './viewport';
 
-const SLOT = 50;
 const GAP = 6;
 const PAD = 10;
-const TEXT_H = 68;
 const MIN_WIDTH = 360;
 
 /**
@@ -20,14 +19,26 @@ export class ToolBar {
   private readonly container: Phaser.GameObjects.Container;
   private readonly title: Phaser.GameObjects.Text;
   private readonly hint: Phaser.GameObjects.Text;
-  private readonly slots: { id: string; frame: Phaser.GameObjects.Image; icon: Phaser.GameObjects.Image; x: number }[] = [];
-  private readonly tools = content.tools.all();
-  private readonly width = Math.max(MIN_WIDTH, PAD * 2 + this.tools.length * SLOT + (this.tools.length - 1) * GAP);
+  private readonly slots: { id: string; frame: Phaser.GameObjects.Image; icon: Phaser.GameObjects.Image | Phaser.GameObjects.Graphics; x: number }[] = [];
+  private readonly seedBadge: Phaser.GameObjects.Image;
+  /** Every tool, then the all-round hand last. */
+  private readonly ids = [...content.tools.all().map((t) => t.id), AUTO_TOOL];
+  /** Touch gets bigger slots and no text but the name: icons carry the rest. */
+  private readonly slot: number;
+  private readonly textH: number;
+  private readonly width: number;
   private readonly controls: string;
+  private readonly touch: boolean;
   private shown = false;
 
   constructor(scene: Phaser.Scene, touch: boolean) {
-    this.controls = touch ? 'Antippen: benutzen · Knopf: fertig' : 'E oder Klick: benutzen · T: fertig';
+    this.touch = touch;
+    this.slot = touch ? 58 : 50;
+    this.textH = touch ? 34 : 68;
+    this.width = Math.max(MIN_WIDTH, PAD * 2 + this.ids.length * this.slot + (this.ids.length - 1) * GAP);
+    const SLOT = this.slot;
+    const TEXT_H = this.textH;
+    this.controls = 'E oder Klick: benutzen · T: fertig';
     const bg = scene.add.graphics();
     bg.fillStyle(THEME.panel, THEME.panelAlpha);
     bg.fillRoundedRect(-this.width / 2, 0, this.width, this.height, 14);
@@ -47,13 +58,19 @@ export class ToolBar {
       .setOrigin(0.5, 0)
       .setAlpha(0.8);
     const parts: Phaser.GameObjects.GameObject[] = [bg, this.title, this.hint];
-    const rowW = this.tools.length * SLOT + (this.tools.length - 1) * GAP;
-    this.tools.forEach((tool, i) => {
+    const rowW = this.ids.length * SLOT + (this.ids.length - 1) * GAP;
+    this.ids.forEach((id, i) => {
       const x = -rowW / 2 + i * (SLOT + GAP) + SLOT / 2;
       const y = TEXT_H + PAD / 2 + SLOT / 2;
       const frame = scene.add.image(x, y, 'ui-slot').setDisplaySize(SLOT, SLOT);
-      const icon = scene.add.image(x, y, itemTextureKey(tool.id));
-      icon.setScale(Math.min(1, (SLOT - 12) / Math.max(icon.width, icon.height)));
+      let icon: Phaser.GameObjects.Image | Phaser.GameObjects.Graphics;
+      if (id === AUTO_TOOL) {
+        icon = scene.add.graphics({ x, y });
+        drawAutoIcon(icon, THEME.cream);
+      } else {
+        icon = scene.add.image(x, y, itemTextureKey(id));
+        icon.setScale(Math.min(1, (SLOT - 12) / Math.max(icon.width, icon.height)));
+      }
       parts.push(frame, icon);
       if (!touch) {
         parts.push(
@@ -62,8 +79,10 @@ export class ToolBar {
             .setAlpha(0.7),
         );
       }
-      this.slots.push({ id: tool.id, frame, icon, x });
+      this.slots.push({ id, frame, icon, x });
     });
+    this.seedBadge = scene.add.image(0, 0, itemTextureKey('tool-satchel')).setVisible(false);
+    parts.push(this.seedBadge);
     this.container = scene.add.container(0, 0, parts).setDepth(90_500).setVisible(false);
     this.refresh();
   }
@@ -74,7 +93,7 @@ export class ToolBar {
 
   /** Total height in CSS px, including the text lines. */
   get height(): number {
-    return TEXT_H + SLOT + PAD * 1.5;
+    return this.textH + this.slot + PAD * 1.5;
   }
 
   layout(viewW: number, viewH: number, safe: SafeArea): void {
@@ -96,25 +115,42 @@ export class ToolBar {
   /** Redraws ownership, the tool in hand and the text lines. */
   refresh(): void {
     const owned = new Set(getOwnedTools().map((t) => t.id));
-    const inHand = getEquippedTool();
+    if (canUseAutoTool()) owned.add(AUTO_TOOL);
+    const inHand = isAutoTool() ? AUTO_TOOL : getEquippedTool()?.id;
     for (const slot of this.slots) {
       const has = owned.has(slot.id);
-      slot.frame.setTexture(slot.id === inHand?.id ? 'ui-slot-selected' : has ? 'ui-slot' : 'ui-slot-dim');
+      slot.frame.setTexture(slot.id === inHand ? 'ui-slot-selected' : has ? 'ui-slot' : 'ui-slot-dim');
       slot.icon.setAlpha(has ? 1 : 0.22);
     }
-    if (inHand) {
-      const { title, hint } = describeTool(inHand.id);
+    // The seed the satchel sows, as a small icon on its slot (tap the satchel again for the next kind).
+    const satchel = this.slots.find((sl) => sl.id === 'tool-satchel');
+    const seed = getSowSeed();
+    const seedItem = seed ? content.plants.get(seed).seedItemId : undefined;
+    if (satchel && seedItem && owned.has(satchel.id)) {
+      const size = this.slot * 0.42;
+      this.seedBadge
+        .setTexture(itemTextureKey(seedItem))
+        .setPosition(satchel.x + this.slot / 2 - size / 2 - 3, this.textH + PAD / 2 + this.slot / 2 - size / 2 - 3)
+        .setDisplaySize(size, size)
+        .setVisible(true);
+    } else {
+      this.seedBadge.setVisible(false);
+    }
+    const tool = inHand ?? '';
+    if (tool) {
+      const { title, hint } = describeTool(tool);
       this.title.setText(title);
-      this.hint.setText(`${hint}\n${this.controls}`);
+      this.hint.setText(this.touch ? '' : `${hint}\n${this.controls}`);
     } else {
       this.title.setText('Werkzeug');
-      this.hint.setText(`Wähle ein Werkzeug.\n${this.controls}`);
+      this.hint.setText(this.touch ? '' : `Wähle ein Werkzeug.\n${this.controls}`);
     }
   }
 
   /** Tool id of the slot with this index (number keys), if it is owned. */
   toolAt(index: number): string | undefined {
     const id = this.slots[index]?.id;
+    if (id === AUTO_TOOL) return canUseAutoTool() ? id : undefined;
     return id && getOwnedTools().some((t) => t.id === id) ? id : undefined;
   }
 
@@ -125,7 +161,7 @@ export class ToolBar {
     const lx = (x - this.container.x) / s;
     const ly = (y - this.container.y) / s;
     if (Math.abs(lx) > this.width / 2 || ly < 0 || ly > this.height) return undefined;
-    const slot = this.slots.find((sl) => Math.abs(lx - sl.x) <= SLOT / 2 + GAP / 2 && ly >= TEXT_H);
+    const slot = this.slots.find((sl) => Math.abs(lx - sl.x) <= this.slot / 2 + GAP / 2 && ly >= this.textH);
     return slot && this.toolAt(this.slots.indexOf(slot)) ? slot.id : null;
   }
 }

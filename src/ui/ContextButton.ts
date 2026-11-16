@@ -1,6 +1,8 @@
 import Phaser from 'phaser';
 import { THEME } from './theme';
 
+type IconPainter = (g: Phaser.GameObjects.Graphics, color: number) => void;
+
 const SIZE = 84;
 
 /** Large round action button (bottom-right). Shows the focused interactable's label. */
@@ -9,6 +11,8 @@ export class ContextButton {
   readonly hit: Phaser.GameObjects.Arc;
   private readonly label: Phaser.GameObjects.Text;
   private readonly keyHint: Phaser.GameObjects.Text;
+  private readonly icon: Phaser.GameObjects.Graphics;
+  private iconKey: string | null = null;
   private visible = false;
 
   constructor(
@@ -35,7 +39,8 @@ export class ContextButton {
       })
       .setOrigin(0.5)
       .setVisible(showKeyHint);
-    this.container = scene.add.container(0, 0, [shadow, this.hit, this.label, this.keyHint]);
+    this.icon = scene.add.graphics().setScale(1.9).setVisible(false);
+    this.container = scene.add.container(0, 0, [shadow, this.hit, this.label, this.icon, this.keyHint]);
     this.container.setAlpha(0).setScale(0.6);
 
     this.hit.setInteractive({ useHandCursor: true });
@@ -54,12 +59,30 @@ export class ContextButton {
     this.container.setPosition(x, y);
   }
 
+  /** Shows the button with a drawn icon instead of a label (the tool in hand). `key` says when the icon changed. */
+  showIcon(key: string, paint: IconPainter): void {
+    if (this.iconKey !== key) {
+      this.iconKey = key;
+      this.icon.clear();
+      paint(this.icon, THEME.ink);
+    }
+    this.icon.setVisible(true);
+    this.label.setText('');
+    this.reveal();
+  }
+
   show(label: string): void {
+    this.iconKey = null;
+    this.icon.setVisible(false);
     this.label.setText(label);
     for (let size = 15; size >= 10; size--) {
       this.label.setFontSize(size);
       if (this.label.width <= SIZE - 16) break;
     }
+    this.reveal();
+  }
+
+  private reveal(): void {
     if (this.visible) return;
     this.visible = true;
     this.scene.tweens.killTweensOf(this.container);

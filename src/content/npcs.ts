@@ -91,6 +91,21 @@ export const NPCS: NpcDef[] = [
     interactLabel: 'Sprechen',
     color: 0x5d8a45,
     dialogues: [
+      {
+        dialogueId: 'm-village-finale',
+        mapId: 'garden',
+        requires: ['village-all-restored'],
+        forbids: ['village-finale-celebrated'],
+        setFlags: ['village-finale-celebrated'],
+      },
+      { dialogueId: 'm-village-after', mapId: 'garden', requires: ['village-finale-celebrated'] },
+      ...(['garden', 'valley', 'future'] as const).map((ending) => ({
+        dialogueId: `m-village-hint-${ending}`,
+        mapId: 'garden',
+        requires: ['episode-4-complete', `chronicle-ending-${ending}`],
+        forbids: ['village-hint-heard'],
+        setFlags: ['village-hint-heard'],
+      })),
       { dialogueId: 'm-garden-after', mapId: 'garden', requires: ['episode-4-complete'] },
       {
         dialogueId: 'm-gathering-finale',

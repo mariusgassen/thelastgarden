@@ -115,9 +115,16 @@ export function getHearts(mapId: string): HeartWithMap[] {
   return allBlightHearts().filter((h) => h.mapId === mapId);
 }
 
+const wardSources: ((mapId: string) => Ward[])[] = [];
+
+/** Let another system keep blight away from fixed spots (the restored village does). Call at module load. */
+export function registerWardSource(source: (mapId: string) => Ward[]): void {
+  wardSources.push(source);
+}
+
 /** Everything on a map that keeps the blight away from the tiles around it. */
 export function getWards(mapId: string): Ward[] {
-  const wards: Ward[] = [];
+  const wards: Ward[] = wardSources.flatMap((source) => source(mapId));
   for (const piece of getPieces(mapId)) {
     const radius = content.buildables.find(piece.id)?.wardRadius;
     if (radius) wards.push({ x: piece.x + 0.5, y: piece.y + 0.5, radius });

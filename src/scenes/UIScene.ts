@@ -8,14 +8,15 @@ import { inputState } from '../systems/input';
 import { eatMeal } from '../systems/meals';
 import { gameState } from '../systems/state';
 import { hasTravelMap, travelTo } from '../systems/travel';
-import { cycleSeed, equipTool, getEquippedTool, getOwnedTools, getToolMode, setToolMode } from '../systems/tools';
+import { AUTO_TOOL, cycleSeed, equipTool, getEquippedTool, getOwnedTools, getToolMode, isAutoTool, setToolMode } from '../systems/tools';
+import type { ToolDef } from '../content/types';
 import { Banner } from '../ui/Banner';
 import { BuildBar } from '../ui/BuildBar';
 import { ContextButton } from '../ui/ContextButton';
 import { CraftingPanel } from '../ui/CraftingPanel';
 import { DayClock } from '../ui/DayClock';
 import { DialoguePanel } from '../ui/DialoguePanel';
-import { drawHammerIcon, drawHorseIcon, drawMapIcon, drawToolIcon, HudButton } from '../ui/HudButton';
+import { drawAutoIcon, drawHammerIcon, drawHorseIcon, drawMapIcon, drawToolIcon, HudButton } from '../ui/HudButton';
 import { InventoryPanel } from '../ui/InventoryPanel';
 import { Joystick } from '../ui/Joystick';
 import { MapPanel } from '../ui/MapPanel';
@@ -56,6 +57,7 @@ export class UIScene extends Phaser.Scene {
   private toolButton!: HudButton;
   private buildBar!: BuildBar;
   private toolBar!: ToolBar;
+  private usingToolButton = false;
   private dayClock!: DayClock;
   private tutorial!: TutorialHints;
   private safe: SafeArea = { top: 0, right: 0, bottom: 0, left: 0 };
@@ -171,7 +173,8 @@ export class UIScene extends Phaser.Scene {
     this.buildButton = new HudButton(this, drawHammerIcon, touch ? undefined : 'B');
     this.toolButton = new HudButton(
       this,
-      (g, color) => drawToolIcon(g, color, (getEquippedTool() ?? getOwnedTools()[0])?.kind ?? 'sickle'),
+      (g, color) =>
+        isAutoTool() ? drawAutoIcon(g, color) : drawToolIcon(g, color, (getEquippedTool() ?? getOwnedTools()[0])?.kind ?? 'sickle'),
       touch ? undefined : 'T',
     );
     this.buildBar = new BuildBar(this, touch);
@@ -418,6 +421,7 @@ export class UIScene extends Phaser.Scene {
     const tooling = getToolMode().open;
     this.buildBar.setVisible(building && !hidden);
     this.toolBar.setVisible(tooling && !hidden);
+    this.syncUseButton(tooling && !hidden);
     this.toolButton.setVisible(!hidden && getOwnedTools().length > 0);
     this.toolButton.setState(tooling);
     this.buildButton.setVisible(!hidden && isBuildUnlocked() && canRideHere());
@@ -425,12 +429,15 @@ export class UIScene extends Phaser.Scene {
     this.mapButton.setVisible(!hidden && hasTravelMap());
     this.rideButton.setVisible(!hidden && hasHorse());
     this.rideButton.setState(isRiding(), canRideHere());
-    let x = this.viewW - this.safe.right - 22 - HudButton.RADIUS;
-    const startY = this.viewH - this.safe.bottom - 34 - this.button.radius * 2 - 16 - HudButton.RADIUS;
-    let y = startY;
-    // The bars take the bottom edge on narrow screens; the column moves up above them.
+    const r = this.button.radius;
     const bar = this.buildBar.visible ? this.buildBar : this.toolBar.visible ? this.toolBar : undefined;
-    if (bar) y = Math.min(y, this.viewH - this.safe.bottom - bar.height - 26 - HudButton.RADIUS);
+    // The bars take the bottom edge on narrow screens; the action button and the column move up above them.
+    let buttonY = this.viewH - this.safe.bottom - r - 34;
+    if (bar) buttonY = Math.min(buttonY, this.viewH - this.safe.bottom - bar.height - 14 - r);
+    this.button.setPosition(this.viewW - this.safe.right - r - 22, buttonY);
+    let x = this.viewW - this.safe.right - 22 - HudButton.RADIUS;
+    const startY = buttonY - r - 16 - HudButton.RADIUS;
+    let y = startY;
     const step = HudButton.RADIUS * 2 + 12;
     // A short (landscape) screen starts a second column to the left instead of running into the clock.
     const topLimit = this.dayClock.bottom + 12 + HudButton.RADIUS;
@@ -444,6 +451,28 @@ export class UIScene extends Phaser.Scene {
       b.setPosition(x, y);
       y -= step;
     }
+  }
+
+  /** While the tool bar is open, the big round button is the tool in hand: one tap uses it (on touch there is no E). */
+  private syncUseButton(tooling: boolean): void {
+    if (!tooling) {
+      if (this.usingToolButton) {
+        this.usingToolButton = false;
+        this.button.hide();
+      }
+      return;
+    }
+    const auto = isAutoTool();
+    const tool = getEquippedTool();
+    if (!auto && (!tool || tool.kind === 'light')) {
+      if (this.usingToolButton) this.button.hide();
+      this.usingToolButton = false;
+      return;
+    }
+    this.usingToolButton = true;
+    this.button.showIcon(auto ? 'auto' : (tool as ToolDef).kind, (g, color) =>
+      auto ? drawAutoIcon(g, color) : drawToolIcon(g, color, (tool as ToolDef).kind),
+    );
   }
 
   private toggleMap(): void {
@@ -472,6 +501,7 @@ export class UIScene extends Phaser.Scene {
   private pickTool(toolId: string): void {
     const inHand = getEquippedTool();
     if (inHand?.id === toolId && inHand.kind === 'satchel') cycleSeed();
+    else if (toolId === AUTO_TOOL && isAutoTool()) return;
     else equipTool(toolId);
   }
 
