@@ -201,10 +201,10 @@ export const ORCHARD_MAP: MapDef = {
     },
   ],
   npcs: [
-    { npcId: 'crow', at: { x: 13.2, y: 24.9 }, radius: 70, showWhenFlag: 'episode-2-complete', hideWhenFlag: 'jakob-ready-to-return' },
-    { npcId: 'm', at: { x: 38.2, y: 8.4 }, radius: 74, hideWhenFlag: 'jakob-ready-to-return' },
-    { npcId: 'ottilie', at: { x: 38.2, y: 21.8 }, radius: 68, showWhenFlag: 'village-open:orchard' },
-    { npcId: 'konrad', at: { x: 42.6, y: 23.4 }, radius: 68, showWhenFlag: 'village-open:orchard' },
+    { npcId: 'crow', at: { x: 13.2, y: 24.9 }, radius: 70, wander: 2.5, showWhenFlag: 'episode-2-complete', hideWhenFlag: 'jakob-ready-to-return' },
+    { npcId: 'm', at: { x: 38.2, y: 8.4 }, radius: 74, wander: 2.5, hideWhenFlag: 'jakob-ready-to-return' },
+    { npcId: 'ottilie', at: { x: 38.2, y: 21.8 }, radius: 68, wander: 1.5, showWhenFlag: 'village-open:orchard' },
+    { npcId: 'konrad', at: { x: 42.6, y: 23.4 }, radius: 68, wander: 1.5, showWhenFlag: 'village-open:orchard' },
   ],
   plantingBeds: [
     { id: 'bed-orchard-extra', rect: { x: 10, y: 20, w: 4, h: 2 } },

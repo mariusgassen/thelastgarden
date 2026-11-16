@@ -96,8 +96,8 @@ export const RIVER_FARMS_MAP: MapDef = {
     },
   ],
   npcs: [
-    { npcId: 'wilma', at: { x: 9.6, y: 12.6 }, radius: 68, showWhenFlag: 'village-open:farms' },
-    { npcId: 'bruno', at: { x: 14.8, y: 14.6 }, radius: 68, showWhenFlag: 'village-open:farms' },
+    { npcId: 'wilma', at: { x: 9.6, y: 12.6 }, radius: 68, wander: 1.5, showWhenFlag: 'village-open:farms' },
+    { npcId: 'bruno', at: { x: 14.8, y: 14.6 }, radius: 68, wander: 1.5, showWhenFlag: 'village-open:farms' },
   ],
   plantingBeds: [{ id: 'bed-farms-hollyhock', rect: { x: 27, y: 11, w: 4, h: 2 }, plantId: 'hollyhock' }],
   journalPages: [

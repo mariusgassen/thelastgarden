@@ -3,6 +3,7 @@ import Phaser from 'phaser';
 import { startAnimals } from '../systems/animals';
 import { startBlightScheduler } from '../systems/blight';
 import { startMachineTicker } from '../systems/machines';
+import { startWiki } from '../systems/wiki';
 import { startGrowthTicker } from '../systems/plants';
 import { hideAppLoader, showBootError } from '../systems/pwa';
 import { startNightScheduler } from '../systems/nightEvents';
@@ -29,6 +30,7 @@ export class BootScene extends Phaser.Scene {
       startBlightScheduler();
       startAnimals();
       startMachineTicker();
+      startWiki();
       this.scene.start(SCENES.world);
       this.scene.launch(SCENES.ui);
       hideAppLoader();

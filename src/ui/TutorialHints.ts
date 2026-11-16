@@ -80,8 +80,8 @@ export class TutorialHints {
         this.enqueue({
           id: 'inventory',
           text: touch
-            ? 'Tippe auf die Leiste oben links, um in deinen Beutel zu sehen.'
-            : 'Taste I oder ein Klick auf die Leiste oben links öffnet deinen Beutel.',
+            ? 'Tippe oben links auf den Beutel, um hineinzusehen.'
+            : 'Taste I oder ein Klick auf den Beutel oben links öffnet deinen Beutel.',
           ttlMs: 10_000,
         });
       } else if (itemId.startsWith('mat-')) {

@@ -90,7 +90,7 @@ export const HILL_PATH_MAP: MapDef = {
       radius: 64,
     },
   ],
-  npcs: [{ npcId: 'crow', at: { x: 13.8, y: 13.9 }, radius: 70, showWhenFlag: 'episode-2-complete', hideWhenFlag: 'crow-orchard-talked' }],
+  npcs: [{ npcId: 'crow', at: { x: 13.8, y: 13.9 }, radius: 70, wander: 2, showWhenFlag: 'episode-2-complete', hideWhenFlag: 'crow-orchard-talked' }],
   plantingBeds: [{ id: 'bed-hill-extra', rect: { x: 25, y: 12, w: 4, h: 2 } }],
   resourceNodes: [
     { id: 'hill-seed-thornroot', itemId: 'seed-thornroot', at: { x: 14.5, y: 14 }, label: 'Samen einsammeln' },

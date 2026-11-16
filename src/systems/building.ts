@@ -104,7 +104,6 @@ function mapInfo(mapId: string): MapInfo | undefined {
     ...map.interactables.map((i) => i.at),
     ...(map.npcs ?? []).map((n) => n.at),
     ...(map.journalPages ?? []).map((p) => p.at),
-    ...(map.resourceNodes ?? []).map((n) => n.at),
     ...Object.values(map.spawns),
   ];
   for (const pt of points) {
@@ -115,6 +114,11 @@ function mapInfo(mapId: string): MapInfo | undefined {
   const info = { grid: buildTileGrid(map), keepClear };
   mapInfoCache.set(mapId, info);
   return info;
+}
+
+/** True for a tile that doors, NPCs, beds, solid props and arrival points keep free (pickups roam, so they are not part of it). */
+export function isKeepClearTile(mapId: string, x: number, y: number): boolean {
+  return mapInfo(mapId)?.keepClear.has(key(x, y)) ?? false;
 }
 
 /** The map's own tile at (x, y), ignoring anything built. */

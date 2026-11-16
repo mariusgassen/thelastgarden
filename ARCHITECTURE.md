@@ -142,7 +142,7 @@ To add an entry, append it to the array in the matching file. The interfaces liv
 - `items.ts`: `ItemDef`. The categories are `seed | tool | key | material | note`.
 - `quests.ts`: `QuestDef`. Objectives are a union of `flag | item | unblock | visitZone`. Wave 1 has no quest runtime yet; progress goes in `SaveGame.quests`.
 - `dialogues.ts`: `DialogueDef`, a list of lines `{ speaker?, text }`. The UI shows them in order. Choices and branching are Wave 3 work: extend `DialogueLine` and `DialogueBox`.
-- `npcs.ts`: `NpcDef`. Contains only the crow stub; there is no NPC behavior yet.
+- `npcs.ts`: `NpcDef`. NPC behavior lives in `systems/npcs.ts`: placements with `wander` (tiles) stroll around their home spot by day, walk home at dusk and rest there; `nocturnal` ones (the owl) do the reverse. They never step on beds, solid props, obstacles, built pieces or doorways, pause when the player is near, stay still with reduced motion, and the builder refuses the tile an NPC stands on.
 
 All player-facing text is German.
 
@@ -396,6 +396,13 @@ push back a grey wilt that creeps in at night. No money, no chores, no fail stat
   from piles: ordinary `ResourceNodeDef`s with two new optional fields, `texture` (`node-wood`,
   `node-stone`, `node-scrap` instead of the glowing orb) and `count` (wood gives 2). They regrow
   after 60 s. The first material sets `gathered-material`, which unlocks build mode.
+- **Roaming pickups.** Every node with `respawnMs` (light, dew, piles) is drawn to a new spot
+  each time it is collected: open grass within `ROAM_TILES` (8) of its home in the map data,
+  reachable from home, off beds, props, doors, NPCs, spawns, built pieces, blight, other pickups
+  and at least 3 tiles from where it was. The first appearance is always the map spot. Seeded
+  by `ext.resources.seed` (drawn once per save; `setSpawnSeed` pins it in tests), with
+  `rolls` and `spots` beside it. One-time finds and seeds never move. Nothing can be built on a
+  pickup's current tile.
 - **Pieces.** `content/buildables.ts` → `content.buildables`, each a `BuildableDef { cost, on,
   solid?, wardRadius?, lightRadius?, planter?, rest? }`:
 
@@ -570,6 +577,25 @@ harvest into something else.
   description is toasted.
 - **Build bar.** `ui/BuildBar.ts` wraps into rows of six; keys 1–9 pick the first nine slots.
 - **Flour** is a plain `craft-flour` material for cooking recipes; nothing consumes it yet.
+## Almanach (in-game wiki)
+
+`systems/wiki.ts` (no Phaser) builds entries from the content registries, so new content shows
+up without a hand-written page: every plant, item (except notes), recipe and build piece, plus
+any other registry added to `content` (animals, machines, ... get a generic entry from `name`
+and `description`; `quests`, `dialogues`, `npcs` are skipped). Hand-written how-it-works topics
+live in `content/wiki.ts` (`WIKI_TOPICS`, optional `requiresFlag`), as do German section titles
+and order (`WIKI_SECTION_TITLES`, `WIKI_SECTION_ORDER`). Items get "grows into / used for"
+lines derived from plants, recipes and buildables.
+
+- **People, places, story.** `persons:<npc>` from `content.npcs` (found on which maps comes from `MapDef.npcs`; known after talking to them, remembered in `ext.wiki`), `places:<map>` from `MAPS` (known once a zone is visited), `story:<quest>` from `content.quests` (known once started; shows objectives and status). Tools are items, so their entries get the tool's `hint`; meals show their effect.
+- **Discovery.** Items when owned, plants when their seed or produce is known, recipes when
+  unlocked, build pieces once build mode is unlocked, topics by flag (`requiresFlag` or `requiresAnyFlag`). Generic registries are
+  always listed. To gate or customise, call `registerWikiSource(() => WikiEntry[])` at module load.
+  Locked entries show as "???". Discovery is sticky.
+- **Save.** `ext.wiki = { seen: string[] }`, no migration; the first scan after loading picks up
+  what an old save already has.
+- **UI.** `ui/WikiPanel.ts`, Menü button (top left, opens the menu list; Almanach is its first entry) and **H**. Esc steps back from an
+  entry, then closes.
 
 ## The living village
 

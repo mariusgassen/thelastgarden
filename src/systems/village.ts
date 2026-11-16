@@ -20,11 +20,12 @@
  *   isPartOpen / isPartRestored / isVillagerHelped
  */
 import type { VillagePartDef } from '../content/types';
-import { VILLAGE_PARTS, getVillagers, villageOpenFlag, villageQuestId, villageRestoredFlag, villagerHelpedFlag } from '../content/village';
+import { VILLAGE_PARTS, getVillagers, villagerRequestText, villageOpenFlag, villageQuestId, villageRestoredFlag, villagerHelpedFlag } from '../content/village';
 import { refreshBlight, registerWardSource } from './blight';
 import { bus } from './events';
 import { unblockPath } from './obstacles';
 import { gameState } from './state';
+import { registerWikiSource } from './wiki';
 
 export const ALL_RESTORED_FLAG = 'village-all-restored';
 
@@ -80,6 +81,21 @@ export function syncVillage(): void {
   }
   if (VILLAGE_PARTS.every((p) => isPartRestored(p.id))) gameState.setFlag(ALL_RESTORED_FLAG);
 }
+
+/** Almanach: a quarter is listed once it has opened; it names who lives there and what they asked for. */
+registerWikiSource(() =>
+  VILLAGE_PARTS.map((part) => ({
+    key: `village:${part.id}`,
+    section: 'village',
+    title: part.name,
+    lines: [
+      part.description,
+      ...getVillagers(part.id).map((v) => `${v.name}: ${villagerRequestText(v.request)}${isVillagerHelped(v.id) ? ' (erledigt)' : ''}.`),
+      isPartRestored(part.id) ? 'Wieder voll Leben.' : 'Wartet auf Hilfe.',
+    ],
+    known: () => isPartOpen(part.id),
+  })),
+);
 
 let started = false;
 

@@ -7,6 +7,7 @@ import { pickNpcDialogue } from '../../src/systems/npcs';
 import { getActiveQuests, getCompletedQuests, startQuestRuntime } from '../../src/systems/quests';
 import { gameState } from '../../src/systems/state';
 import { ALL_RESTORED_FLAG, getVillageStatus, isPartOpen, isPartRestored, isVillagerHelped, startVillage, syncVillage } from '../../src/systems/village';
+import { getWikiEntries } from '../../src/systems/wiki';
 import { MAPS } from '../../src/world';
 import { buildTileGrid } from '../../src/world/grid';
 import { TILES } from '../../src/world/tiles';
@@ -202,5 +203,25 @@ describe('living village', () => {
     for (const part of ['plaza', 'farms', 'orchard']) helpAll(part);
     expect(talkTo('m')).toBe('m-village-finale');
     expect(talkTo('m')).toBe('m-village-after');
+  });
+
+  it('lets every villager wander around the home spot, like the other NPCs', () => {
+    for (const v of VILLAGERS) {
+      const part = VILLAGE_PARTS.find((p) => p.id === v.partId)!;
+      const placement = MAPS[part.mapId].npcs!.find((n) => n.npcId === v.id)!;
+      expect(placement.wander, v.id).toBeGreaterThan(0);
+    }
+  });
+
+  it('lists quarters, villagers and their quests in the Almanach only once they are known', () => {
+    const entry = (key: string) => getWikiEntries().find((e) => e.key === key)!;
+    expect(entry('village:plaza').known()).toBe(false);
+    expect(entry('persons:hanne')).toBeDefined();
+    gameState.setFlag('chronicle-ending-garden');
+    expect(entry('village:plaza').known()).toBe(true);
+    expect(entry('village:farms').known()).toBe(false);
+    expect(entry('village:plaza').lines.join(' ')).toContain('Hanne');
+    expect(entry('story:q-village-plaza').known()).toBe(true);
+    expect(getWikiEntries().filter((e) => e.key.startsWith('villageParts:'))).toHaveLength(0);
   });
 });

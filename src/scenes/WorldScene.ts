@@ -132,7 +132,7 @@ export class WorldScene extends Phaser.Scene implements WorldApi {
     this.resources = new ResourceLayer(this, this.map.id, this.interaction);
     this.tools = new ToolLayer(this, this.map.id, () => ({ x: this.player.feetX, y: this.player.feetY, facing: this.player.facing }));
     this.atmosphere = new AtmosphereLayer(this, this.map, () => this.tools.getLight());
-    this.npcs = new NpcLayer(this, this.map, this.interaction, () => this.player.feetX);
+    this.npcs = new NpcLayer(this, this.map, this.interaction, () => ({ x: this.player.feetX, y: this.player.feetY }));
     this.journal = new JournalLayer(this, this.map.id, this.interaction);
     this.questMarkers = new QuestMarkerLayer(this, this.interaction);
     this.night = new NightEventLayer(this, this);

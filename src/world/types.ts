@@ -109,6 +109,13 @@ export interface NpcPlacementDef {
   showWhenFlag?: string;
   /** Hidden & non-interactable once this flag is set. */
   hideWhenFlag?: string;
+  /**
+   * Daily routine (src/systems/npcs.ts): the NPC strolls up to this many tiles around `at` (its
+   * home spot) and walks back home when it is not "up and about". Omit for an NPC that stays put.
+   */
+  wander?: number;
+  /** Up and about at dusk and night instead of dawn and day (the owl). */
+  nocturnal?: boolean;
 }
 
 /**
