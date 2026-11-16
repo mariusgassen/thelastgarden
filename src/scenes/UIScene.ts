@@ -8,7 +8,7 @@ import { inputState } from '../systems/input';
 import { eatMeal } from '../systems/meals';
 import { gameState } from '../systems/state';
 import { hasTravelMap, travelTo } from '../systems/travel';
-import { AUTO_TOOL, cycleSeed, equipTool, getEquippedTool, getOwnedTools, getToolMode, isAutoTool, setToolMode } from '../systems/tools';
+import { AUTO_TOOL, cycleSeed, equipTool, getEquippedTool, getOwnedTools, getToolMode, isAutoTool, peekTool, setToolMode } from '../systems/tools';
 import type { ToolDef } from '../content/types';
 import { Banner } from '../ui/Banner';
 import { BuildBar } from '../ui/BuildBar';
@@ -434,6 +434,7 @@ export class UIScene extends Phaser.Scene {
     // The bars take the bottom edge on narrow screens; the action button and the column move up above them.
     let buttonY = this.viewH - this.safe.bottom - r - 34;
     if (bar) buttonY = Math.min(buttonY, this.viewH - this.safe.bottom - bar.height - 14 - r);
+    inputState.bottomInset = bar ? this.safe.bottom + bar.height + 10 : 0;
     this.button.setPosition(this.viewW - this.safe.right - r - 22, buttonY);
     let x = this.viewW - this.safe.right - 22 - HudButton.RADIUS;
     const startY = buttonY - r - 16 - HudButton.RADIUS;
@@ -470,8 +471,14 @@ export class UIScene extends Phaser.Scene {
       return;
     }
     this.usingToolButton = true;
-    this.button.showIcon(auto ? 'auto' : (tool as ToolDef).kind, (g, color) =>
-      auto ? drawAutoIcon(g, color) : drawToolIcon(g, color, (tool as ToolDef).kind),
+    // The icon is what a press would do right now; dimmed, nothing is in reach to work on.
+    const player = gameState.data.player;
+    const acts = peekTool(player.mapId, { x: player.x, y: player.y });
+    const kind = acts ?? (auto ? null : (tool as ToolDef).kind);
+    this.button.showIcon(
+      `${kind ?? 'auto'}${acts ? '' : '-dim'}`,
+      (g, color) => (kind ? drawToolIcon(g, color, kind) : drawAutoIcon(g, color)),
+      !acts,
     );
   }
 

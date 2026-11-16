@@ -60,7 +60,8 @@ export class ContextButton {
   }
 
   /** Shows the button with a drawn icon instead of a label (the tool in hand). `key` says when the icon changed. */
-  showIcon(key: string, paint: IconPainter): void {
+  showIcon(key: string, paint: IconPainter, dim = false): void {
+    this.icon.setAlpha(dim ? 0.3 : 1);
     if (this.iconKey !== key) {
       this.iconKey = key;
       this.icon.clear();

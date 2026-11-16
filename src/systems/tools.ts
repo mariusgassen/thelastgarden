@@ -25,6 +25,7 @@ import {
   bedAccepts,
   harvestBed,
   isBedPlanted,
+  isProduceReady,
   plantSeed,
   transplantInto,
   uprootBed,
@@ -189,7 +190,7 @@ export function getCarriedPlant(): UprootedPlant | undefined {
 
 export function describeTool(toolId: string): { title: string; hint: string } {
   if (toolId === AUTO_TOOL) {
-    return { title: 'Gärtnerhand', hint: 'Erntet, sät oder setzt ein: je nachdem, was hier gerade passt.' };
+    return { title: 'Gärtnerhand', hint: 'Wählt selbst: Reifes ernten, freie Beete säen, eine getragene Pflanze einsetzen. Ausgraben geht nur mit dem Spaten.' };
   }
   const tool = content.tools.get(toolId);
   const name = itemName(tool.id);
@@ -207,7 +208,7 @@ export function describeTool(toolId: string): { title: string; hint: string } {
     const carried = getCarriedPlant();
     return {
       title: carried ? `${name} · trägt ${content.plants.get(carried.plantId).name}` : name,
-      hint: carried ? 'Ein freies Beet suchen und den Spaten benutzen.' : tool.hint,
+      hint: carried ? 'Du trägst eine Pflanze. Geh zu einem freien Beet und benutze den Spaten, um sie einzusetzen.' : tool.hint,
     };
   }
   return { title: name, hint: tool.hint };
@@ -302,12 +303,13 @@ function useSatchel(tool: ToolDef, mapId: string, at: { x: number; y: number }):
   return { ok: true, used: 'satchel', text: `${name} gesät: ${spots.length} ${spots.length === 1 ? 'Beet' : 'Beete'}.`, spots };
 }
 
-/** The all-round hand: sets down a carried plant, else harvests what is ripe, else sows. */
+/** The all-round hand: sets down a carried plant if a bed in reach takes it, else harvests what is ripe, else sows. */
 function useAuto(mapId: string, at: { x: number; y: number }): ToolResult {
   const owned = getOwnedTools();
   const find = (kind: ToolKind) => owned.find((t) => t.kind === kind);
   const shovel = find('shovel');
-  if (shovel && getCarriedPlant()) return useShovel(shovel, mapId, at);
+  const carried = getCarriedPlant();
+  if (shovel && carried && canPlace(shovel, mapId, at)) return useShovel(shovel, mapId, at);
   const sickle = find('sickle');
   if (sickle) {
     const done = useSickle(sickle, mapId, at);
@@ -318,7 +320,49 @@ function useAuto(mapId: string, at: { x: number; y: number }): ToolResult {
     const done = useSatchel(satchel, mapId, at);
     if (done.ok) return done;
   }
+  if (carried) return fail(`Du trägst ${content.plants.get(carried.plantId).name}. Gehe zu einem freien Beet und setze sie dort ein.`);
   return fail('Hier gibt es gerade nichts zu tun.');
+}
+
+const reachOf = (tool: ToolDef): number => tool.reachTiles as number;
+
+/** Whether the carried plant has a free bed in reach that takes it. */
+function canPlace(shovel: ToolDef, mapId: string, at: { x: number; y: number }): boolean {
+  const carried = getCarriedPlant();
+  return (
+    carried !== undefined &&
+    bedsNear(mapId, at, reachOf(shovel)).some((b) => !isBedPlanted(b.bedId) && bedAccepts(b.bedId, carried.plantId))
+  );
+}
+
+/**
+ * What a press would do right now, without doing it: the tool that would work (the one in hand,
+ * or for the all-round hand the one it would pick), or null when nothing would happen.
+ */
+export function peekTool(mapId: string, at: { x: number; y: number }): ToolKind | null {
+  const owned = getOwnedTools();
+  const find = (kind: ToolKind) => owned.find((t) => t.kind === kind);
+  const auto = isAutoTool();
+  const hand = getEquippedTool();
+  const may = (kind: ToolKind): boolean => auto || hand?.kind === kind;
+  const shovel = find('shovel');
+  const sickle = find('sickle');
+  const satchel = find('satchel');
+  const carried = getCarriedPlant();
+  if (shovel && may('shovel')) {
+    if (carried ? canPlace(shovel, mapId, at) : !auto && bedsNear(mapId, at, reachOf(shovel)).some((b) => isBedPlanted(b.bedId))) return 'shovel';
+  }
+  if (sickle && may('sickle') && bedsNear(mapId, at, reachOf(sickle)).some((b) => isProduceReady(b.bedId))) return 'sickle';
+  const seed = getSowSeed();
+  if (
+    satchel &&
+    seed &&
+    may('satchel') &&
+    bedsNear(mapId, at, reachOf(satchel)).some((b) => !isBedPlanted(b.bedId) && bedAccepts(b.bedId, seed))
+  ) {
+    return 'satchel';
+  }
+  return null;
 }
 
 /** Works the beds around `at` (px) with the tool in hand. Never costs the tool anything. */
