@@ -8,6 +8,7 @@ export const MILL_INTERIOR_MAP: MapDef = {
   height: 12,
   baseTile: 'brickWall',
   backgroundColor: 0x1a1512,
+  indoor: true,
   layout: [
     { op: 'rect', tile: 'floor', rect: { x: 1, y: 2, w: 14, h: 9 } },
     { op: 'rect', tile: 'floor', rect: { x: 7, y: 11, w: 2, h: 1 } },

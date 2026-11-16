@@ -81,6 +81,67 @@ test.describe('Desktop gameplay and PWA', () => {
     expect(errors).toEqual([]);
   });
 
+  test('rides the horse and fast travels with the town map', async ({ page }) => {
+    const errors = trackErrors(page);
+
+    await page.addInitScript((key) => {
+      if (localStorage.getItem(key)) return;
+      localStorage.setItem(
+        key,
+        JSON.stringify({
+          version: 1,
+          savedAt: Date.now(),
+          player: { mapId: 'garden', x: 25.5 * 32, y: 31 * 32, facing: 'right' },
+          world: {
+            unblockedPaths: [],
+            visitedZones: ['garden', 'tram-tracks'],
+            flags: { 'crow-met': true, 'greenhouse-hint-read': true, 'horse-tamed': true },
+          },
+          inventory: { items: {} },
+          quests: { active: [], completed: ['q-meet-crow'], progress: {} },
+          ext: {},
+        }),
+      );
+    }, SAVE_KEY);
+
+    await page.goto('/');
+    await waitForGameBoot(page);
+
+    const ridingState = async () => ((await flushAndReadSave(page))?.ext.horse as { riding: boolean } | undefined)?.riding;
+    await expect
+      .poll(
+        async () => {
+          if (await ridingState()) return true;
+          await page.keyboard.press('KeyR');
+          await page.waitForTimeout(300);
+          return ridingState();
+        },
+        { timeout: 15_000, intervals: [100] },
+      )
+      .toBe(true);
+
+    // Open the map, pick the next known stop (the tramline) and confirm
+    await expect
+      .poll(
+        async () => {
+          if ((await flushAndReadSave(page))?.player.mapId === 'tramline') return 'tramline';
+          await page.keyboard.press('KeyM');
+          await page.waitForTimeout(300);
+          await page.keyboard.press('ArrowRight');
+          await page.waitForTimeout(150);
+          await page.keyboard.press('KeyE');
+          await page.waitForTimeout(900);
+          return (await flushAndReadSave(page))?.player.mapId;
+        },
+        { timeout: 20_000, intervals: [100] },
+      )
+      .toBe('tramline');
+
+    // Still riding after the journey
+    expect(await ridingState()).toBe(true);
+    expect(errors).toEqual([]);
+  });
+
   test('harvests regrowing produce from a mature bed', async ({ page }) => {
     const errors = trackErrors(page);
 

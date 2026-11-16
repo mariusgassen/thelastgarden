@@ -146,4 +146,23 @@ export const NPCS: NpcDef[] = [
     ],
     dialogueId: 'jakob-waiting',
   },
+  {
+    id: 'mohn',
+    name: 'Mohn',
+    description: 'Die alte Stute der Gärtnerei. Sie grast auf der Lichtung an der alten Trasse.',
+    interactLabel: 'Ansehen',
+    color: 0x9a6a42,
+    dialogues: [
+      {
+        dialogueId: 'mohn-tamed',
+        requires: ['horse-met'],
+        requiresItems: [{ itemId: 'craft-horse-treat', count: 1 }],
+        takeItems: [{ itemId: 'craft-horse-treat', count: 1 }],
+        setFlags: ['horse-tamed'],
+      },
+      { dialogueId: 'mohn-waiting', requires: ['horse-met'] },
+      { dialogueId: 'mohn-intro', forbids: ['horse-met'], setFlags: ['horse-met'] },
+    ],
+    dialogueId: 'mohn-waiting',
+  },
 ];

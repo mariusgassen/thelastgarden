@@ -13,7 +13,8 @@ export function pickNpcDialogue(def: NpcDef): NpcDialogueRule | undefined {
     (rule) =>
       (!rule.mapId || rule.mapId === gameState.data.player.mapId) &&
       (rule.requires ?? []).every((flag) => gameState.hasFlag(flag)) &&
-      !(rule.forbids ?? []).some((flag) => gameState.hasFlag(flag)),
+      !(rule.forbids ?? []).some((flag) => gameState.hasFlag(flag)) &&
+      (rule.requiresItems ?? []).every((item) => gameState.getItemCount(item.itemId) >= item.count),
   );
 }
 
@@ -96,6 +97,7 @@ export class NpcLayer {
         ctx.world.showDialogue(dialogueId);
         if (!rule) return;
         onDialogueClosed(dialogueId, () => {
+          for (const item of rule.takeItems ?? []) gameState.removeItem(item.itemId, item.count);
           for (const item of rule.giveItems ?? []) {
             gameState.addItem(item.itemId, item.count);
             ctx.world.toast(`+${item.count} ${content.items.get(item.itemId).name}`);

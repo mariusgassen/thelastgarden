@@ -2,13 +2,17 @@ import Phaser from 'phaser';
 import { content, type DialogueChoice } from '../content';
 import { CRAFTING_DIALOGUE_ID, craftingMenuLines, hasPocketWorkbench } from '../systems/crafting';
 import { bus } from '../systems/events';
+import { canRideHere, hasHorse, isRiding, toggleRiding } from '../systems/horse';
 import { inputState } from '../systems/input';
 import { gameState } from '../systems/state';
+import { hasTravelMap, travelTo } from '../systems/travel';
 import { Banner } from '../ui/Banner';
 import { ContextButton } from '../ui/ContextButton';
 import { DialoguePanel } from '../ui/DialoguePanel';
+import { drawHorseIcon, drawMapIcon, HudButton } from '../ui/HudButton';
 import { InventoryPanel } from '../ui/InventoryPanel';
 import { Joystick } from '../ui/Joystick';
+import { MapPanel } from '../ui/MapPanel';
 import { QuestLog } from '../ui/QuestLog';
 import { ResourceBar } from '../ui/ResourceBar';
 import { TutorialHints } from '../ui/TutorialHints';
@@ -33,6 +37,9 @@ export class UIScene extends Phaser.Scene {
   private resourceBar!: ResourceBar;
   private questLog!: QuestLog;
   private inventory!: InventoryPanel;
+  private mapPanel!: MapPanel;
+  private mapButton!: HudButton;
+  private rideButton!: HudButton;
   private tutorial!: TutorialHints;
   private safe: SafeArea = { top: 0, right: 0, bottom: 0, left: 0 };
   private downAt = new Map<number, { x: number; y: number; t: number }>();
@@ -61,7 +68,10 @@ export class UIScene extends Phaser.Scene {
     this.toast = new Banner(this, 14, () => this.layoutTopStack());
     this.resourceBar = new ResourceBar(this);
     this.questLog = new QuestLog(this, (open) => {
-      if (open) this.inventory.setOpen(false);
+      if (open) {
+        this.inventory.setOpen(false);
+        this.mapPanel.setOpen(false);
+      }
       this.syncModal();
       if (open) this.releaseJoystick();
       this.layoutTopStack();
@@ -69,13 +79,33 @@ export class UIScene extends Phaser.Scene {
     this.inventory = new InventoryPanel(
       this,
       (open) => {
-        if (open) this.questLog.setOpen(false);
+        if (open) {
+          this.questLog.setOpen(false);
+          this.mapPanel.setOpen(false);
+        }
         this.syncModal();
         if (open) this.releaseJoystick();
       },
       hasPocketWorkbench,
       () => this.openPocketWorkbench(),
     );
+    this.mapPanel = new MapPanel(
+      this,
+      touch,
+      (open) => {
+        if (open) {
+          this.questLog.setOpen(false);
+          this.inventory.setOpen(false);
+        }
+        this.syncModal();
+        if (open) this.releaseJoystick();
+      },
+      (mapId) => {
+        if (travelTo(mapId)) this.mapPanel.setOpen(false);
+      },
+    );
+    this.mapButton = new HudButton(this, drawMapIcon, touch ? undefined : 'M');
+    this.rideButton = new HudButton(this, drawHorseIcon, touch ? undefined : 'R');
     this.tutorial = new TutorialHints(this, touch, () => this.layoutTopStack());
 
     this.input.on(Phaser.Input.Events.POINTER_DOWN, this.onPointerDown, this);
@@ -99,22 +129,21 @@ export class UIScene extends Phaser.Scene {
     kb?.on('keydown-C', () => {
       if (!this.dialogue.isOpen && hasPocketWorkbench()) this.openPocketWorkbench();
     });
+    kb?.on('keydown-M', () => this.toggleMap());
+    kb?.on('keydown-R', () => this.toggleRide());
     kb?.on('keydown-ESC', () => {
       this.questLog.setOpen(false);
       this.inventory.setOpen(false);
+      this.mapPanel.setOpen(false);
     });
-    kb?.on('keydown-UP', () => {
-      if (this.dialogue.isOpen && this.dialogue.hasChoices) this.dialogue.moveChoice(-1);
-    });
-    kb?.on('keydown-W', () => {
-      if (this.dialogue.isOpen && this.dialogue.hasChoices) this.dialogue.moveChoice(-1);
-    });
-    kb?.on('keydown-DOWN', () => {
-      if (this.dialogue.isOpen && this.dialogue.hasChoices) this.dialogue.moveChoice(1);
-    });
-    kb?.on('keydown-S', () => {
-      if (this.dialogue.isOpen && this.dialogue.hasChoices) this.dialogue.moveChoice(1);
-    });
+    const step = (dir: 1 | -1) => () => {
+      if (this.dialogue.isOpen && this.dialogue.hasChoices) this.dialogue.moveChoice(dir);
+      else this.mapPanel.moveSelection(dir);
+    };
+    for (const key of ['UP', 'W']) kb?.on(`keydown-${key}`, step(-1));
+    for (const key of ['DOWN', 'S']) kb?.on(`keydown-${key}`, step(1));
+    for (const key of ['LEFT', 'A']) kb?.on(`keydown-${key}`, () => this.mapPanel.moveSelection(-1));
+    for (const key of ['RIGHT', 'D']) kb?.on(`keydown-${key}`, () => this.mapPanel.moveSelection(1));
     ['ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX', 'SEVEN', 'EIGHT', 'NINE'].forEach((key, idx) => {
       kb?.on(`keydown-${key}`, () => {
         if (!this.dialogue.isOpen || !this.dialogue.hasChoices) return;
@@ -129,6 +158,7 @@ export class UIScene extends Phaser.Scene {
     bus.onScene(this, 'dialogue-show', ({ id, lines, style, title }) => {
       this.questLog.setOpen(false);
       this.inventory.setOpen(false);
+      this.mapPanel.setOpen(false);
       this.dialogue.open(id, lines, style, title);
       inputState.modal = this.dialogue.isOpen;
       if (inputState.modal) this.releaseJoystick();
@@ -136,6 +166,7 @@ export class UIScene extends Phaser.Scene {
     bus.onScene(this, 'dialogue-advance', () => {
       if (this.questLog.isOpen) this.questLog.setOpen(false);
       else if (this.inventory.isOpen) this.inventory.setOpen(false);
+      else if (this.mapPanel.isOpen) this.mapPanel.confirm();
       else if (this.dialogue.isOpen && this.dialogue.hasChoices) {
         const picked = this.dialogue.pickSelectedChoice();
         if (picked) this.applyDialogueChoice(picked);
@@ -164,6 +195,7 @@ export class UIScene extends Phaser.Scene {
   override update(_time: number, delta: number): void {
     inputState.setMove(this.joystick.vectorX, this.joystick.vectorY);
     this.tutorial.update(delta);
+    this.syncHudButtons();
     if (this.toastQueue.length > 0 && this.time.now >= this.toastBusyUntil) {
       this.toast.show(this.toastQueue.shift() as string, TOAST_MS);
       this.toastBusyUntil = this.time.now + TOAST_MS + 300;
@@ -192,6 +224,7 @@ export class UIScene extends Phaser.Scene {
     this.resourceBar.setPosition(safe.left + 28, topRowY);
     this.questLog.layout(w, h, safe, topRowY);
     this.inventory.layout(w, h, safe);
+    this.mapPanel.layout(w, h, safe);
     this.areaBanner.setMaxWidth(maxBannerW);
     this.toast.setMaxWidth(maxBannerW);
     this.tutorial.layout(w, 0, centerX, maxBannerW);
@@ -234,7 +267,31 @@ export class UIScene extends Phaser.Scene {
   }
 
   private syncModal(): void {
-    inputState.modal = this.dialogue.isOpen || this.questLog.isOpen || this.inventory.isOpen;
+    inputState.modal = this.dialogue.isOpen || this.questLog.isOpen || this.inventory.isOpen || this.mapPanel.isOpen;
+  }
+
+  /** Map and horse buttons: a column above the context button, shown once unlocked. */
+  private syncHudButtons(): void {
+    const hidden = inputState.modal;
+    this.mapButton.setVisible(!hidden && hasTravelMap());
+    this.rideButton.setVisible(!hidden && hasHorse());
+    this.rideButton.setState(isRiding(), canRideHere());
+    const x = this.viewW - this.safe.right - 22 - HudButton.RADIUS;
+    let y = this.viewH - this.safe.bottom - 34 - this.button.radius * 2 - 16 - HudButton.RADIUS;
+    for (const b of [this.rideButton, this.mapButton]) {
+      if (!b.visible) continue;
+      b.setPosition(x, y);
+      y -= HudButton.RADIUS * 2 + 12;
+    }
+  }
+
+  private toggleMap(): void {
+    if (this.dialogue.isOpen || !hasTravelMap()) return;
+    this.mapPanel.toggle();
+  }
+
+  private toggleRide(): void {
+    if (!inputState.modal) toggleRiding();
   }
 
   /** The pocket workbench: the same crafting menu a workbench opens, from anywhere. */
@@ -301,8 +358,17 @@ export class UIScene extends Phaser.Scene {
       }
       return;
     }
+    if (this.mapPanel.pointerDown(p.x, p.y)) return;
     if (this.inventory.pointerDown(p.x, p.y)) return;
     if (this.questLog.pointerDown(p.x, p.y)) return;
+    if (this.mapButton.contains(p.x, p.y)) {
+      this.toggleMap();
+      return;
+    }
+    if (this.rideButton.contains(p.x, p.y)) {
+      this.toggleRide();
+      return;
+    }
     if (this.questLog.buttonContains(p.x, p.y)) {
       this.questLog.toggle();
       return;
@@ -319,6 +385,7 @@ export class UIScene extends Phaser.Scene {
   private onPointerMove(pointer: Phaser.Input.Pointer): void {
     if (!pointer.isDown) return;
     const p = this.toCss(pointer);
+    if (this.mapPanel.isOpen) return;
     if (this.inventory.isOpen) {
       this.inventory.pointerMove(p.y);
       return;

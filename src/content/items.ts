@@ -210,6 +210,22 @@ export const ITEMS: ItemDef[] = [
     color: 0x8fd6e8,
   },
   {
+    id: 'craft-horse-treat',
+    name: 'Kräuterleckerli',
+    description: 'Ein fester kleiner Riegel aus zarten Brombeerblättern und Lavendel. Mohn, die alte Gartenstute, kann ihm nicht widerstehen.',
+    category: 'material',
+    stackable: true,
+    color: 0xb9a15c,
+  },
+  {
+    id: 'journal-page-mohn',
+    name: 'Zettel · Mohn',
+    description: 'Ein wetterfester Zettel vom Zaunpfahl an der alten Trasse, mit einem Rezept für Kräuterleckerli.',
+    category: 'note',
+    stackable: false,
+    color: 0xf1e6c8,
+  },
+  {
     id: 'journal-page-tower',
     name: 'Notiz vom Wasserturm',
     description: 'Eine hastig beschriebene Karteikarte mit Blick auf die Dächer von Erlenbrück.',

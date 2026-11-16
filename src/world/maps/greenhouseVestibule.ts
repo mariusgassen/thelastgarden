@@ -12,6 +12,7 @@ export const GREENHOUSE_VESTIBULE_MAP: MapDef = {
   height: 10,
   baseTile: 'greenhouse',
   backgroundColor: 0x152420,
+  indoor: true,
   layout: [
     { op: 'rect', tile: 'paving', rect: { x: 1, y: 2, w: 12, h: 7 } },
     { op: 'rect', tile: 'soil', rect: { x: 8, y: 6, w: 4, h: 2 } },

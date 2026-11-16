@@ -1,8 +1,10 @@
 import Phaser from 'phaser';
 import { content } from '../content';
 import { bus } from '../systems/events';
+import { hasHorse, HORSE_FLAG } from '../systems/horse';
 import { inputState } from '../systems/input';
 import { gameState } from '../systems/state';
+import { hasTravelMap, TRAVEL_MAP_FLAG } from '../systems/travel';
 import { THEME } from './theme';
 
 interface TutorialExt {
@@ -91,6 +93,29 @@ export class TutorialHints {
           ttlMs: 12_000,
         });
       }
+    });
+    // Also on load, so saves from before these features learn about them.
+    const mapHint = () =>
+      this.enqueue({
+        id: 'travel-map',
+        text: touch
+          ? 'Der Stadtplan ist abgezeichnet: Der Kartenknopf unten rechts bringt dich schnell an Orte, die du schon kennst.'
+          : 'Der Stadtplan ist abgezeichnet: Taste M oder der Kartenknopf unten rechts bringt dich schnell an Orte, die du schon kennst.',
+        ttlMs: 14_000,
+      });
+    const horseHint = () =>
+      this.enqueue({
+        id: 'riding',
+        text: touch
+          ? 'Mohn begleitet dich jetzt. Der Hufeisenknopf unten rechts lässt dich auf- und absteigen.'
+          : 'Mohn begleitet dich jetzt. Taste R oder der Hufeisenknopf unten rechts lässt dich auf- und absteigen.',
+        ttlMs: 14_000,
+      });
+    if (hasTravelMap()) mapHint();
+    if (hasHorse()) horseHint();
+    bus.onScene(scene, 'flag-changed', ({ key, value }) => {
+      if (key === TRAVEL_MAP_FLAG && value) mapHint();
+      if (key === HORSE_FLAG && value) horseHint();
     });
     bus.onScene(scene, 'plant-planted', () => {
       this.dismiss('seed');

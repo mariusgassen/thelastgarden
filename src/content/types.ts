@@ -122,9 +122,13 @@ export interface NpcDialogueRule {
   requires?: string[];
   /** None of these flags may be set. */
   forbids?: string[];
+  /** The player must carry all of these for the rule to apply. */
+  requiresItems?: { itemId: string; count: number }[];
   /** Applied when the dialogue closes. */
   setFlags?: string[];
   giveItems?: { itemId: string; count: number }[];
+  /** Removed from the inventory when the dialogue closes (pair with `requiresItems`). */
+  takeItems?: { itemId: string; count: number }[];
 }
 
 export interface NpcDef {
