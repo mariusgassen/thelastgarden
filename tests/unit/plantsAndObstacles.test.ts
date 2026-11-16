@@ -10,6 +10,7 @@ import {
 } from '../../src/systems/obstacles';
 import {
   canWaterBed,
+  computeLightAttenuation,
   currentStage,
   debugRewindGrowth,
   getAllPlantedBeds,
@@ -17,6 +18,7 @@ import {
   getLightSources,
   getMatureClearingKind,
   getPlantableSpecies,
+  haloFalloff,
   HARVEST_REGROW_MS,
   harvestBed,
   hasAbility,
@@ -29,6 +31,7 @@ import {
   STAGE_DURATION_MS,
   startGrowthTicker,
   waterBed,
+  type LightPoint,
 } from '../../src/systems/plants';
 import { gameState } from '../../src/systems/state';
 import { findObstacle } from '../../src/world';
@@ -300,5 +303,56 @@ describe('plants and obstacles systems', () => {
     } finally {
       removeHandler();
     }
+  });
+
+  it('attenuates stacked and adjacent light plants so combined brightness stays capped', () => {
+    expect(computeLightAttenuation([]).size).toBe(0);
+    expect(haloFalloff(0, 150)).toBe(1);
+    expect(haloFalloff(150, 150)).toBe(0);
+    expect(haloFalloff(75, 150)).toBeGreaterThan(0);
+
+    // Single isolated plant keeps full brightness; distant plants do not dim each other
+    expect(computeLightAttenuation([{ id: 'a', x: 0, y: 0, radius: 150 }]).get('a')).toBe(1);
+    const distant = computeLightAttenuation([
+      { id: 'a', x: 0, y: 0, radius: 150 },
+      { id: 'b', x: 400, y: 0, radius: 150 },
+    ]);
+    expect(distant.get('a')).toBe(1);
+    expect(distant.get('b')).toBe(1);
+
+    const combinedAt = (sources: LightPoint[], weights: Map<string, number>, at: { x: number; y: number }): number =>
+      sources.reduce((sum, s) => sum + (weights.get(s.id) ?? 0) * haloFalloff(Math.hypot(at.x - s.x, at.y - s.y), s.radius), 0);
+
+    // 4 plants in one 2x2 planter (16 px apart) combine smoothly below 1.3x single-flower brightness
+    const planter: LightPoint[] = [
+      { id: 'p0', x: 0, y: 0, radius: 150 },
+      { id: 'p1', x: 16, y: 0, radius: 150 },
+      { id: 'p2', x: 0, y: 16, radius: 150 },
+      { id: 'p3', x: 16, y: 16, radius: 150 },
+    ];
+    const planterScales = computeLightAttenuation(planter);
+    expect(planterScales.get('p0')).toBeCloseTo(planterScales.get('p3')!, 5);
+    expect(planterScales.get('p0')!).toBeLessThan(0.4);
+    const planterPeak = combinedAt(planter, planterScales, { x: 8, y: 8 });
+    expect(planterPeak).toBeGreaterThan(1);
+    expect(planterPeak).toBeLessThan(1.3);
+
+    // 8 plants in a 4x2 bed + 1 outlier nearby: cluster stays capped while outlier stays bright
+    const bed: LightPoint[] = [];
+    for (let r = 0; r < 2; r++) {
+      for (let c = 0; c < 4; c++) bed.push({ id: `b-${r}-${c}`, x: c * 32, y: r * 32, radius: 150 });
+    }
+    const outlier: LightPoint = { id: 'outlier', x: 96 + 120, y: 16, radius: 150 };
+    const clusterAndOutlier = [...bed, outlier];
+    const mixedScales = computeLightAttenuation(clusterAndOutlier);
+    for (const s of bed) {
+      expect(combinedAt(clusterAndOutlier, mixedScales, s)).toBeLessThan(1.4);
+    }
+    expect(mixedScales.get('outlier')!).toBeGreaterThan(0.75);
+
+    // Extreme stacking on the exact same spot stays bounded
+    const stacked: LightPoint[] = Array.from({ length: 200 }, (_, i) => ({ id: `s-${i}`, x: 0, y: 0, radius: 150 }));
+    const stackedScales = computeLightAttenuation(stacked);
+    expect(combinedAt(stacked, stackedScales, { x: 0, y: 0 })).toBeLessThan(1.3);
   });
 });
