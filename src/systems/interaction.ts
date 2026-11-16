@@ -1,7 +1,8 @@
 import { content } from '../content';
 import type { DialogueLine } from '../content/types';
-import type { InteractableSpec } from '../world/types';
+import type { DialogueVariant, InteractableSpec } from '../world/types';
 import { TILE_SIZE } from '../world/tiles';
+import { CRAFTING_DIALOGUE_ID, craftingMenuLines } from './crafting';
 import { bus } from './events';
 import { gameState } from './state';
 
@@ -156,27 +157,30 @@ export function onDialogueClosed(id: string, fn: () => void): void {
   bus.on('dialogue-closed', handler);
 }
 
+/** Shows the first variant whose conditions hold and applies its effects on close. False if none matches. */
+function showVariant(variants: DialogueVariant[] | undefined, ctx: InteractionContext): boolean {
+  const variant = variants?.find(
+    (v) =>
+      (v.requires ?? []).every((f) => gameState.hasFlag(f)) && !(v.forbids ?? []).some((f) => gameState.hasFlag(f)),
+  );
+  if (!variant) return false;
+  ctx.world.showDialogue(variant.dialogueId);
+  if (variant.setFlags?.length || variant.giveItems?.length) {
+    onDialogueClosed(variant.dialogueId, () => {
+      for (const item of variant.giveItems ?? []) {
+        gameState.addItem(item.itemId, item.count);
+        ctx.world.toast(`+${item.count} ${content.items.get(item.itemId).name}`);
+      }
+      for (const flag of variant.setFlags ?? []) gameState.setFlag(flag);
+      gameState.save();
+    });
+  }
+  return true;
+}
+
 const specHandlers: { [K in InteractableSpec['type']]: SpecHandler<K> } = {
   dialogue: (spec, ctx) => {
-    const variant = spec.variants?.find(
-      (v) =>
-        (v.requires ?? []).every((f) => gameState.hasFlag(f)) &&
-        !(v.forbids ?? []).some((f) => gameState.hasFlag(f)),
-    );
-    if (variant) {
-      ctx.world.showDialogue(variant.dialogueId);
-      if (variant.setFlags?.length || variant.giveItems?.length) {
-        onDialogueClosed(variant.dialogueId, () => {
-          for (const item of variant.giveItems ?? []) {
-            gameState.addItem(item.itemId, item.count);
-            ctx.world.toast(`+${item.count} ${content.items.get(item.itemId).name}`);
-          }
-          for (const flag of variant.setFlags ?? []) gameState.setFlag(flag);
-          gameState.save();
-        });
-      }
-      return;
-    }
+    if (showVariant(spec.variants, ctx)) return;
     ctx.world.showDialogue(spec.dialogueId);
     if (spec.setFlag) {
       gameState.setFlag(spec.setFlag);
@@ -224,6 +228,12 @@ const specHandlers: { [K in InteractableSpec['type']]: SpecHandler<K> } = {
     }
     gameState.save();
     ctx.world.showDialogue(spec.repairedDialogueId);
+  },
+  craft: (spec, ctx) => {
+    if (showVariant(spec.variants, ctx)) return;
+    const lines = craftingMenuLines();
+    if (lines) ctx.world.showLines(CRAFTING_DIALOGUE_ID, lines);
+    else ctx.world.showDialogue(spec.emptyDialogueId);
   },
 };
 

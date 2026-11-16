@@ -156,8 +156,8 @@ export const QUESTS: QuestDef[] = [
       {
         type: 'unblock',
         obstacleId: 'bramble-tram-switch',
-        description: 'Öffne einen Weg durch das Dornengestrüpp auf den Gleisen.',
-        markers: ['obstacle:bramble-tram-switch', 'bed:bed-tram-bramble', 'resource:tram-seed-bramble'],
+        description: 'Öffne das Dornengestrüpp auf den Gleisen mit einem Brombeer-Steckling von der Werkbank (2 Brombeertriebe, 1 Tau).',
+        markers: ['obstacle:bramble-tram-switch', 'bed:bed-tram-bramble', 'resource:tram-seed-bramble', 'workshop-door', 'workbench'],
       },
       {
         type: 'visitZone',
@@ -194,7 +194,7 @@ export const QUESTS: QuestDef[] = [
       {
         type: 'flag',
         flag: 'tower-cistern-repaired',
-        description: 'Repariere das Zisternen-Ventil (3 Sonnenlicht, 3 Tau, 1 Fundstück).',
+        description: 'Repariere das Zisternen-Ventil (1 Ventildichtung von der Werkbank, 2 Sonnenlicht, 1 Fundstück).',
         markers: ['tower-cistern'],
       },
       {
@@ -305,8 +305,8 @@ export const QUESTS: QuestDef[] = [
       {
         type: 'unblock',
         obstacleId: 'bramble-orchard-terrace',
-        description: 'Teile die Dornenhecke am Hang zur oberen Terrasse.',
-        markers: ['obstacle:bramble-orchard-terrace'],
+        description: 'Teile die Dornenhecke am Hang zur oberen Terrasse mit einem Brombeer-Steckling.',
+        markers: ['obstacle:bramble-orchard-terrace', 'orchard-to-cottage', 'cottage-herb-rack'],
       },
       {
         type: 'flag',
@@ -325,8 +325,8 @@ export const QUESTS: QuestDef[] = [
       {
         type: 'flag',
         flag: 'orchard-sluice-repaired',
-        description: 'Repariere die alte Bewässerungsrinne (2 Sonnenlicht, 2 Tau, 1 Fundstück).',
-        markers: ['orchard-sluice'],
+        description: 'Repariere die alte Bewässerungsrinne (1 Dichtzopf von der Werkbank, 1 Sonnenlicht, 1 Fundstück).',
+        markers: ['orchard-sluice', 'cottage-herb-rack'],
       },
       {
         type: 'flag',
@@ -399,8 +399,8 @@ export const QUESTS: QuestDef[] = [
       {
         type: 'flag',
         flag: 'mill-wheel-repaired',
-        description: 'Mache das alte Mühlrad wieder gangbar (3 Sonnenlicht, 3 Tau, 2 Fundstücke).',
-        markers: ['mill-wheel'],
+        description: 'Mache das alte Mühlrad wieder gangbar (1 Achsenwachs von der Werkbank, 2 Sonnenlicht, 2 Fundstücke).',
+        markers: ['mill-wheel', 'mill-workbench'],
       },
       {
         type: 'flag',
@@ -429,8 +429,8 @@ export const QUESTS: QuestDef[] = [
       {
         type: 'unblock',
         obstacleId: 'bramble-farm-gate',
-        description: 'Öffne das verwachsene Hoftor mit der Brombeerranke.',
-        markers: ['obstacle:bramble-farm-gate'],
+        description: 'Öffne das verwachsene Hoftor mit einem Brombeer-Steckling.',
+        markers: ['obstacle:bramble-farm-gate', 'mill-workbench'],
       },
       {
         type: 'flag',

@@ -13,7 +13,7 @@ export interface NightOutcome {
   /** Decoration left behind in the world (px), e.g. snails next to a nibbled bed. */
   remnants: { texture: 'snail' | 'mole-mound' | 'feather' | 'puddle'; x: number; y: number }[];
   /** Set when the player's garden design (plants) or ally (crow) prevented harm. */
-  protectedBy?: 'lavender' | 'glow-lily' | 'crow';
+  protectedBy?: 'lavender' | 'glow-lily' | 'crow' | 'sachet' | 'lantern';
 }
 
 /**
@@ -55,6 +55,8 @@ export interface GameEvents {
   'plant-harvested': { bedId: string; plantId: string; itemId: string };
   /** The player picked a dialogue choice that carries an `id` (DialogueChoice.id). */
   'dialogue-choice': { dialogueId: string; choiceId: string };
+  /** A workbench recipe was crafted (see systems/crafting.ts). */
+  'item-crafted': { recipeId: string };
   /** A resource/seed pickup in the world was collected. */
   'resource-collected': { nodeId: string; itemId: string };
   'save-loaded': { save: SaveGame };

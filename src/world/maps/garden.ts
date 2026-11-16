@@ -87,7 +87,7 @@ export const GARDEN_MAP: MapDef = {
       removable: true,
       rect: { x: 34.5, y: 13.6, w: 2.4, h: 3.6 },
       name: 'Dornengestrüpp',
-      hint: 'Undurchdringliche Brombeerranken. Vielleicht könnte eine andere Pflanze sich hindurchwinden …',
+      hint: 'Undurchdringliche Brombeerranken. Vielleicht könnte sich ein junger Steckling hindurchwinden …',
     },
     {
       id: 'fallen-tree-canal',

@@ -188,8 +188,6 @@ export function getLightSources(): { bedId: string; mapId: string; lightRadius: 
 
 function abilityFlavor(abilityId?: string): string {
   switch (abilityId) {
-    case 'weave-through-brambles':
-      return 'windet sich durchs Gestrüpp und öffnet einen Weg.';
     case 'calm-animals':
       return 'ihr Duft vertreibt die Zecken aus dem hohen Gras.';
     case 'awaken-heart':
@@ -215,6 +213,15 @@ addObstacleInteractHandler((obstacle, ctx) => {
   if (obstacle.blockedBy !== 'fallenTree' || gameState.getItemCount('garden-saw') <= 0) return false;
   unblockPath(obstacle.id);
   ctx.world.toast('Mit der Astsäge räumst du den umgestürzten Stamm Stück für Stück aus dem Weg.');
+  return true;
+});
+
+/** A bramble is opened on the spot by one crafted cutting; a mature vine alone no longer clears them all. */
+const BRAMBLE_CUTTING_ITEM_ID = 'craft-bramble-cutting';
+addObstacleInteractHandler((obstacle, ctx) => {
+  if (obstacle.blockedBy !== 'bramble' || !gameState.removeItem(BRAMBLE_CUTTING_ITEM_ID, 1)) return false;
+  unblockPath(obstacle.id);
+  ctx.world.toast('Du setzt den Steckling. Er windet sich durchs Gestrüpp und öffnet einen Weg.');
   return true;
 });
 

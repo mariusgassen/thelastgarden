@@ -19,6 +19,7 @@ export const NPCS: NpcDef[] = [
         requires: ['episode-2-complete'],
         forbids: ['crow-orchard-talked'],
         setFlags: ['crow-orchard-talked'],
+        giveItems: [{ itemId: 'produce-tendril', count: 2 }],
       },
       { dialogueId: 'crow-hill-waiting', mapId: 'hill-path', requires: ['hill-crow-talked'] },
       {
@@ -110,7 +111,10 @@ export const NPCS: NpcDef[] = [
         dialogueId: 'm-intro',
         forbids: ['m-met'],
         setFlags: ['m-met'],
-        giveItems: [{ itemId: 'seed-night-violet', count: 1 }],
+        giveItems: [
+          { itemId: 'seed-night-violet', count: 1 },
+          { itemId: 'produce-scent-bundle', count: 2 },
+        ],
       },
     ],
     dialogueId: 'm-waiting',

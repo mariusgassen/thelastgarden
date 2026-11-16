@@ -211,8 +211,9 @@ bramble-vine → glow-lily → lavender, that the player owns a seed for; there'
 UI in this wave). `bed-bramble`/`bed-lily`/`bed-lavender` are the "3 verwilderte Beete" for
 Wave 3's Quest 3.
 
-**Obstacle ↔ plant mapping.** `bramble-vine` clears `bramble` and `lavender` clears
-`tallGrass` — both already set in `content/plants.ts` from Wave 1 and left unchanged.
+**Obstacle ↔ plant mapping.** `lavender` clears `tallGrass` and `moon-fern` clears `denseFog`
+through `PlantDef.clears`. `bramble` is opened per obstacle with a crafted cutting instead;
+see "Workbench and recipes".
 **`fallenTree` (`fallen-tree-canal`) has no plant that clears it.** No `PlantDef.clears`
 targets it; moving a fallen tree needs something a plant can't do alone. Leave it to a
 future wave (a tool, or the Wave 3 crow). This still meets "at least 2 paths unlocked by
@@ -301,7 +302,41 @@ Growing a plant is no longer only a key. A mature plant keeps giving, all in
 - **Debug.** `__tlg.harvestBed(bedId)`, `__tlg.waterBed(bedId)`; `debugRewindGrowth(ms)` also
   fast-forwards regrowth.
 
-Produce has no consumer yet; the workbench recipes are the next step.
+## Workbench and recipes
+
+Produce is spent at a workbench. Recipes are content, crafting is a Phaser-free system:
+
+- **Recipes.** `content/recipes.ts` → `content.recipes`, each a `RecipeDef { id, name, result[],
+  cost[], requiresFlag? }`. Every recipe is unlocked by reading a journal page
+  (`journal-read:<pageId>`); the page's text states the recipe, and a toast announces it.
+
+  | Recipe | Cost | Unlocked by | Used for |
+  |---|---|---|---|
+  | Brombeer-Steckling | 2 Brombeertrieb, 1 Tau | `page-bramble` | opens one `bramble` obstacle |
+  | Lilienlaterne | 2 Lichtpollen, 1 Sonnenlicht | `page-lily` | one vole night |
+  | Lavendelsäckchen | 2 Duftbündel, 1 Sonnenlicht | `page-lavender` | one snail night |
+  | Ventildichtung | 1 Brombeertrieb, 1 Duftbündel | `page-tower` | `tower-cistern` repair |
+  | Dichtzopf | 2 Duftbündel, 1 Tau | `page-heart` | `orchard-sluice` repair |
+  | Achsenwachs | 2 Nektar, 1 Sonnenlicht | `page-orchard` | `mill-wheel` repair |
+  | Saattütchen | 2 Samenkapsel, 1 Tau | `page-mill` | 1 seed each: bramble, lily, lavender |
+
+- **System.** `systems/crafting.ts`: `getUnlockedRecipes()`, `getMissing(recipe)`,
+  `craft(recipeId)` (emits `item-crafted`), `craftingMenuLines()`. The menu is an ad-hoc dialogue
+  with id `crafting`; the module listens for `dialogue-choice` and crafts the picked recipe.
+- **Stations.** New `InteractableSpec` type `craft` (`emptyDialogueId` while nothing is
+  unlocked, optional `variants` that run first). Placed as `workbench` (workshop),
+  `cottage-herb-rack` (M.'s cottage) and `mill-workbench` (mill interior), so each episode has
+  one within a map or two.
+- **Brambles.** `bramble-vine` no longer has `clears`. A handler in `systems/plants.ts` spends
+  one `craft-bramble-cutting` on the inspected bramble and unblocks only that one. Without a
+  cutting the obstacle shows its hint.
+- **Nights.** `nightEvents.ts` spends a carried `craft-lavender-sachet` (snails) or
+  `craft-lily-lantern` (voles) when beds would be harmed that no plant protects
+  (`protectedBy: 'sachet' | 'lantern'`).
+- **Repairs.** The three `repair` specs now cost one crafted part plus fewer raw resources.
+  The crow (orchard) and M. hand over the produce for the first Episode 3 crafts, so nobody
+  has to walk back to the garden.
+- **Save.** Nothing new: crafted things are ordinary inventory items.
 
 ## Wave boundaries
 

@@ -1,6 +1,9 @@
 import type { PlantDef } from './types';
 
-/** Abilities are NOT implemented in Wave 1 — `clears`/`abilityId` are hooks for Wave 2. */
+/**
+ * `clears` lets any mature plant of the species open matching obstacles. Brambles are the
+ * exception: each one needs its own crafted cutting (see systems/plants.ts).
+ */
 export const PLANTS: PlantDef[] = [
   {
     id: 'bramble-vine',
@@ -9,7 +12,6 @@ export const PLANTS: PlantDef[] = [
     seedItemId: 'seed-bramble-vine',
     produceItemId: 'produce-tendril',
     growthStages: 3,
-    clears: ['bramble'],
     abilityId: 'weave-through-brambles',
     color: 0x6b2e4a,
   },

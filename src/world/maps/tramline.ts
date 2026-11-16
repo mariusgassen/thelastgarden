@@ -42,7 +42,7 @@ export const TRAMLINE_MAP: MapDef = {
       removable: true,
       rect: { x: 28.4, y: 8, w: 2.4, h: 5 },
       name: 'Verwilderte Weiche',
-      hint: 'Dichte Brombeerranken haben die alte Weiche überwuchert. Eine reife Brombeerranke im Garten weiß, wie man sie teilt.',
+      hint: 'Dichte Brombeerranken haben die alte Weiche überwuchert. Ein Brombeer-Steckling von der Werkbank würde sich hier hindurchwinden.',
     },
   ],
   props: [

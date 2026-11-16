@@ -58,7 +58,7 @@ export const ORCHARD_MAP: MapDef = {
       removable: true,
       rect: { x: 33.8, y: 11.4, w: 3.4, h: 2.8 },
       name: 'Dornenhecke am Hang',
-      hint: 'Dichte Brombeerranken versperren den Aufstieg zur oberen Terrasse. Eine reife Brombeerranke im Garten weiß, wie man sie teilt.',
+      hint: 'Dichte Brombeerranken versperren den Aufstieg zur oberen Terrasse. Ein Brombeer-Steckling von der Werkbank würde sich hier hindurchwinden.',
     },
   ],
   props: [
@@ -155,8 +155,8 @@ export const ORCHARD_MAP: MapDef = {
       radius: 66,
       doneFlag: 'orchard-sluice-repaired',
       cost: [
-        { itemId: 'resource-sunlight', count: 2 },
-        { itemId: 'resource-dew', count: 2 },
+        { itemId: 'craft-sealing-braid', count: 1 },
+        { itemId: 'resource-sunlight', count: 1 },
         { itemId: 'resource-curio', count: 1 },
       ],
       missingDialogueId: 'orchard-sluice-missing',
