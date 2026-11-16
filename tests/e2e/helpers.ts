@@ -44,3 +44,45 @@ export async function flushAndReadSave(page: Page): Promise<SaveSnapshot | null>
     return raw ? (JSON.parse(raw) as SaveSnapshot) : null;
   }, SAVE_KEY);
 }
+
+/**
+ * Counts pixels matching an RGB color (within tolerance) inside a CSS-pixel viewport clip
+ * using the rendered browser screenshot — works on production builds without debug globals.
+ */
+export async function countColorPixels(
+  page: Page,
+  clip: { x: number; y: number; width: number; height: number },
+  rgb: readonly [number, number, number],
+  tolerance = 14,
+): Promise<number> {
+  const png = await page.screenshot({ clip });
+  const b64 = png.toString('base64');
+  return page.evaluate(
+    async ({ encoded, target, tol }) => {
+      const img = new Image();
+      img.src = `data:image/png;base64,${encoded}`;
+      await img.decode();
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return 0;
+      ctx.drawImage(img, 0, 0);
+      const { data } = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const [tr, tg, tb] = target;
+      let matches = 0;
+      for (let i = 0; i < data.length; i += 4) {
+        if (
+          Math.abs(data[i] - tr) <= tol &&
+          Math.abs(data[i + 1] - tg) <= tol &&
+          Math.abs(data[i + 2] - tb) <= tol
+        ) {
+          matches++;
+        }
+      }
+      return matches;
+    },
+    { encoded: b64, target: rgb, tol: tolerance },
+  );
+}
+

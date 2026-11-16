@@ -196,8 +196,13 @@ function setupConnectivityStatus(): void {
 export function registerServiceWorker(): void {
   if (!import.meta.env.PROD || !('serviceWorker' in navigator)) return;
 
+  let hasController = Boolean(navigator.serviceWorker.controller);
   let refreshing = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!hasController) {
+      hasController = true;
+      return;
+    }
     if (refreshing) return;
     refreshing = true;
     window.location.reload();

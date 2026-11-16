@@ -1,5 +1,8 @@
 import { expect, test } from '@playwright/test';
-import { flushAndReadSave, SAVE_KEY, type SaveSnapshot, trackErrors, waitForGameBoot } from './helpers';
+import { countColorPixels, flushAndReadSave, SAVE_KEY, type SaveSnapshot, trackErrors, waitForGameBoot } from './helpers';
+
+const STRAW_HAT_RGB: readonly [number, number, number] = [232, 207, 122];
+const HORSE_COAT_RGB: readonly [number, number, number] = [154, 106, 66];
 
 test.describe('Desktop gameplay and PWA', () => {
   test('moves with keyboard and toggles quest log', async ({ page }) => {
@@ -139,6 +142,204 @@ test.describe('Desktop gameplay and PWA', () => {
 
     // Still riding after the journey
     expect(await ridingState()).toBe(true);
+    expect(errors).toEqual([]);
+  });
+
+  test('horse follows along on foot outdoors and mounts with R', async ({ page }) => {
+    const errors = trackErrors(page);
+
+    await page.addInitScript((key) => {
+      if (localStorage.getItem(key)) return;
+      localStorage.setItem(
+        key,
+        JSON.stringify({
+          version: 1,
+          savedAt: Date.now(),
+          player: { mapId: 'garden', x: 20 * 32, y: 36 * 32, facing: 'right' },
+          world: {
+            unblockedPaths: [],
+            visitedZones: ['garden', 'tram-tracks'],
+            flags: { 'crow-met': true, 'greenhouse-hint-read': true, 'horse-tamed': true },
+          },
+          inventory: { items: {} },
+          quests: { active: [], completed: ['q-meet-crow'], progress: {} },
+          ext: { horse: { riding: false } },
+        }),
+      );
+    }, SAVE_KEY);
+
+    await page.goto('/');
+    await waitForGameBoot(page);
+    // Mohn spawns beside the player on foot
+    await expect
+      .poll(() => countColorPixels(page, { x: 460, y: 260, width: 280, height: 220 }, HORSE_COAT_RGB), {
+        timeout: 6_000,
+        intervals: [150],
+      })
+      .toBeGreaterThan(100);
+    await expect
+      .poll(() => countColorPixels(page, { x: 540, y: 260, width: 200, height: 200 }, STRAW_HAT_RGB), {
+        timeout: 6_000,
+        intervals: [150],
+      })
+      .toBeGreaterThan(30);
+
+    // Walk east across the plaza (~180 px) and wait for Mohn to trot along behind
+    const startX = (await flushAndReadSave(page))!.player.x;
+    await page.keyboard.down('KeyD');
+    await expect
+      .poll(async () => (await flushAndReadSave(page))?.player.x ?? startX, {
+        timeout: 15_000,
+        intervals: [80],
+      })
+      .toBeGreaterThan(startX + 170);
+    await page.keyboard.up('KeyD');
+
+    await expect
+      .poll(() => countColorPixels(page, { x: 480, y: 260, width: 220, height: 220 }, HORSE_COAT_RGB), {
+        timeout: 6_000,
+        intervals: [150],
+      })
+      .toBeGreaterThan(100);
+
+    // Mount with R: riding state becomes true and the mounted player-horse sprite is rendered
+    await expect
+      .poll(
+        async () => {
+          const riding = ((await flushAndReadSave(page))?.ext.horse as { riding: boolean } | undefined)?.riding;
+          if (riding) return true;
+          await page.keyboard.press('KeyR');
+          await page.waitForTimeout(300);
+          return ((await flushAndReadSave(page))?.ext.horse as { riding: boolean } | undefined)?.riding;
+        },
+        { timeout: 10_000, intervals: [100] },
+      )
+      .toBe(true);
+    await expect
+      .poll(() => countColorPixels(page, { x: 540, y: 260, width: 200, height: 220 }, HORSE_COAT_RGB), {
+        timeout: 6_000,
+        intervals: [150],
+      })
+      .toBeGreaterThan(60);
+
+    expect(errors).toEqual([]);
+  });
+
+  test('leaving a building restores riding and fast travel keeps character visible', async ({ page }) => {
+    const errors = trackErrors(page);
+
+    await page.addInitScript((key) => {
+      if (localStorage.getItem(key)) return;
+      localStorage.setItem(
+        key,
+        JSON.stringify({
+          version: 1,
+          savedAt: Date.now(),
+          player: { mapId: 'garden', x: 7 * 32, y: 33 * 32, facing: 'right' },
+          world: {
+            unblockedPaths: [],
+            visitedZones: ['garden', 'workshop-yard', 'tram-tracks', 'river-farms-yard'],
+            flags: { 'crow-met': true, 'greenhouse-hint-read': true, 'horse-tamed': true },
+          },
+          inventory: { items: {} },
+          quests: { active: [], completed: ['q-meet-crow'], progress: {} },
+          ext: { horse: { riding: true } },
+        }),
+      );
+    }, SAVE_KEY);
+
+    await page.goto('/');
+    await waitForGameBoot(page);
+
+    // Outdoors before entering: riding near hut door (left-of-center clamped camera)
+    await expect
+      .poll(() => countColorPixels(page, { x: 260, y: 200, width: 260, height: 260 }, HORSE_COAT_RGB), {
+        timeout: 6_000,
+        intervals: [150],
+      })
+      .toBeGreaterThan(60);
+
+    // Enter workshop: Mohn waits outside while riding preference stays true
+    await expect
+      .poll(
+        async () => {
+          if ((await flushAndReadSave(page))?.player.mapId === 'workshop') return 'workshop';
+          await page.keyboard.press('KeyE');
+          await page.waitForTimeout(450);
+          return (await flushAndReadSave(page))?.player.mapId;
+        },
+        { timeout: 15_000, intervals: [100] },
+      )
+      .toBe('workshop');
+
+    const indoorSave = await flushAndReadSave(page);
+    expect((indoorSave?.ext.horse as { riding: boolean }).riding).toBe(true);
+    await expect
+      .poll(() => countColorPixels(page, { x: 540, y: 420, width: 200, height: 160 }, STRAW_HAT_RGB), {
+        timeout: 6_000,
+        intervals: [150],
+      })
+      .toBeGreaterThan(30);
+    expect(await countColorPixels(page, { x: 540, y: 420, width: 200, height: 160 }, HORSE_COAT_RGB, 6)).toBeLessThan(15);
+
+    // Leave workshop: back outdoors on Mohn again
+    await expect
+      .poll(
+        async () => {
+          if ((await flushAndReadSave(page))?.player.mapId === 'garden') return 'garden';
+          await page.keyboard.press('KeyE');
+          await page.waitForTimeout(450);
+          return (await flushAndReadSave(page))?.player.mapId;
+        },
+        { timeout: 15_000, intervals: [100] },
+      )
+      .toBe('garden');
+
+    const outdoorSave = await flushAndReadSave(page);
+    expect((outdoorSave?.ext.horse as { riding: boolean }).riding).toBe(true);
+    await expect
+      .poll(() => countColorPixels(page, { x: 260, y: 200, width: 260, height: 260 }, HORSE_COAT_RGB), {
+        timeout: 6_000,
+        intervals: [150],
+      })
+      .toBeGreaterThan(60);
+    await expect
+      .poll(() => countColorPixels(page, { x: 260, y: 200, width: 260, height: 260 }, STRAW_HAT_RGB), {
+        timeout: 6_000,
+        intervals: [150],
+      })
+      .toBeGreaterThan(30);
+
+    // Fast travel to Drei Höfe (river-farms) and verify character & horse are clearly visible below top HUD
+    await expect
+      .poll(
+        async () => {
+          if ((await flushAndReadSave(page))?.player.mapId === 'river-farms') return 'river-farms';
+          await page.keyboard.press('KeyM');
+          await page.waitForTimeout(300);
+          await page.keyboard.press('ArrowLeft');
+          await page.waitForTimeout(150);
+          await page.keyboard.press('KeyE');
+          await page.waitForTimeout(900);
+          return (await flushAndReadSave(page))?.player.mapId;
+        },
+        { timeout: 20_000, intervals: [100] },
+      )
+      .toBe('river-farms');
+
+    expect(((await flushAndReadSave(page))?.ext.horse as { riding: boolean }).riding).toBe(true);
+    await expect
+      .poll(() => countColorPixels(page, { x: 460, y: 120, width: 360, height: 400 }, STRAW_HAT_RGB), {
+        timeout: 6_000,
+        intervals: [150],
+      })
+      .toBeGreaterThan(30);
+    await expect
+      .poll(() => countColorPixels(page, { x: 460, y: 120, width: 360, height: 400 }, HORSE_COAT_RGB), {
+        timeout: 6_000,
+        intervals: [150],
+      })
+      .toBeGreaterThan(60);
     expect(errors).toEqual([]);
   });
 

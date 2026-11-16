@@ -1,7 +1,8 @@
 import Phaser from 'phaser';
 import { content, type DialogueLine } from '../content';
 import { bus } from '../systems/events';
-import { isRidingHere } from '../systems/horse';
+import { HORSE_FLAG, isRidingHere } from '../systems/horse';
+import { HorseFollower } from '../systems/horseFollower';
 import { inputState } from '../systems/input';
 import { createSpecInteractable, InteractionSystem, type WorldApi } from '../systems/interaction';
 import { JournalLayer } from '../systems/journal';
@@ -48,8 +49,8 @@ export class WorldScene extends Phaser.Scene implements WorldApi {
   /** Static colliders (props, obstacles). Add your own solid bodies here. */
   solids!: Phaser.Physics.Arcade.StaticGroup;
   private marker!: Phaser.GameObjects.Image;
-  /** Mohn grazing where the player got off; scenery only, gone on the next mount or map change. */
-  private idleHorse: Phaser.GameObjects.Image | null = null;
+  private horse!: HorseFollower;
+  private isWalkablePx: (x: number, y: number) => boolean = () => true;
   private flagProps: { image: Phaser.GameObjects.Image; showWhenFlag?: string; hideWhenFlag?: string }[] = [];
   private currentZone: ZoneDef | null = null;
   private transitioning = false;
@@ -67,12 +68,17 @@ export class WorldScene extends Phaser.Scene implements WorldApi {
     this.map = MAPS[mapId] ?? getMap(START_MAP_ID);
     this.currentZone = null;
     this.transitioning = false;
-    this.idleHorse = null;
 
     const widthPx = this.map.width * TILE_SIZE;
     const heightPx = this.map.height * TILE_SIZE;
 
     const grid = buildTileGrid(this.map);
+    this.isWalkablePx = (x: number, y: number): boolean => {
+      if (x < 16 || x > widthPx - 16 || y < 32 || y > heightPx - 16) return false;
+      const tile = grid[Math.floor(y / TILE_SIZE)]?.[Math.floor(x / TILE_SIZE)];
+      return tile !== undefined && !TILES[tile].solid;
+    };
+
     const tilemap = this.make.tilemap({
       data: toFrameGrid(grid, this.map.decorate?.seed ?? 1),
       tileWidth: TILE_SIZE,
@@ -105,21 +111,33 @@ export class WorldScene extends Phaser.Scene implements WorldApi {
     this.night = new NightEventLayer(this, this);
 
     const spawn = this.resolveSpawn(data.spawn);
+    // Record the active map before checking riding state so building entry/exit and fast travel match this map.
+    gameState.data.player.mapId = this.map.id;
     this.player = new PlayerController(this, spawn.x, spawn.y, gameState.data.player.facing);
-    this.player.setRiding(isRidingHere());
+    this.player.setRiding(isRidingHere(this.map.id));
+    this.horse = new HorseFollower(this, this.map.id, this.isWalkablePx);
+    this.horse.sync(this.player.feetX, this.player.feetY, this.player.facing);
     bus.onScene(this, 'riding-changed', () => this.applyRiding());
-    bus.onScene(this, 'fast-travel', ({ mapId, spawn: stopSpawn }) => this.changeMap(mapId, stopSpawn));
+    bus.onScene(this, 'flag-changed', ({ key, value }) => {
+      if (key === HORSE_FLAG && value) {
+        const npcMohn = this.map.npcs?.find((n) => n.npcId === 'mohn');
+        const at = npcMohn ? { x: npcMohn.at.x * TILE_SIZE, y: npcMohn.at.y * TILE_SIZE } : undefined;
+        this.horse.sync(this.player.feetX, this.player.feetY, this.player.facing, at);
+      }
+    });
+    bus.onScene(this, 'fast-travel', ({ mapId: destMapId, spawn: stopSpawn }) => this.changeMap(destMapId, stopSpawn));
     this.physics.add.collider(this.player.sprite, ground);
     this.physics.add.collider(this.player.sprite, this.solids);
 
     this.marker = this.add.image(0, 0, 'marker').setVisible(false).setDepth(100_000);
     this.tweens.add({ targets: this.marker, displayOriginY: 14, duration: 450, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
 
-    this.cameras.main.startFollow(this.player.sprite, true, 0.12, 0.12);
     this.applyZoom();
+    this.cameras.main.startFollow(this.player.sprite, true, 0.12, 0.12);
     this.scale.on(Phaser.Scale.Events.RESIZE, this.applyZoom, this);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.scale.off(Phaser.Scale.Events.RESIZE, this.applyZoom, this);
+      this.horse.destroy();
       this.interaction.clear();
     });
 
@@ -152,11 +170,12 @@ export class WorldScene extends Phaser.Scene implements WorldApi {
 
     const frozen = inputState.modal || this.transitioning;
     this.player.update(delta, frozen);
+    this.horse.update(this.player.feetX, this.player.feetY, delta, frozen);
     this.atmosphere.update(delta);
     this.interaction.update(!frozen);
     this.updateMarker();
     this.updateZone();
-    this.syncPlayerToSave();
+    if (!this.transitioning) this.syncPlayerToSave();
   }
 
   private syncPlayerToSave(): void {
@@ -175,7 +194,6 @@ export class WorldScene extends Phaser.Scene implements WorldApi {
     this.player.sprite.setVelocity(0, 0);
     this.cameras.main.fadeOut(250, 31, 46, 29);
     this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
-      gameState.data.player.mapId = mapId;
       this.scene.restart({ mapId, spawn } satisfies WorldSceneData);
     });
   }
@@ -195,20 +213,17 @@ export class WorldScene extends Phaser.Scene implements WorldApi {
 
   // ── internals ─────────────────────────────────────────────
   private applyRiding(): void {
-    const riding = isRidingHere();
+    const riding = isRidingHere(this.map.id);
     if (riding === this.player.isRiding) return;
     const { feetX: x, feetY: y } = this.player;
-    this.idleHorse?.destroy();
-    this.idleHorse = null;
     this.player.setRiding(riding);
     if (!riding) {
       // The player steps down beside her head.
       const left = this.player.facing === 'left';
-      this.idleHorse = this.add
-        .image(x + (left ? 26 : -26), y, 'mohn')
-        .setOrigin(0.5, 1)
-        .setFlipX(left)
-        .setDepth(y - 2);
+      const beside = { x: x + (left ? 26 : -26), y };
+      this.horse.sync(x, y, this.player.facing, this.isWalkablePx(beside.x, beside.y) ? beside : undefined);
+    } else {
+      this.horse.sync(x, y, this.player.facing);
     }
     const puff = this.add.particles(x, y - 6, 'sparkle', {
       angle: { min: 180, max: 360 },
