@@ -2,21 +2,18 @@ import Phaser from 'phaser';
 import { findPlantingBed } from '../world';
 import type { MapDef } from '../world/types';
 import { TILE_SIZE } from '../world/tiles';
+import { advanceDayClock, getDayTime } from './dayClock';
 import { getLightSources } from './plants';
 
-/** A complete in-game day. Kept short enough that a casual session sees a change of mood. */
-const DAY_LENGTH_MS = 4 * 60_000;
-
 /**
- * Scene-bound ambience for the open world. It deliberately owns no game state: time advances
- * while the app is open and plants remain the source of persistent light through `plants.ts`.
+ * Scene-bound ambience for the open world. Time itself lives in `dayClock.ts` so map
+ * transitions keep the current hour; plants remain the persistent light source via `plants.ts`.
  */
 export class AtmosphereLayer {
   private readonly shade: Phaser.GameObjects.RenderTexture;
   private readonly haloWidth: number;
   private readonly haloHeight: number;
   private readonly motes: Phaser.GameObjects.Particles.ParticleEmitter;
-  private elapsed = 0;
   private lastAlpha = -1;
   private lastSourcesKey = '';
 
@@ -26,7 +23,7 @@ export class AtmosphereLayer {
   ) {
     const width = map.width * TILE_SIZE;
     const height = map.height * TILE_SIZE;
-    this.shade = scene.add.renderTexture(0, 0, width, height).setOrigin(0, 0).setDepth(90_000);
+    this.shade = scene.add.renderTexture(0, 0, width, height).setOrigin(0, 0).setDepth(90_000).setVisible(false);
     const haloFrame = scene.textures.getFrame('light-halo');
     this.haloWidth = haloFrame?.width || 128;
     this.haloHeight = haloFrame?.height || 128;
@@ -49,18 +46,29 @@ export class AtmosphereLayer {
       this.shade.destroy();
       this.motes.destroy();
     });
+
+    this.update(0);
   }
 
   update(delta: number): void {
-    this.elapsed = (this.elapsed + delta) % DAY_LENGTH_MS;
-    // Noon = 0.5. The cosine gives long, gentle transitions at dawn and dusk.
-    const daylight = (Math.cos((this.elapsed / DAY_LENGTH_MS) * Math.PI * 2 - Math.PI) + 1) / 2;
-    const night = Phaser.Math.Clamp((0.58 - daylight) / 0.58, 0, 1);
-    this.motes.setAlpha(0.32 + night * 0.68);
-    this.drawShade(0.05 + night * 0.56);
+    advanceDayClock(delta);
+    const { shadeAlpha } = getDayTime();
+    const nightFactor = Phaser.Math.Clamp(shadeAlpha / 0.52, 0, 1);
+    const effectiveAlpha = this.map.baseTile === 'woodWall' ? shadeAlpha * 0.42 : shadeAlpha;
+    this.motes.setAlpha(0.24 + nightFactor * 0.72);
+    this.drawShade(effectiveAlpha);
   }
 
   private drawShade(alpha: number): void {
+    if (alpha <= 0.004) {
+      if (this.lastAlpha !== 0) {
+        this.lastAlpha = 0;
+        this.shade.setVisible(false);
+      }
+      return;
+    }
+
+    this.shade.setVisible(true);
     const sources = getLightSources().filter((source) => source.mapId === this.map.id);
     const sourcesKey = sources.map((s) => s.bedId).join(',');
     if (Math.abs(alpha - this.lastAlpha) < 0.01 && sourcesKey === this.lastSourcesKey) return;

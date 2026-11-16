@@ -5,6 +5,7 @@ import { BootScene } from './scenes/BootScene';
 import { UIScene } from './scenes/UIScene';
 import { WorldScene } from './scenes/WorldScene';
 import { bus } from './systems/events';
+import { getDayTime, setDayTimeHour } from './systems/dayClock';
 import { stopNightScheduler, triggerNightEvent } from './systems/nightEvents';
 import { getObstacles, isBlocked, unblockPath } from './systems/obstacles';
 import {
@@ -105,6 +106,8 @@ if (import.meta.env.DEV) {
       }),
       triggerNightEvent,
       stopNightScheduler,
+      setTimeOfDay: (hour: number) => setDayTimeHour(hour),
+      getTimeOfDay: () => getDayTime(),
       resetSave: () => {
         gameState.reset();
         location.reload();

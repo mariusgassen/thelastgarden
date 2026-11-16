@@ -42,6 +42,7 @@ export class QuestLog {
   private viewH = 0;
   private safe: SafeArea = { top: 0, right: 0, bottom: 0, left: 0 };
   private topRowY = 40;
+  private rightReserved = 0;
   private trackerH = 0;
   private buttonW = BUTTON_MIN_W;
   private open = false;
@@ -111,14 +112,15 @@ export class QuestLog {
     return this.tracker.visible ? this.tracker.y + this.trackerH : this.topBarBottom;
   }
 
-  layout(viewW: number, viewH: number, safe: SafeArea, topRowY = safe.top + 40): void {
+  layout(viewW: number, viewH: number, safe: SafeArea, topRowY = safe.top + 40, rightReserved = this.rightReserved): void {
     this.viewW = viewW;
     this.viewH = viewH;
     this.safe = safe;
     this.topRowY = topRowY;
+    this.rightReserved = rightReserved;
     this.button.setPosition(viewW - safe.right - 18, topRowY);
     this.tracker.setPosition(safe.left + 14, this.topBarBottom + 8);
-    this.trackerText.setWordWrapWidth(Math.max(160, Math.min(380, viewW - safe.left - safe.right - 52)), true);
+    this.trackerText.setWordWrapWidth(Math.max(140, Math.min(380, viewW - safe.left - safe.right - 66 - rightReserved)), true);
     this.backdrop.setSize(viewW, viewH);
     this.panelW = Math.min(PANEL_MAX_W, Math.max(240, viewW - safe.left - safe.right - 24));
     const maxH = viewH - safe.top - safe.bottom - 36;
@@ -187,7 +189,7 @@ export class QuestLog {
 
   refresh(): void {
     this.rebuildList();
-    if (this.viewW > 0) this.layout(this.viewW, this.viewH, this.safe, this.topRowY);
+    if (this.viewW > 0) this.layout(this.viewW, this.viewH, this.safe, this.topRowY, this.rightReserved);
     const openCount = getActiveQuests().length;
     this.badge.setVisible(openCount > 0);
     this.badgeText.setText(String(openCount));
