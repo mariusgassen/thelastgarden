@@ -191,3 +191,10 @@ export function drawAutoIcon(g: Phaser.GameObjects.Graphics, color: number): voi
   g.lineStyle(1.4, color, 0.9);
   g.strokeEllipse(0, 9, 22, 8);
 }
+
+/** A crisp cross: put the tool away (hands free). */
+export function drawDeselectIcon(g: Phaser.GameObjects.Graphics, color: number): void {
+  g.lineStyle(3.2, color, 1);
+  g.lineBetween(-7, -7, 7, 7);
+  g.lineBetween(7, -7, -7, 7);
+}

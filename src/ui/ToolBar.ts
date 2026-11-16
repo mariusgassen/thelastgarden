@@ -1,8 +1,8 @@
 import Phaser from 'phaser';
 import { content } from '../content';
-import { AUTO_TOOL, canUseAutoTool, describeTool, getEquippedTool, getOwnedTools, getSowSeed, isAutoTool } from '../systems/tools';
+import { AUTO_TOOL, DESELECT_TOOL, canUseAutoTool, describeTool, getEquippedTool, getOwnedTools, getSowSeed, isAutoTool } from '../systems/tools';
 import { itemTextureKey } from '../world/textures';
-import { drawAutoIcon } from './HudButton';
+import { drawAutoIcon, drawDeselectIcon } from './HudButton';
 import { THEME } from './theme';
 import type { SafeArea } from './viewport';
 
@@ -11,9 +11,9 @@ const PAD = 10;
 const MIN_WIDTH = 360;
 
 /**
- * The tool mode's picker: a row with every tool (the ones not made yet stay dim), the tool in
- * hand's name and a short how-to above it. UIScene does the hit-testing through `pointerDown`,
- * so a press never starts the joystick.
+ * The tool picker: a row with every tool (unowned ones stay dim), the all-round Gärtnerhand,
+ * and a deselect slot. Opens on tap or hold of the tool button (or T) and closes as soon as
+ * a tool is chosen. UIScene does the hit-testing through `pointerDown` / `slotAt`.
  */
 export class ToolBar {
   private readonly container: Phaser.GameObjects.Container;
@@ -21,8 +21,8 @@ export class ToolBar {
   private readonly hint: Phaser.GameObjects.Text;
   private readonly slots: { id: string; frame: Phaser.GameObjects.Image; icon: Phaser.GameObjects.Image | Phaser.GameObjects.Graphics; x: number }[] = [];
   private readonly seedBadge: Phaser.GameObjects.Image;
-  /** Every tool, then the all-round hand last. */
-  private readonly ids = [...content.tools.all().map((t) => t.id), AUTO_TOOL];
+  /** Every tool, then the all-round hand, then the deselect slot. */
+  private readonly ids = [...content.tools.all().map((t) => t.id), AUTO_TOOL, DESELECT_TOOL];
   /** Touch gets bigger slots and no text but the name: icons carry the rest. */
   private readonly slot: number;
   private readonly textH: number;
@@ -30,15 +30,16 @@ export class ToolBar {
   private readonly controls: string;
   private readonly touch: boolean;
   private shown = false;
+  private previewId: string | null = null;
 
   constructor(scene: Phaser.Scene, touch: boolean) {
     this.touch = touch;
-    this.slot = touch ? 58 : 50;
+    this.slot = touch ? 54 : 50;
     this.textH = touch ? 34 : 68;
     this.width = Math.max(MIN_WIDTH, PAD * 2 + this.ids.length * this.slot + (this.ids.length - 1) * GAP);
     const SLOT = this.slot;
     const TEXT_H = this.textH;
-    this.controls = 'E oder Klick: benutzen · T: fertig';
+    this.controls = '1–6 oder Klick: wählen · T / Esc: schließen';
     const bg = scene.add.graphics();
     bg.fillStyle(THEME.panel, THEME.panelAlpha);
     bg.fillRoundedRect(-this.width / 2, 0, this.width, this.height, 14);
@@ -67,6 +68,9 @@ export class ToolBar {
       if (id === AUTO_TOOL) {
         icon = scene.add.graphics({ x, y });
         drawAutoIcon(icon, THEME.cream);
+      } else if (id === DESELECT_TOOL) {
+        icon = scene.add.graphics({ x, y });
+        drawDeselectIcon(icon, THEME.cream);
       } else {
         icon = scene.add.image(x, y, itemTextureKey(id));
         icon.setScale(Math.min(1, (SLOT - 12) / Math.max(icon.width, icon.height)));
@@ -108,8 +112,16 @@ export class ToolBar {
   setVisible(visible: boolean): void {
     if (visible === this.shown) return;
     this.shown = visible;
+    if (!visible) this.previewId = null;
     this.container.setVisible(visible);
     if (visible) this.refresh();
+  }
+
+  /** Highlights a slot while sliding across the bar during a press-and-hold gesture. */
+  setPreview(toolId: string | null): void {
+    if (this.previewId === toolId) return;
+    this.previewId = toolId;
+    if (this.shown) this.refresh();
   }
 
   /** Redraws ownership, the tool in hand and the text lines. */
@@ -117,9 +129,11 @@ export class ToolBar {
     const owned = new Set(getOwnedTools().map((t) => t.id));
     if (canUseAutoTool()) owned.add(AUTO_TOOL);
     const inHand = isAutoTool() ? AUTO_TOOL : getEquippedTool()?.id;
+    if (inHand) owned.add(DESELECT_TOOL);
+    const shownPick = this.previewId ?? inHand;
     for (const slot of this.slots) {
       const has = owned.has(slot.id);
-      slot.frame.setTexture(slot.id === inHand ? 'ui-slot-selected' : has ? 'ui-slot' : 'ui-slot-dim');
+      slot.frame.setTexture(slot.id === shownPick ? 'ui-slot-selected' : has ? 'ui-slot' : 'ui-slot-dim');
       slot.icon.setAlpha(has ? 1 : 0.22);
     }
     // The seed the satchel sows, as a small icon on its slot (tap the satchel again for the next kind).
@@ -136,7 +150,7 @@ export class ToolBar {
     } else {
       this.seedBadge.setVisible(false);
     }
-    const tool = inHand ?? '';
+    const tool = shownPick ?? '';
     if (tool) {
       const { title, hint } = describeTool(tool);
       this.title.setText(title);
@@ -147,11 +161,25 @@ export class ToolBar {
     }
   }
 
-  /** Tool id of the slot with this index (number keys), if it is owned. */
+  /** Tool id of the slot with this index (number keys), if it is usable right now. */
   toolAt(index: number): string | undefined {
     const id = this.slots[index]?.id;
+    if (id === DESELECT_TOOL) return isAutoTool() || getEquippedTool() ? id : undefined;
     if (id === AUTO_TOOL) return canUseAutoTool() ? id : undefined;
     return id && getOwnedTools().some((t) => t.id === id) ? id : undefined;
+  }
+
+  /** Returns the enabled tool id under `(x, y)` in CSS px, or `undefined` if none matches. */
+  slotAt(x: number, y: number, generous = false): string | undefined {
+    if (!this.shown) return undefined;
+    const s = this.container.scaleX;
+    const lx = (x - this.container.x) / s;
+    const ly = (y - this.container.y) / s;
+    const minY = generous ? this.textH - 20 : this.textH;
+    const maxY = generous ? this.height + 24 : this.height;
+    if (Math.abs(lx) > this.width / 2 || ly < minY || ly > maxY) return undefined;
+    const slot = this.slots.find((sl) => Math.abs(lx - sl.x) <= this.slot / 2 + GAP / 2);
+    return slot ? this.toolAt(this.slots.indexOf(slot)) : undefined;
   }
 
   /** Returns the picked tool id for a press on a slot, `null` for a press elsewhere on the bar, `undefined` for a miss. */
@@ -161,7 +189,6 @@ export class ToolBar {
     const lx = (x - this.container.x) / s;
     const ly = (y - this.container.y) / s;
     if (Math.abs(lx) > this.width / 2 || ly < 0 || ly > this.height) return undefined;
-    const slot = this.slots.find((sl) => Math.abs(lx - sl.x) <= this.slot / 2 + GAP / 2 && ly >= this.textH);
-    return slot && this.toolAt(this.slots.indexOf(slot)) ? slot.id : null;
+    return this.slotAt(x, y, false) ?? null;
   }
 }

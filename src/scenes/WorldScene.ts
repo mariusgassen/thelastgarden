@@ -19,7 +19,7 @@ import { NpcLayer } from '../systems/npcs';
 import { ObstacleLayer } from '../systems/obstacles';
 import { PlantLayer } from '../systems/plantLayer';
 import { ToolLayer } from '../systems/toolLayer';
-import { isToolActing } from '../systems/tools';
+import { getToolMode, isToolActing, setToolMode } from '../systems/tools';
 import { FEET_OFFSET_Y, PlayerController } from '../systems/player';
 import { QuestMarkerLayer } from '../systems/questMarkers';
 import { ResourceLayer } from '../systems/resources';
@@ -227,13 +227,15 @@ export class WorldScene extends Phaser.Scene implements WorldApi {
       if (inputState.modal) bus.emit('dialogue-advance', undefined);
       else if (!this.transitioning) {
         if (getBuildMode().active) this.building.confirm();
+        else if (getToolMode().open) setToolMode(false);
         else if (isToolActing()) this.tools.confirm();
         else this.interaction.interactFocused();
       }
     }
 
+    if (inputState.bottomInset !== this.appliedInset) this.applyZoom();
     const frozen = inputState.modal || this.transitioning;
-    const building = getBuildMode().active || isToolActing();
+    const building = getBuildMode().active || isToolActing() || getToolMode().open;
     const onBlight = isBlightedPx(this.map.id, this.player.feetX, this.player.feetY);
     const restedHorse = isRidingHere(this.map.id) && isHorseRested() ? RESTED_SPEED_FACTOR : 1;
     const blightDrag = onBlight && !isBlightproof() ? BLIGHT_SPEED_FACTOR : 1;
@@ -243,7 +245,7 @@ export class WorldScene extends Phaser.Scene implements WorldApi {
     this.tools.update(delta);
     this.horse.update(this.player.feetX, this.player.feetY, delta, frozen);
     this.atmosphere.update(delta);
-    // While building (or working with a tool), E and taps act on the world, so nothing else takes the focus.
+    // While building, picking a tool, or working with a tool, E and taps act on the world, so nothing else takes the focus.
     this.interaction.update(!frozen && !building);
     this.updateMarker();
     this.updateZone();
@@ -359,6 +361,8 @@ export class WorldScene extends Phaser.Scene implements WorldApi {
     return { x: tile.x * TILE_SIZE, y: tile.y * TILE_SIZE };
   }
 
+  private appliedInset = 0;
+
   private applyZoom(): void {
     const cssMin = Math.min(this.scale.width, this.scale.height) / DPR;
     const zoom = Phaser.Math.Clamp(cssMin / (TARGET_TILES_ACROSS * TILE_SIZE), 1, 2) * DPR;
@@ -370,7 +374,10 @@ export class WorldScene extends Phaser.Scene implements WorldApi {
     const viewH = this.scale.height / zoom;
     const bw = Math.max(w, viewW);
     const bh = Math.max(h, viewH);
-    cam.setBounds((w - bw) / 2, (h - bh) / 2, bw, bh);
+    // A bar over the bottom of the screen hides the last tiles: let the camera scroll past the edge by its height.
+    this.appliedInset = inputState.bottomInset;
+    const extra = (this.appliedInset * DPR) / zoom;
+    cam.setBounds((w - bw) / 2, (h - bh) / 2, bw, bh + extra);
   }
 
   private updateMarker(): void {

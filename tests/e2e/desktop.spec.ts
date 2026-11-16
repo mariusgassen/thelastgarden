@@ -670,14 +670,12 @@ test.describe('Desktop gameplay and PWA', () => {
     await page.goto('/');
     await waitForGameBoot(page);
 
-    // Open tool mode (T) and use shovel on slot 0 (E) -> lavender seed goes into inventory while slot 1 stays planted
+    // Shovel is equipped -> press E to dig slot 0 -> lavender seed goes into inventory while slot 1 stays planted
     await expect
       .poll(
         async () => {
           const s = await flushAndReadSave(page);
           if ((s?.inventory.items['seed-lavender'] ?? 0) >= 1) return true;
-          await page.keyboard.press('KeyT');
-          await page.waitForTimeout(200);
           await page.keyboard.press('KeyE');
           await page.waitForTimeout(300);
           return ((await flushAndReadSave(page))?.inventory.items['seed-lavender'] ?? 0) >= 1;
@@ -821,6 +819,77 @@ test.describe('Desktop gameplay and PWA', () => {
     } finally {
       await context.setOffline(false);
     }
+
+    expect(errors).toEqual([]);
+  });
+
+  test('selects tools without keeping bar open, collects wood with sickle via E, and deselects', async ({ page }) => {
+    const errors = trackErrors(page);
+
+    await page.addInitScript((key) => {
+      if (localStorage.getItem(key)) return;
+      localStorage.setItem(
+        key,
+        JSON.stringify({
+          version: 1,
+          savedAt: Date.now(),
+          player: { mapId: 'garden', x: 15.5 * 32, y: 38.5 * 32, facing: 'left' },
+          world: { unblockedPaths: [], visitedZones: ['garden'], flags: { 'crow-met': true } },
+          inventory: { items: { 'tool-sickle': 1, 'tool-satchel': 1, 'seed-lavender': 1 } },
+          quests: { active: [], completed: ['q-meet-crow'], progress: {} },
+          ext: {},
+        }),
+      );
+    }, SAVE_KEY);
+
+    await page.goto('/');
+    await waitForGameBoot(page);
+
+    const equipped = async () =>
+      ((await flushAndReadSave(page))?.ext.tools as { equipped?: string } | undefined)?.equipped ?? null;
+
+    // Open tool bar with T and pick slot 1 (tool-sickle): bar closes and sickle is active
+    await page.keyboard.press('KeyT');
+    await page.waitForTimeout(150);
+    await page.keyboard.press('Digit1');
+    await expect.poll(equipped, { timeout: 6_000, intervals: [100] }).toBe('tool-sickle');
+
+    // E triggers the active sickle directly (bar stays closed) and collects wood-garden-2
+    await expect
+      .poll(
+        async () => {
+          const wood = (await flushAndReadSave(page))?.inventory.items['mat-wood'] ?? 0;
+          if (wood >= 2) return wood;
+          await page.keyboard.press('KeyE');
+          await page.waitForTimeout(250);
+          return (await flushAndReadSave(page))?.inventory.items['mat-wood'] ?? 0;
+        },
+        { timeout: 10_000, intervals: [150] },
+      )
+      .toBe(2);
+
+    // T -> Digit6 (Ablegen) deselects the tool
+    await page.keyboard.press('KeyT');
+    await page.waitForTimeout(250);
+    await page.keyboard.press('Digit6');
+    await expect.poll(equipped, { timeout: 6_000, intervals: [100] }).toBeNull();
+
+    // T -> Digit3 equips satchel, then Escape deselects it cleanly
+    await expect
+      .poll(
+        async () => {
+          if ((await equipped()) === 'tool-satchel') return 'tool-satchel';
+          await page.keyboard.press('KeyT');
+          await page.waitForTimeout(250);
+          await page.keyboard.press('Digit3');
+          await page.waitForTimeout(250);
+          return equipped();
+        },
+        { timeout: 10_000, intervals: [150] },
+      )
+      .toBe('tool-satchel');
+    await page.keyboard.press('Escape');
+    await expect.poll(equipped, { timeout: 6_000, intervals: [100] }).toBeNull();
 
     expect(errors).toEqual([]);
   });

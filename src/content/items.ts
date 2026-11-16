@@ -326,7 +326,7 @@ export const ITEMS: ItemDef[] = [
   {
     id: 'tool-sickle',
     name: 'Sichel',
-    description: 'Eine kleine, scharfe Sichel mit Holzgriff. Ein Schwung erntet alles Reife ringsum.',
+    description: 'Eine kleine, scharfe Sichel mit Holzgriff. Ein Schwung erntet alles Reife und sammelt Holz, Steine, Tau und Funde ringsum ein.',
     category: 'tool',
     stackable: false,
     color: 0xb9c0c7,

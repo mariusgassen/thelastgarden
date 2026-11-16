@@ -8,7 +8,7 @@ export const TOOLS: ToolDef[] = [
   {
     id: 'tool-sickle',
     kind: 'sickle',
-    hint: 'Erntet alles Reife in deiner Nähe auf einmal.',
+    hint: 'Erntet alles Reife und sammelt Holz, Steine und Funde ringsum auf einmal.',
     reachTiles: 3.2,
   },
   {

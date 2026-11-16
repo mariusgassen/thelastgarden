@@ -24,6 +24,7 @@ import {
   getToolMode,
   isAutoTool,
   isToolActing,
+  peekTool,
   setToolMode,
   useTool,
 } from '../../src/systems/tools';
@@ -143,10 +144,70 @@ describe('tools', () => {
     expect(reaped.ok && reaped.used).toBe('sickle');
   });
 
-  it('opens the tool mode with the all-round hand when nothing is in hand yet', () => {
+  it('previews what a press would do for shovel, sickle, satchel and the all-round hand', () => {
+    buildPlanters(1);
+    give({ 'seed-lavender': 1, 'tool-sickle': 1, 'tool-shovel': 1, 'tool-satchel': 1 });
+    equipTool('tool-shovel');
+    expect(peekTool('garden', feet(0))).toBeNull();
+    plantSeed(planter(0), 'lavender');
+    expect(peekTool('garden', feet(0))).toBe('shovel');
+
+    equipTool(AUTO_TOOL);
+    expect(peekTool('garden', feet(0))).toBeNull(); // auto hand never digs up unripe plants
+    debugRewindGrowth(10 * STAGE_DURATION_MS);
+    expect(peekTool('garden', feet(0))).toBe('sickle');
+    expect(useTool('garden', feet(0)).used).toBe('sickle');
+    expect(peekTool('garden', feet(0))).toBeNull();
+  });
+
+  it('opens the tool picker without forcing the all-round hand, and keeps work tools active until deselected', () => {
     give({ 'tool-sickle': 1 });
     setToolMode(true);
-    expect(isAutoTool()).toBe(true);
+    expect(getToolMode().open).toBe(true);
+    expect(isAutoTool()).toBe(false);
+    expect(isToolActing()).toBe(false);
+
+    expect(equipTool('tool-sickle')).toBe(true);
+    setToolMode(false);
+    expect(getToolMode().open).toBe(false);
+    expect(isToolActing()).toBe(true); // active even after picker closes
+
+    expect(equipTool(null)).toBe(true);
+    expect(isToolActing()).toBe(false);
+  });
+
+  it('lets the sickle collect nearby wood, light pickups and ready animal produce too', () => {
+    give({ 'tool-sickle': 1 });
+    equipTool('tool-sickle');
+    // Stand next to wood-garden-2 (15, 38.5): sickle peeks and collects 2 wood at once.
+    const byWood = { x: 15.5 * TILE_SIZE, y: 38.5 * TILE_SIZE };
+    expect(peekTool('garden', byWood)).toBe('sickle');
+    const chopped = useTool('garden', byWood);
+    expect(chopped.ok && chopped.used).toBe('sickle');
+    expect(gameState.getItemCount('mat-wood')).toBe(2);
+    expect(gameState.hasFlag('gathered-material')).toBe(true);
+    expect(peekTool('garden', byWood)).toBeNull();
+
+    // Stand next to sun-2 (20, 34): all-round hand also sees sunlight via sickle.
+    equipTool(AUTO_TOOL);
+    const bySun = { x: 20.5 * TILE_SIZE, y: 34.5 * TILE_SIZE };
+    expect(peekTool('garden', bySun)).toBe('sickle');
+    const lit = useTool('garden', bySun);
+    expect(lit.ok && lit.used).toBe('sickle');
+    expect(gameState.getItemCount('resource-sunlight')).toBe(1);
+
+    // Ready hen eggs on a placed coop are harvested by the sickle too.
+    give({ 'mat-wood': 4, 'mat-scrap': 2 });
+    gameState.setFlag('gathered-material');
+    expect(placePiece('garden', 'henhouse', SPOT.x, SPOT.y)).toBeNull();
+    const animals = (gameState.data.ext.animals as { stamps: Record<string, number> }) ?? { stamps: {} };
+    animals.stamps[`garden:${SPOT.x}:${SPOT.y}`] = Date.now() - 200_000;
+    gameState.setExt('animals', animals);
+    equipTool('tool-sickle');
+    expect(peekTool('garden', feet())).toBe('sickle');
+    const eggs = useTool('garden', feet());
+    expect(eggs.ok && eggs.used).toBe('sickle');
+    expect(gameState.getItemCount('produce-egg')).toBeGreaterThan(0);
   });
 
   it('lets the shovel dig plants directly into inventory, including ripe produce and targeted mixed-bed slots', () => {

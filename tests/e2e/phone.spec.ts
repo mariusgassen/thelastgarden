@@ -387,5 +387,86 @@ test.describe('Phone touch controls', () => {
 
     expect(errors).toEqual([]);
   });
+
+  test('hold-to-select tool without button jump, action button collects wood with sickle, and tap/slot deselects', async ({
+    page,
+  }) => {
+    const errors = trackErrors(page);
+
+    await page.addInitScript((key) => {
+      if (localStorage.getItem(key)) return;
+      localStorage.setItem(
+        key,
+        JSON.stringify({
+          version: 1,
+          savedAt: Date.now(),
+          player: { mapId: 'garden', x: 15.5 * 32, y: 38.5 * 32, facing: 'left' },
+          world: { unblockedPaths: [], visitedZones: ['garden'], flags: { 'crow-met': true } },
+          inventory: { items: { 'tool-sickle': 1, 'tool-shovel': 1 } },
+          quests: { active: [], completed: ['q-meet-crow'], progress: {} },
+          ext: {},
+        }),
+      );
+    }, SAVE_KEY);
+
+    await page.goto('/');
+    await waitForGameBoot(page);
+
+    const equipped = async () =>
+      ((await flushAndReadSave(page))?.ext.tools as { equipped?: string } | undefined)?.equipped ?? null;
+
+    // 1. Tap toolButton (345, 687) to open ToolBar, then tap the exact same coordinate to close it (no jump!)
+    await page.touchscreen.tap(345, 687);
+    await page.waitForTimeout(200);
+    expect(await equipped()).toBeNull();
+    await page.touchscreen.tap(345, 687);
+    await page.waitForTimeout(200);
+
+    // 2. Press and hold toolButton, drag to slot 1 (tool-sickle at x=45, y=797), and release -> equips sickle & closes bar
+    await page.mouse.move(345, 687);
+    await page.mouse.down();
+    await page.waitForTimeout(240);
+    await page.mouse.move(45, 797, { steps: 8 });
+    await page.waitForTimeout(100);
+    await page.mouse.up();
+    await expect.poll(equipped, { timeout: 6_000, intervals: [100] }).toBe('tool-sickle');
+
+    // 3. Big ContextButton IS the sickle: tapping (326, 768) chops nearby wood-garden-2
+    await expect
+      .poll(
+        async () => {
+          const wood = (await flushAndReadSave(page))?.inventory.items['mat-wood'] ?? 0;
+          if (wood >= 2) return wood;
+          await page.touchscreen.tap(326, 768);
+          await page.waitForTimeout(300);
+          return (await flushAndReadSave(page))?.inventory.items['mat-wood'] ?? 0;
+        },
+        { timeout: 10_000, intervals: [150] },
+      )
+      .toBe(2);
+
+    // 4. Quick-tapping toolButton (now above buildButton at 345, 629) deselects the equipped tool
+    await page.touchscreen.tap(345, 629);
+    await expect.poll(equipped, { timeout: 6_000, intervals: [100] }).toBeNull();
+
+    // 5. Hold toolButton -> drag to shovel (105, 797) -> equips shovel; hold -> drag to cross slot (345, 797) -> deselects
+    await page.mouse.move(345, 629);
+    await page.mouse.down();
+    await page.waitForTimeout(240);
+    await page.mouse.move(105, 797, { steps: 8 });
+    await page.waitForTimeout(100);
+    await page.mouse.up();
+    await expect.poll(equipped, { timeout: 6_000, intervals: [100] }).toBe('tool-shovel');
+
+    await page.mouse.move(345, 629);
+    await page.mouse.down();
+    await page.waitForTimeout(240);
+    await page.mouse.move(345, 797, { steps: 8 });
+    await page.waitForTimeout(100);
+    await page.mouse.up();
+    await expect.poll(equipped, { timeout: 6_000, intervals: [100] }).toBeNull();
+
+    expect(errors).toEqual([]);
+  });
 });
 

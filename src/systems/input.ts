@@ -8,6 +8,8 @@ class InputState {
   moveY = 0;
   /** True while a modal UI (dialogue) is open: movement is frozen, interact advances the UI. */
   modal = false;
+  /** CSS px of the bottom edge a HUD bar (build or tool bar) covers; the camera may scroll that far past the map. */
+  bottomInset = 0;
   private interactQueued = false;
 
   setMove(x: number, y: number): void {

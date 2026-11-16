@@ -9,7 +9,7 @@ import { inputState } from '../systems/input';
 import { eatMeal } from '../systems/meals';
 import { gameState } from '../systems/state';
 import { hasTravelMap, travelTo } from '../systems/travel';
-import { AUTO_TOOL, cycleSeed, equipTool, getEquippedTool, getOwnedTools, getToolMode, isAutoTool, setToolMode } from '../systems/tools';
+import { DESELECT_TOOL, cycleSeed, equipTool, getEquippedTool, getOwnedTools, getSowableSpecies, getToolMode, isAutoTool, isToolActing, peekTool, setToolMode } from '../systems/tools';
 import type { ToolDef } from '../content/types';
 import { Banner } from '../ui/Banner';
 import { BuildBar } from '../ui/BuildBar';
@@ -32,6 +32,8 @@ import { SCENES } from './keys';
 
 const TAP_MAX_MS = 280;
 const TAP_MAX_MOVE = 12;
+const TOOL_HOLD_MS = 180;
+const TOOL_DRAG_PX = 10;
 const TOAST_MS = 1900;
 const TOP_ROW_OFFSET = 40;
 
@@ -63,6 +65,13 @@ export class UIScene extends Phaser.Scene {
   private tutorial!: TutorialHints;
   private safe: SafeArea = { top: 0, right: 0, bottom: 0, left: 0 };
   private downAt = new Map<number, { x: number; y: number; t: number }>();
+  private toolHold: {
+    pointerId: number;
+    x: number;
+    y: number;
+    openedByHold: boolean;
+    timer: Phaser.Time.TimerEvent;
+  } | null = null;
   private toastQueue: string[] = [];
   private toastBusyUntil = 0;
 
@@ -214,7 +223,8 @@ export class UIScene extends Phaser.Scene {
     kb?.on('keydown-ESC', () => {
       if (!inputState.modal) {
         setBuildMode(false);
-        setToolMode(false);
+        if (getToolMode().open) setToolMode(false);
+        else equipTool(null);
       }
       this.questLog.setOpen(false);
       this.inventory.setOpen(false);
@@ -251,7 +261,7 @@ export class UIScene extends Phaser.Scene {
           this.crafting.craftIndex(idx);
         } else if (this.toolBar.visible) {
           const toolId = this.toolBar.toolAt(idx);
-          if (toolId) this.pickTool(toolId);
+          if (toolId) this.pickTool(toolId, true);
         } else if (this.buildBar.visible) {
           const pieceId = this.buildBar.pieceAt(idx);
           if (pieceId) selectBuildPiece(pieceId);
@@ -291,6 +301,7 @@ export class UIScene extends Phaser.Scene {
     });
     bus.onScene(this, 'build-mode-changed', () => this.buildBar.refresh());
     bus.onScene(this, 'tool-changed', () => {
+      this.syncHudButtons();
       this.toolBar.refresh();
       this.toolButton.refresh();
     });
@@ -404,6 +415,13 @@ export class UIScene extends Phaser.Scene {
     this.toastQueue.push(text);
   }
 
+  private cancelToolHold(): void {
+    if (!this.toolHold) return;
+    this.toolHold.timer.remove(false);
+    this.toolHold = null;
+    this.toolBar.setPreview(null);
+  }
+
   private syncModal(): void {
     inputState.modal =
       this.dialogue.isOpen ||
@@ -413,6 +431,7 @@ export class UIScene extends Phaser.Scene {
       this.mapPanel.isOpen ||
       this.wiki.isOpen ||
       this.menu.isOpen;
+    if (inputState.modal) this.cancelToolHold();
   }
 
   /** Map, horse and build buttons: a column above the context button, shown once unlocked. */
@@ -420,21 +439,24 @@ export class UIScene extends Phaser.Scene {
     const hidden = inputState.modal;
     const building = getBuildMode().active;
     const tooling = getToolMode().open;
+    const equipped = Boolean(getEquippedTool()) || isAutoTool();
     this.buildBar.setVisible(building && !hidden);
     this.toolBar.setVisible(tooling && !hidden);
-    this.syncUseButton(tooling && !hidden);
+    this.button.setSuppressed(tooling && !hidden);
+    this.syncUseButton(!hidden && !building && !tooling && isToolActing());
     this.toolButton.setVisible(!hidden && getOwnedTools().length > 0);
-    this.toolButton.setState(tooling);
+    this.toolButton.setState(equipped || tooling);
     this.buildButton.setVisible(!hidden && isBuildUnlocked() && canRideHere());
     this.buildButton.setState(building);
     this.mapButton.setVisible(!hidden && hasTravelMap());
     this.rideButton.setVisible(!hidden && hasHorse());
     this.rideButton.setState(isRiding(), canRideHere());
     const r = this.button.radius;
-    const bar = this.buildBar.visible ? this.buildBar : this.toolBar.visible ? this.toolBar : undefined;
-    // The bars take the bottom edge on narrow screens; the action button and the column move up above them.
+    const bar = this.buildBar.visible ? this.buildBar : undefined;
+    // BuildBar takes the bottom edge on narrow screens; ToolBar overlays only below the button column and suppresses ContextButton so buttons never jump.
     let buttonY = this.viewH - this.safe.bottom - r - 34;
     if (bar) buttonY = Math.min(buttonY, this.viewH - this.safe.bottom - bar.height - 14 - r);
+    inputState.bottomInset = bar ? this.safe.bottom + bar.height + 10 : 0;
     this.button.setPosition(this.viewW - this.safe.right - r - 22, buttonY);
     let x = this.viewW - this.safe.right - 22 - HudButton.RADIUS;
     const startY = buttonY - r - 16 - HudButton.RADIUS;
@@ -454,7 +476,7 @@ export class UIScene extends Phaser.Scene {
     }
   }
 
-  /** While the tool bar is open, the big round button is the tool in hand: one tap uses it (on touch there is no E). */
+  /** While a work tool is equipped (and the picker is closed), the big round button IS that tool: one tap uses it. */
   private syncUseButton(tooling: boolean): void {
     if (!tooling) {
       if (this.usingToolButton) {
@@ -471,8 +493,14 @@ export class UIScene extends Phaser.Scene {
       return;
     }
     this.usingToolButton = true;
-    this.button.showIcon(auto ? 'auto' : (tool as ToolDef).kind, (g, color) =>
-      auto ? drawAutoIcon(g, color) : drawToolIcon(g, color, (tool as ToolDef).kind),
+    // The icon is what a press would do right now; dimmed, nothing is in reach to work on.
+    const player = gameState.data.player;
+    const acts = peekTool(player.mapId, { x: player.x, y: player.y });
+    const kind = acts ?? (auto ? null : (tool as ToolDef).kind);
+    this.button.showIcon(
+      `${kind ?? 'auto'}${acts ? '' : '-dim'}`,
+      (g, color) => (kind ? drawToolIcon(g, color, kind) : drawAutoIcon(g, color)),
+      !acts,
     );
   }
 
@@ -498,12 +526,27 @@ export class UIScene extends Phaser.Scene {
     setToolMode(!getToolMode().open);
   }
 
-  /** A tool slot was picked: take it in hand; the satchel again switches to the next kind of seed. */
-  private pickTool(toolId: string): void {
+  /** A tool slot was picked: equip it and close the picker, put it away, or cycle the satchel's seed. */
+  private pickTool(toolId: string, keepOpenOnCycle = false): void {
+    if (toolId === DESELECT_TOOL) {
+      equipTool(null);
+      setToolMode(false);
+      return;
+    }
     const inHand = getEquippedTool();
-    if (inHand?.id === toolId && inHand.kind === 'satchel') cycleSeed();
-    else if (toolId === AUTO_TOOL && isAutoTool()) return;
-    else equipTool(toolId);
+    if (inHand?.id === toolId && inHand.kind === 'satchel') {
+      const next = cycleSeed();
+      if (keepOpenOnCycle && getSowableSpecies().length > 1) return;
+      setToolMode(false);
+      if (next) {
+        const plant = content.plants.get(next);
+        const count = plant.seedItemId ? gameState.getItemCount(plant.seedItemId) : 0;
+        this.enqueueToast(`Saatbeutel: ${plant.name} (${count})`);
+      }
+      return;
+    }
+    equipTool(toolId);
+    setToolMode(false);
   }
 
   private toggleRide(): void {
@@ -585,9 +628,27 @@ export class UIScene extends Phaser.Scene {
     if (this.crafting.pointerDown(p.x, p.y)) return;
     if (this.inventory.pointerDown(p.x, p.y)) return;
     if (this.questLog.pointerDown(p.x, p.y)) return;
+    if (this.toolButton.contains(p.x, p.y)) {
+      if (this.toolBar.visible) {
+        setToolMode(false);
+        return;
+      }
+      this.cancelToolHold();
+      const timer = this.time.delayedCall(TOOL_HOLD_MS, () => {
+        if (!this.toolHold || this.toolHold.pointerId !== pointer.id) return;
+        this.toolHold.openedByHold = true;
+        setToolMode(true);
+      });
+      this.toolHold = { pointerId: pointer.id, x: p.x, y: p.y, openedByHold: false, timer };
+      return;
+    }
     const pickedTool = this.toolBar.pointerDown(p.x, p.y);
     if (pickedTool !== undefined) {
-      if (pickedTool) this.pickTool(pickedTool);
+      if (pickedTool) this.pickTool(pickedTool, true);
+      return;
+    }
+    if (this.toolBar.visible) {
+      setToolMode(false);
       return;
     }
     const pickedPiece = this.buildBar.pointerDown(p.x, p.y);
@@ -597,10 +658,6 @@ export class UIScene extends Phaser.Scene {
     }
     if (this.buildButton.contains(p.x, p.y)) {
       this.toggleBuild();
-      return;
-    }
-    if (this.toolButton.contains(p.x, p.y)) {
-      this.toggleTools();
       return;
     }
     if (this.mapButton.contains(p.x, p.y)) {
@@ -632,6 +689,17 @@ export class UIScene extends Phaser.Scene {
   private onPointerMove(pointer: Phaser.Input.Pointer): void {
     if (!pointer.isDown) return;
     const p = this.toCss(pointer);
+    if (this.toolHold?.pointerId === pointer.id) {
+      if (!this.toolHold.openedByHold && Math.hypot(p.x - this.toolHold.x, p.y - this.toolHold.y) > TOOL_DRAG_PX) {
+        this.toolHold.timer.remove(false);
+        this.toolHold.openedByHold = true;
+        setToolMode(true);
+      }
+      if (this.toolHold.openedByHold && this.toolBar.visible) {
+        this.toolBar.setPreview(this.toolBar.slotAt(p.x, p.y, true) ?? null);
+      }
+      return;
+    }
     if (this.mapPanel.isOpen) return;
     if (this.wiki.isOpen) {
       this.wiki.pointerMove(p.y);
@@ -658,6 +726,20 @@ export class UIScene extends Phaser.Scene {
     this.inventory.pointerUp(p.x, p.y);
     this.crafting.pointerUp(p.x, p.y);
     this.wiki.pointerUp(p.x, p.y);
+    if (this.toolHold?.pointerId === pointer.id) {
+      const hold = this.toolHold;
+      this.cancelToolHold();
+      if (hold.openedByHold) {
+        const picked = this.toolBar.slotAt(p.x, p.y, true);
+        if (picked) this.pickTool(picked, false);
+        else if (!this.toolButton.contains(p.x, p.y)) setToolMode(false);
+      } else if (getEquippedTool() || isAutoTool()) {
+        equipTool(null);
+      } else {
+        setToolMode(true);
+      }
+      return;
+    }
     const down = this.downAt.get(pointer.id);
     this.downAt.delete(pointer.id);
     this.joystick.end(pointer.id);

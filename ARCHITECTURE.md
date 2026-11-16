@@ -473,7 +473,7 @@ Four craftable tools make the garden work easier. None is used up, nothing is so
 
   | Tool | Cost | Unlocked by | Does |
   |---|---|---|---|
-  | Sichel | 2 Holz, 1 Schrott | `harvested-once` | harvests every ripe bed within 3.2 tiles at once |
+  | Sichel | 2 Holz, 1 Schrott | `harvested-once` | harvests every ripe bed and collects nearby resource pickups and ready eggs/honey within 3.2 tiles at once |
   | Spaten | 2 Holz, 1 Feldstein | `gathered-material` | digs a plant out with its growth and sets it into a free bed it accepts |
   | Saatbeutel | 1 Brombeertrieb, 1 Duftbündel, 1 Schrott | `harvested-once` | sows the picked species into every free bed within 4 tiles |
   | Stablaterne | 1 Holz, 1 Schrott, 2 Lichtpollen | `built:lantern` | carried light: opens the night veil, dries up blight within 2.4 tiles |
@@ -482,22 +482,27 @@ Four craftable tools make the garden work easier. None is used up, nothing is so
   makes two. The first tool made goes into the hand.
 - **System.** `systems/tools.ts` (no Phaser): `getOwnedTools`, `getEquippedTool`, `equipTool`,
   `getToolMode` / `setToolMode` / `isToolActing`, `useTool(mapId, at)` → `{ ok, text, spots }`,
-  `getSowSeed` / `cycleSeed`, `getCarriedPlant`, `getCarriedLight`, `describeTool`. Emits
-  `tool-changed`. Plant moving is two small functions in `systems/plants.ts`: `uprootBed`
-  (emits `plant-removed`, which `PlantLayer` turns into the sprite going away) and
-  `transplantInto`; `bedAccepts` is the species rule of a bed. The blight side is
-  `pushBackBlight(mapId, px, py, radiusTiles)` in `systems/blight.ts`: it only clears what is
-  there, it is not a ward, so it never seals a heart and the blight may creep back at night.
-- **Tool mode.** The tool button (**T**) opens `ui/ToolBar.ts` (tap a slot or 1–4; tools not made
-  yet stay dim; picking the satchel again switches the seed). While it is open with a sickle,
-  spade or satchel in hand, E and any tap use the tool around the player instead of
-  interacting, like build mode, and the two modes close each other. A fifth slot, the
-  **Gärtnerhand** (`AUTO_TOOL`, equipped as `ext.tools.equipped = 'auto'`, the default when the
-  mode opens with nothing in hand), picks per spot: sets down a carried plant, else harvests,
-  else sows. While the bar is open the big round action button shows the tool in hand as an icon
-  and uses it, so touch needs no world tap; on touch the bar has bigger slots and only the
-  name, and the satchel slot carries the seed it sows as a small badge. The lantern needs no mode:
-  picking it closes the bar and it just shines.
+  `getSowSeed` / `cycleSeed`, `getCarriedPlant`, `getCarriedLight`, `describeTool`, plus
+  `AUTO_TOOL` (`'auto'`) and `DESELECT_TOOL` (`'none'`). Emits `tool-changed`. Plant moving is
+  two small functions in `systems/plants.ts`: `uprootBed` (emits `plant-removed`, which
+  `PlantLayer` turns into the sprite going away) and `transplantInto`; `bedAccepts` is the species
+  rule of a bed. The blight side is `pushBackBlight(mapId, px, py, radiusTiles)` in
+  `systems/blight.ts`: it only clears what is there, it is not a ward, so it never seals a heart
+  and the blight may creep back at night.
+- **Tool selection and active use.** The tool button (**T**) never jumps when opening `ui/ToolBar.ts`:
+  while the picker overlays the bottom edge, `ContextButton` is suppressed and the `HudButton`
+  column stays put. Quick-tapping the tool button opens the picker when empty-handed or puts the
+  equipped tool away when one is in hand; pressing and holding (or dragging) opens the picker,
+  highlights the hovered slot (`setPreview` / `slotAt`), and selects + closes on release. Picking any
+  slot (1–6 or tap, where slot 5 is the **Gärtnerhand** `AUTO_TOOL` and slot 6 is **Ablegen**
+  `DESELECT_TOOL`) closes the picker cleanly (`Esc` closes the picker or unequips the active tool).
+  Once a work tool (`isToolActing()`) is equipped and build mode is off, the picker stays closed and
+  the big round `ContextButton` becomes the tool icon itself (`peekTool(mapId, at)` dims it when
+  nothing is in reach) while E and taps act with the tool. A carried plant never blocks
+  `AUTO_TOOL`: with no free bed in reach it moves on to sickle/satchel. The satchel slot carries
+  the seed it sows as a badge (picking it again cycles seeds), and the spade slot carries the
+  uprooted plant as a badge. The lantern needs no action mode: picking it closes the bar and it
+  just shines.
 - **World.** `systems/toolLayer.ts` (`ToolLayer`): the lantern on its pole beside the player, puffs
   where a tool worked, a sickle sweep, and the blight push-back every 250 ms. `AtmosphereLayer`
   takes a `carriedLight` callback and punches the player's light into the night veil (redrawn at
