@@ -866,7 +866,9 @@ test.describe('Desktop gameplay and PWA', () => {
     expect(errors).toEqual([]);
   });
 
-  test('selects tools without keeping bar open, collects wood with sickle via E, and deselects', async ({ page }) => {
+  test('selects tools without keeping bar open, switches seeds, collects wood with sickle via E, and deselects', async ({
+    page,
+  }) => {
     const errors = trackErrors(page);
 
     await page.addInitScript((key) => {
@@ -878,7 +880,7 @@ test.describe('Desktop gameplay and PWA', () => {
           savedAt: Date.now(),
           player: { mapId: 'garden', x: 15.5 * 32, y: 38.5 * 32, facing: 'left' },
           world: { unblockedPaths: [], visitedZones: ['garden'], flags: { 'crow-met': true } },
-          inventory: { items: { 'tool-sickle': 1, 'tool-satchel': 1, 'seed-lavender': 1 } },
+          inventory: { items: { 'tool-sickle': 1, 'tool-satchel': 1, 'seed-glow-lily': 2, 'seed-lavender': 2 } },
           quests: { active: [], completed: ['q-meet-crow'], progress: {} },
           ext: {},
         }),
@@ -888,12 +890,14 @@ test.describe('Desktop gameplay and PWA', () => {
     await page.goto('/');
     await waitForGameBoot(page);
 
-    const equipped = async () =>
-      ((await flushAndReadSave(page))?.ext.tools as { equipped?: string } | undefined)?.equipped ?? null;
+    const toolState = async () =>
+      ((await flushAndReadSave(page))?.ext.tools as { equipped?: string; seed?: string } | undefined) ?? {};
+    const equipped = async () => (await toolState()).equipped ?? null;
+    const sowSeed = async () => (await toolState()).seed ?? null;
 
     // Open tool bar with T and pick slot 1 (tool-sickle): bar closes and sickle is active
     await page.keyboard.press('KeyT');
-    await page.waitForTimeout(150);
+    await page.waitForTimeout(250);
     await page.keyboard.press('Digit1');
     await expect.poll(equipped, { timeout: 6_000, intervals: [100] }).toBe('tool-sickle');
 
@@ -917,7 +921,7 @@ test.describe('Desktop gameplay and PWA', () => {
     await page.keyboard.press('Digit6');
     await expect.poll(equipped, { timeout: 6_000, intervals: [100] }).toBeNull();
 
-    // T -> Digit3 equips satchel, then Escape deselects it cleanly
+    // T -> Digit3 equips satchel, pressing Digit3 again cycles seed, clicking seed 1 in seed strip picks glow-lily directly
     await expect
       .poll(
         async () => {
@@ -931,6 +935,16 @@ test.describe('Desktop gameplay and PWA', () => {
         { timeout: 10_000, intervals: [150] },
       )
       .toBe('tool-satchel');
+
+    await page.keyboard.press('KeyT');
+    await page.waitForTimeout(250);
+    await page.keyboard.press('Digit3');
+    await expect.poll(sowSeed, { timeout: 6_000, intervals: [100] }).toBe('lavender');
+
+    // Bar stays open on cycle when 2+ seeds exist; click the first seed slot (glow-lily at 1050, 399)
+    await page.mouse.click(1050, 399);
+    await expect.poll(sowSeed, { timeout: 6_000, intervals: [100] }).toBe('glow-lily');
+
     await page.keyboard.press('Escape');
     await expect.poll(equipped, { timeout: 6_000, intervals: [100] }).toBeNull();
 
@@ -988,6 +1002,46 @@ test.describe('Desktop gameplay and PWA', () => {
     // 16 mature light plants stacked in bed-lily + adjacent planters must not saturate the center to pure white.
     const whitePixels = await countColorPixels(page, { x: 520, y: 240, width: 240, height: 180 }, [255, 255, 255], 6);
     expect(whitePixels).toBeLessThan(200);
+    expect(errors).toEqual([]);
+  });
+
+  test('interacts with a door while keeping a work tool equipped', async ({ page }) => {
+    const errors = trackErrors(page);
+
+    await page.addInitScript((key) => {
+      if (localStorage.getItem(key)) return;
+      localStorage.setItem(
+        key,
+        JSON.stringify({
+          version: 1,
+          savedAt: Date.now(),
+          player: { mapId: 'garden', x: 7 * 32, y: 33 * 32, facing: 'right' },
+          world: { unblockedPaths: [], visitedZones: ['garden'], flags: {} },
+          inventory: { items: { 'tool-sickle': 1 } },
+          quests: { active: ['q-meet-crow'], completed: [], progress: {} },
+          ext: { tools: { equipped: 'tool-sickle' } },
+        }),
+      );
+    }, SAVE_KEY);
+
+    await page.goto('/');
+    await waitForGameBoot(page);
+
+    await expect
+      .poll(
+        async () => {
+          const current = await flushAndReadSave(page);
+          if (current?.player.mapId === 'workshop') return 'workshop';
+          await page.keyboard.press('KeyE');
+          await page.waitForTimeout(450);
+          return (await flushAndReadSave(page))?.player.mapId;
+        },
+        { timeout: 15_000, intervals: [100] },
+      )
+      .toBe('workshop');
+
+    const save = await flushAndReadSave(page);
+    expect((save?.ext.tools as { equipped?: string } | undefined)?.equipped).toBe('tool-sickle');
     expect(errors).toEqual([]);
   });
 });

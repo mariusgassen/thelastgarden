@@ -65,12 +65,12 @@ test.describe('Phone touch controls', () => {
     await page.goto('/');
     await waitForGameBoot(page);
 
-    // Map button: bottom right, above the context button. "Linie 3" sits at 35 % / 80 % of the sheet.
+    // Map button: top-left bar (menu, bag, map). "Linie 3" sits at 35 % / 80 % of the sheet.
     await expect
       .poll(
         async () => {
           if ((await flushAndReadSave(page))?.player.mapId === 'tramline') return 'tramline';
-          await page.touchscreen.tap(345, 687);
+          await page.touchscreen.tap(140, 40);
           await page.waitForTimeout(350);
           await page.touchscreen.tap(146, 488);
           await page.waitForTimeout(900);
@@ -109,13 +109,13 @@ test.describe('Phone touch controls', () => {
     await page.goto('/');
     await waitForGameBoot(page);
 
-    // Tap the bag button (top-left) -> Beutel opens; tap Werkeln button -> Werkbank opens; tap Herstellen
+    // Tap the bag button (top-left, right of menu) -> Beutel opens; tap Werkeln button -> Werkbank opens; tap Herstellen
     await expect
       .poll(
         async () => {
           const have = (await flushAndReadSave(page))?.inventory.items['craft-bramble-cutting'] ?? 0;
           if (have > 0) return have;
-          await page.touchscreen.tap(28, 40);
+          await page.touchscreen.tap(84, 40);
           await page.waitForTimeout(250);
           await page.touchscreen.tap(268, 255);
           await page.waitForTimeout(250);
@@ -204,12 +204,12 @@ test.describe('Phone touch controls', () => {
       })
       .toBeGreaterThan(25);
 
-    // Open Town Map (above horseshoe button) and tap "Drei Höfe" (84% / 60% of sheet)
+    // Open Town Map (top-left bar) and tap "Drei Höfe" (84% / 60% of sheet)
     await expect
       .poll(
         async () => {
           if ((await flushAndReadSave(page))?.player.mapId === 'river-farms') return 'river-farms';
-          await page.touchscreen.tap(344, 626);
+          await page.touchscreen.tap(140, 40);
           await page.waitForTimeout(350);
           await page.touchscreen.tap(306, 441);
           await page.waitForTimeout(900);
@@ -388,7 +388,7 @@ test.describe('Phone touch controls', () => {
     expect(errors).toEqual([]);
   });
 
-  test('hold-to-select tool without button jump, action button collects wood with sickle, and tap/slot deselects', async ({
+  test('hold-to-select vertical tool bar without button jump, action button collects wood with sickle, switches seeds, and deselects', async ({
     page,
   }) => {
     const errors = trackErrors(page);
@@ -402,7 +402,7 @@ test.describe('Phone touch controls', () => {
           savedAt: Date.now(),
           player: { mapId: 'garden', x: 15.5 * 32, y: 38.5 * 32, facing: 'left' },
           world: { unblockedPaths: [], visitedZones: ['garden'], flags: { 'crow-met': true } },
-          inventory: { items: { 'tool-sickle': 1, 'tool-shovel': 1 } },
+          inventory: { items: { 'tool-sickle': 1, 'tool-shovel': 1, 'tool-satchel': 1, 'seed-glow-lily': 2, 'seed-lavender': 2 } },
           quests: { active: [], completed: ['q-meet-crow'], progress: {} },
           ext: {},
         }),
@@ -412,21 +412,23 @@ test.describe('Phone touch controls', () => {
     await page.goto('/');
     await waitForGameBoot(page);
 
-    const equipped = async () =>
-      ((await flushAndReadSave(page))?.ext.tools as { equipped?: string } | undefined)?.equipped ?? null;
+    const toolState = async () =>
+      ((await flushAndReadSave(page))?.ext.tools as { equipped?: string; seed?: string } | undefined) ?? {};
+    const equipped = async () => (await toolState()).equipped ?? null;
+    const sowSeed = async () => (await toolState()).seed ?? null;
 
-    // 1. Tap toolButton (345, 687) to open ToolBar, then tap the exact same coordinate to close it (no jump!)
+    // 1. Tap toolButton (345, 687) to open vertical ToolBar, then tap the exact same coordinate to close it (no jump!)
     await page.touchscreen.tap(345, 687);
-    await page.waitForTimeout(200);
+    await page.waitForTimeout(220);
     expect(await equipped()).toBeNull();
     await page.touchscreen.tap(345, 687);
-    await page.waitForTimeout(200);
+    await page.waitForTimeout(220);
 
-    // 2. Press and hold toolButton, drag to slot 1 (tool-sickle at x=45, y=797), and release -> equips sickle & closes bar
+    // 2. Press and hold toolButton, drag to slot 1 (tool-sickle at x=278, y=408), and release -> equips sickle & closes bar
     await page.mouse.move(345, 687);
     await page.mouse.down();
     await page.waitForTimeout(240);
-    await page.mouse.move(45, 797, { steps: 8 });
+    await page.mouse.move(278, 408, { steps: 8 });
     await page.waitForTimeout(100);
     await page.mouse.up();
     await expect.poll(equipped, { timeout: 6_000, intervals: [100] }).toBe('tool-sickle');
@@ -445,23 +447,43 @@ test.describe('Phone touch controls', () => {
       )
       .toBe(2);
 
-    // 4. Quick-tapping toolButton (now above buildButton at 345, 629) deselects the equipped tool
-    await page.touchscreen.tap(345, 629);
+    // 4. Quick-tapping toolButton (stays lowest at 345, 687) deselects tool, and tapping once again re-equips the last tool
+    await page.touchscreen.tap(345, 687);
     await expect.poll(equipped, { timeout: 6_000, intervals: [100] }).toBeNull();
+    await page.touchscreen.tap(345, 687);
+    await expect.poll(equipped, { timeout: 6_000, intervals: [100] }).toBe('tool-sickle');
 
-    // 5. Hold toolButton -> drag to shovel (105, 797) -> equips shovel; hold -> drag to cross slot (345, 797) -> deselects
-    await page.mouse.move(345, 629);
+    // 5. Select specific seeds directly from the seed strip beside Saatbeutel (y=516): lavender (212, 516) then glow-lily (167, 516)
+    await page.mouse.move(345, 687);
     await page.mouse.down();
     await page.waitForTimeout(240);
-    await page.mouse.move(105, 797, { steps: 8 });
+    await page.mouse.move(212, 516, { steps: 8 });
+    await page.waitForTimeout(100);
+    await page.mouse.up();
+    await expect.poll(equipped, { timeout: 6_000, intervals: [100] }).toBe('tool-satchel');
+    await expect.poll(sowSeed, { timeout: 6_000, intervals: [100] }).toBe('lavender');
+
+    await page.mouse.move(345, 687);
+    await page.mouse.down();
+    await page.waitForTimeout(240);
+    await page.mouse.move(167, 516, { steps: 8 });
+    await page.waitForTimeout(100);
+    await page.mouse.up();
+    await expect.poll(sowSeed, { timeout: 6_000, intervals: [100] }).toBe('glow-lily');
+
+    // 6. Hold toolButton -> drag to shovel (278, 462) -> equips shovel; hold -> drag to Ablegen slot (278, 678) -> deselects
+    await page.mouse.move(345, 687);
+    await page.mouse.down();
+    await page.waitForTimeout(240);
+    await page.mouse.move(278, 462, { steps: 8 });
     await page.waitForTimeout(100);
     await page.mouse.up();
     await expect.poll(equipped, { timeout: 6_000, intervals: [100] }).toBe('tool-shovel');
 
-    await page.mouse.move(345, 629);
+    await page.mouse.move(345, 687);
     await page.mouse.down();
     await page.waitForTimeout(240);
-    await page.mouse.move(345, 797, { steps: 8 });
+    await page.mouse.move(278, 678, { steps: 8 });
     await page.waitForTimeout(100);
     await page.mouse.up();
     await expect.poll(equipped, { timeout: 6_000, intervals: [100] }).toBeNull();

@@ -115,8 +115,8 @@ export class TutorialHints {
       this.enqueue({
         id: 'travel-map',
         text: touch
-          ? 'Der Stadtplan ist abgezeichnet: Der Kartenknopf unten rechts bringt dich schnell an Orte, die du schon kennst.'
-          : 'Der Stadtplan ist abgezeichnet: Taste M oder der Kartenknopf unten rechts bringt dich schnell an Orte, die du schon kennst.',
+          ? 'Der Stadtplan ist abgezeichnet: Der Kartenknopf oben links bringt dich schnell an Orte, die du schon kennst.'
+          : 'Der Stadtplan ist abgezeichnet: Taste M oder der Kartenknopf oben links bringt dich schnell an Orte, die du schon kennst.',
         ttlMs: 14_000,
       });
     const horseHint = () =>
