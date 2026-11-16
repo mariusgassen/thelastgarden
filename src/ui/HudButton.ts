@@ -178,3 +178,16 @@ export function drawMenuIcon(g: Phaser.GameObjects.Graphics, color: number): voi
   g.fillStyle(color, 1);
   for (const y of [-7, -1, 5]) g.fillRoundedRect(-9, y, 18, 3.5, 1.7);
 }
+
+/** The all-round hand of the tool bar: a sprout on a mound of soil, "does whatever fits". */
+export function drawAutoIcon(g: Phaser.GameObjects.Graphics, color: number): void {
+  g.fillStyle(0x8a603d, 1);
+  g.fillEllipse(0, 9, 22, 8);
+  g.lineStyle(2.4, 0x6fa84a, 1);
+  g.lineBetween(0, 8, 0, -4);
+  g.fillStyle(0x9be26a, 1);
+  g.fillEllipse(-5, -5, 9, 5);
+  g.fillEllipse(5, -8, 9, 5);
+  g.lineStyle(1.4, color, 0.9);
+  g.strokeEllipse(0, 9, 22, 8);
+}
