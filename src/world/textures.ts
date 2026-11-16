@@ -915,6 +915,402 @@ export function generateTextures(scene: Phaser.Scene): void {
     g.fillCircle(73, 10, 4);
   });
 
+  // Episode 3: denseFog, Night Violet, M., Hill Path, Orchard & Cottage
+  make('obstacle-denseFog', 120, 120, (g) => {
+    const rnd = seededRandom(37);
+    for (let i = 0; i < 24; i++) {
+      const cx = 18 + rnd() * 84;
+      const cy = 18 + rnd() * 84;
+      const r = 18 + rnd() * 20;
+      g.fillStyle(i % 2 === 0 ? 0xc7dcd8 : 0x9bbab5, 0.34);
+      g.fillCircle(cx, cy, r);
+    }
+    for (let i = 0; i < 12; i++) {
+      g.fillStyle(0xe8f6f2, 0.45);
+      g.fillEllipse(20 + rnd() * 80, 22 + rnd() * 76, 36 + rnd() * 28, 14 + rnd() * 8);
+    }
+    g.fillStyle(0x7ae7c7, 0.45);
+    for (let i = 0; i < 6; i++) g.fillCircle(24 + rnd() * 72, 24 + rnd() * 72, 2.2);
+  });
+  make('plant-night-violet-sprout', 18, 18, (g) => {
+    g.fillStyle(0x3f6b35, 1);
+    g.fillRect(8, 8, 2, 9);
+    g.fillStyle(0x6f7bf7, 1);
+    g.fillCircle(9, 7, 2.8);
+  });
+  make('plant-night-violet-growing', 26, 34, (g) => {
+    g.fillStyle(0x4c7a3d, 1);
+    g.fillEllipse(13, 27, 14, 7);
+    g.fillStyle(0x3f6b35, 1);
+    g.fillRect(12, 10, 2, 18);
+    g.fillStyle(0x6f7bf7, 1);
+    g.fillCircle(8, 16, 3);
+    g.fillCircle(18, 15, 3);
+    g.fillCircle(13, 9, 3.4);
+  });
+  make('plant-night-violet-mature', 36, 44, (g) => {
+    g.fillStyle(0x000000, 0.18);
+    g.fillEllipse(18, 41, 24, 6);
+    g.fillStyle(0x4c7a3d, 1);
+    g.fillEllipse(18, 34, 22, 10);
+    g.fillStyle(0x3f6b35, 1);
+    g.fillRect(17, 12, 2.5, 22);
+    g.fillRect(10, 17, 2, 17);
+    g.fillRect(24, 17, 2, 17);
+    for (const [fx, fy] of [
+      [18, 10],
+      [11, 16],
+      [25, 16],
+      [14, 21],
+      [22, 21],
+    ]) {
+      g.fillStyle(0x6f7bf7, 1);
+      g.fillCircle(fx, fy, 4.2);
+      g.fillStyle(0x9ea8ff, 1);
+      g.fillCircle(fx - 0.8, fy - 0.8, 2.2);
+      g.fillStyle(0xf6d878, 1);
+      g.fillCircle(fx, fy, 1.3);
+    }
+  });
+  make('m', 28, 40, (g) => {
+    g.fillStyle(0x3f5f3a, 1); // gardening trousers / skirt hem
+    g.fillRoundedRect(8, 26, 12, 12, 3);
+    g.fillStyle(0xe8dec8, 1); // cream linen sleeves
+    g.fillRoundedRect(5, 15, 18, 14, 5);
+    g.fillStyle(0x4c7a3d, 1); // moss apron
+    g.fillRoundedRect(7, 16, 14, 15, 4);
+    g.fillStyle(0xa8753f, 1); // pocket & tool strap
+    g.fillRect(10, 22, 8, 5);
+    g.fillStyle(0xf0c29a, 1); // face
+    g.fillCircle(14, 11, 6.8);
+    g.fillStyle(0x8a7d72, 1); // silver-streaked hair bun
+    g.fillCircle(8, 11, 3.2);
+    g.fillStyle(0xe8cf7a, 1); // woven sun hat
+    g.fillEllipse(14, 6.5, 24, 7.5);
+    g.fillRoundedRect(8, 0, 12, 7.5, 4);
+    g.fillStyle(0x9b84d6, 1); // dried lavender sprig on hatband
+    g.fillRect(8, 4.5, 12, 2);
+    g.fillCircle(19, 4, 2);
+    g.fillStyle(0x3a2a1e, 1); // gentle eye
+    g.fillCircle(17, 12, 1.2);
+  });
+  make('portrait-m', 64, 64, (g) => {
+    g.fillStyle(0x354d32, 1); // warm orchard backdrop
+    g.fillRoundedRect(0, 0, 64, 64, 10);
+    g.fillStyle(0xf4c430, 0.22); // afternoon sun glow
+    g.fillCircle(48, 16, 16);
+    g.fillStyle(0x4c7a3d, 1); // shoulders & apron
+    g.fillEllipse(32, 56, 46, 24);
+    g.fillStyle(0xe8dec8, 1);
+    g.fillRoundedRect(20, 42, 24, 18, 6);
+    g.fillStyle(0x4c7a3d, 1);
+    g.fillRoundedRect(23, 44, 18, 16, 4);
+    g.fillStyle(0x7c6f65, 1); // silver-chestnut hair
+    g.fillCircle(20, 32, 8);
+    g.fillCircle(44, 32, 8);
+    g.fillStyle(0xf0c29a, 1); // warm face
+    g.fillCircle(32, 31, 13);
+    g.fillStyle(0x3a2a1e, 1); // kind eyes
+    g.fillCircle(27, 31, 2);
+    g.fillCircle(37, 31, 2);
+    g.lineStyle(1.8, 0x9e5d48, 1); // warm smile
+    g.beginPath();
+    g.arc(32, 34, 4.5, Phaser.Math.DegToRad(20), Phaser.Math.DegToRad(160));
+    g.strokePath();
+    g.fillStyle(0xe8cf7a, 1); // straw hat brim & crown
+    g.fillEllipse(32, 20, 46, 12);
+    g.fillRoundedRect(19, 8, 26, 14, 7);
+    g.fillStyle(0x9b84d6, 1); // lavender hat ribbon & sprig
+    g.fillRect(19, 17, 26, 3);
+    g.fillCircle(41, 16, 3.2);
+  });
+  make('signpost-north', 32, 48, (g) => {
+    g.fillStyle(0x000000, 0.2);
+    g.fillEllipse(16, 45, 18, 6);
+    g.fillStyle(0x5c3b25, 1);
+    g.fillRect(13.5, 12, 5, 34);
+    g.fillStyle(0xc49a6c, 1);
+    g.fillRoundedRect(5, 12, 22, 12, 2);
+    g.fillTriangle(11, 12, 21, 12, 16, 3);
+    g.fillStyle(0x5d8a45, 1);
+    g.fillCircle(9, 18, 2.2);
+    g.fillStyle(0xd8b04a, 1); // brass bell
+    g.fillCircle(23, 26, 2.5);
+  });
+  make('waystone', 38, 42, (g) => {
+    g.fillStyle(0x000000, 0.22);
+    g.fillEllipse(19, 38, 32, 8);
+    g.fillStyle(0x7c8280, 1);
+    g.fillRoundedRect(8, 10, 22, 28, { tl: 10, tr: 10, bl: 3, br: 3 });
+    g.fillStyle(0x969c99, 1);
+    g.fillRoundedRect(10, 12, 16, 22, { tl: 8, tr: 8, bl: 2, br: 2 });
+    g.fillStyle(0x6a9a4e, 1); // moss cap
+    g.fillCircle(12, 12, 5);
+    g.fillCircle(26, 33, 4);
+    g.fillStyle(0x4c5250, 1); // carved lettering lines
+    g.fillRect(13, 18, 12, 2);
+    g.fillRect(14, 23, 10, 2);
+  });
+  make('hill-lantern', 38, 48, (g) => {
+    g.fillStyle(0x000000, 0.22);
+    g.fillEllipse(19, 44, 30, 8);
+    g.fillStyle(0x7c8280, 1);
+    g.fillRoundedRect(11, 28, 16, 16, 3);
+    g.fillRect(15, 22, 8, 8);
+    g.fillRoundedRect(10, 10, 18, 14, 3);
+    g.fillStyle(0xf3e38a, 0.85); // softly glowing clean lantern glass
+    g.fillRect(14, 13, 10, 8);
+    g.fillStyle(0x5d6462, 1); // stone pagoda cap
+    g.fillTriangle(4, 12, 34, 12, 19, 2);
+    g.fillStyle(0x6a9a4e, 1);
+    g.fillCircle(11, 9, 4);
+  });
+  make('cottage-roof', 224, 118, (g) => {
+    g.fillStyle(0x000000, 0.2);
+    g.fillRect(8, 104, 208, 12);
+    g.fillStyle(0x7d4c3e, 1);
+    g.fillRoundedRect(4, 0, 216, 106, 8);
+    g.fillStyle(0x945b4a, 1);
+    for (let row = 0; row < 6; row++) {
+      for (let col = 0; col < 11; col++) {
+        const x = 6 + col * 19 + (row % 2) * 9;
+        if (x > 204) continue;
+        g.fillRoundedRect(x, 6 + row * 15, 16, 12, 3);
+      }
+    }
+    g.fillStyle(0x5e362b, 1);
+    g.fillRect(4, 50, 216, 6);
+    g.fillStyle(0x6a9a4e, 0.85);
+    g.fillCircle(24, 96, 6);
+    g.fillCircle(186, 94, 5);
+    g.fillStyle(0x7d4537, 1); // brick chimney
+    g.fillRect(40, 10, 18, 24);
+  });
+  make('cottage-door', 48, 40, (g) => {
+    g.fillStyle(0x4a2e1c, 1);
+    g.fillRoundedRect(6, 0, 36, 40, { tl: 12, tr: 12, bl: 0, br: 0 });
+    g.fillStyle(0x6e4529, 1);
+    g.fillRoundedRect(10, 4, 28, 36, { tl: 9, tr: 9, bl: 0, br: 0 });
+    g.fillStyle(0x5d8a45, 1); // flower wreath on door
+    g.strokeCircle(24, 16, 6);
+    g.fillCircle(24, 11, 3);
+    g.fillStyle(0xee8f8f, 1);
+    g.fillCircle(20, 18, 2);
+    g.fillCircle(28, 18, 2);
+    g.fillStyle(0xd8b04a, 1);
+    g.fillCircle(33, 24, 2);
+  });
+  make('orchard-sluice', 72, 46, (g) => {
+    g.fillStyle(0x000000, 0.22);
+    g.fillEllipse(36, 42, 66, 9);
+    g.fillStyle(0x7c8280, 1); // stone channel walls
+    g.fillRoundedRect(6, 14, 60, 28, 4);
+    g.fillStyle(0x5a4028, 1); // dry wooden trough
+    g.fillRect(12, 20, 48, 14);
+    g.fillStyle(0x8a603d, 1); // jammed timber sluice gate
+    g.fillRect(28, 6, 16, 32);
+    g.fillStyle(0x8a4836, 1); // rusted pin slot
+    g.fillCircle(36, 14, 4);
+  });
+  make('orchard-sluice-fixed', 72, 46, (g) => {
+    g.fillStyle(0x000000, 0.22);
+    g.fillEllipse(36, 42, 66, 9);
+    g.fillStyle(0x7c8280, 1);
+    g.fillRoundedRect(6, 14, 60, 28, 4);
+    g.fillStyle(0x4ca3b8, 1); // flowing brook water
+    g.fillRect(10, 20, 52, 14);
+    g.fillStyle(0xdff6ff, 0.75);
+    g.fillRect(14, 23, 20, 3);
+    g.fillRect(40, 28, 18, 3);
+    g.fillStyle(0x8a603d, 1); // lifted sluice gate + brass pin
+    g.fillRect(28, 2, 16, 20);
+    g.fillStyle(0xe6c34a, 1);
+    g.fillCircle(36, 10, 4);
+  });
+  make('beehive', 62, 46, (g) => {
+    g.fillStyle(0x000000, 0.2);
+    g.fillEllipse(31, 42, 56, 8);
+    g.fillStyle(0x5c3b25, 1); // stand legs
+    g.fillRect(10, 32, 6, 10);
+    g.fillRect(46, 32, 6, 10);
+    g.fillStyle(0xc99c58, 1); // two larch hive boxes
+    g.fillRoundedRect(6, 14, 22, 20, 3);
+    g.fillRoundedRect(34, 16, 22, 18, 3);
+    g.fillStyle(0x7a5236, 1); // slanted lids & dark entrances
+    g.fillTriangle(4, 16, 30, 16, 17, 6);
+    g.fillTriangle(32, 18, 58, 18, 45, 8);
+    g.fillRect(12, 29, 10, 3);
+    g.fillRect(40, 29, 10, 3);
+  });
+  make('beehive-active', 62, 46, (g) => {
+    g.fillStyle(0x000000, 0.2);
+    g.fillEllipse(31, 42, 56, 8);
+    g.fillStyle(0x5c3b25, 1);
+    g.fillRect(10, 32, 6, 10);
+    g.fillRect(46, 32, 6, 10);
+    g.fillStyle(0xd9ae62, 1);
+    g.fillRoundedRect(6, 14, 22, 20, 3);
+    g.fillRoundedRect(34, 16, 22, 18, 3);
+    g.fillStyle(0x8a5b3c, 1);
+    g.fillTriangle(4, 16, 30, 16, 17, 6);
+    g.fillTriangle(32, 18, 58, 18, 45, 8);
+    g.fillStyle(0xf4c430, 1); // warm golden bees hovering around
+    for (const [bx, by] of [
+      [15, 8],
+      [28, 12],
+      [44, 6],
+      [54, 18],
+      [22, 31],
+    ]) {
+      g.fillCircle(bx, by, 2);
+      g.fillStyle(0x2b2418, 1);
+      g.fillCircle(bx - 1, by, 1);
+      g.fillStyle(0xf4c430, 1);
+    }
+  });
+  make('cider-press', 64, 52, (g) => {
+    g.fillStyle(0x000000, 0.22);
+    g.fillEllipse(32, 47, 56, 9);
+    g.fillStyle(0x6e4529, 1); // timber frame
+    g.fillRect(12, 14, 6, 32);
+    g.fillRect(46, 14, 6, 32);
+    g.fillRect(8, 12, 48, 7);
+    g.fillStyle(0xa8753f, 1); // slatted pressing basket
+    g.fillRoundedRect(18, 22, 28, 20, 3);
+    g.lineStyle(1.5, 0x5c3b25, 1);
+    for (let x = 22; x <= 42; x += 5) g.lineBetween(x, 22, x, 42);
+    g.fillStyle(0x52575b, 1); // iron screw & handle
+    g.fillRect(30, 4, 4, 18);
+    g.fillRect(20, 4, 24, 3);
+    g.fillStyle(0xd84a5f, 1); // basket of red apples
+    g.fillCircle(10, 42, 3);
+    g.fillCircle(14, 44, 3);
+  });
+  make('apple-tree', 92, 100, (g) => drawTree(g, 92, 100, 0x456338, 0x5f7e47, 0x7a965a));
+  make('apple-tree-bloom', 92, 100, (g) => {
+    drawTree(g, 92, 100, 0x4b773c, 0x6a9a4e, 0x87b863);
+    const rnd = seededRandom(88);
+    for (let i = 0; i < 18; i++) {
+      g.fillStyle(i % 2 === 0 ? 0xf9d8e2 : 0xfff5f8, 0.95);
+      g.fillCircle(24 + rnd() * 44, 14 + rnd() * 42, 3.2);
+    }
+  });
+  make('mother-apple-tree', 128, 128, (g) => {
+    g.fillStyle(0x000000, 0.24);
+    g.fillEllipse(64, 118, 96, 18);
+    g.fillStyle(0x5c3b25, 1); // broad ancient trunk & roots
+    g.fillRect(54, 72, 20, 44);
+    g.fillTriangle(44, 116, 56, 116, 56, 98);
+    g.fillTriangle(84, 116, 72, 116, 72, 98);
+    g.fillStyle(0x3f6034, 1);
+    g.fillCircle(36, 62, 28);
+    g.fillCircle(92, 62, 28);
+    g.fillCircle(64, 42, 38);
+    g.fillStyle(0x5b7d46, 1);
+    g.fillCircle(50, 44, 24);
+    g.fillCircle(80, 48, 22);
+    g.fillStyle(0x769959, 0.85);
+    g.fillCircle(56, 26, 14);
+  });
+  make('mother-apple-tree-bloom', 128, 128, (g) => {
+    g.fillStyle(0x000000, 0.24);
+    g.fillEllipse(64, 118, 96, 18);
+    g.fillStyle(0x5c3b25, 1);
+    g.fillRect(54, 72, 20, 44);
+    g.fillTriangle(44, 116, 56, 116, 56, 98);
+    g.fillTriangle(84, 116, 72, 116, 72, 98);
+    g.fillStyle(0x4b773c, 1);
+    g.fillCircle(36, 62, 28);
+    g.fillCircle(92, 62, 28);
+    g.fillCircle(64, 42, 38);
+    g.fillStyle(0x6a9a4e, 1);
+    g.fillCircle(50, 44, 24);
+    g.fillCircle(80, 48, 22);
+    const rnd = seededRandom(1924);
+    for (let i = 0; i < 34; i++) {
+      g.fillStyle(i % 3 === 0 ? 0xfff5f8 : 0xf7bfd0, 0.95);
+      g.fillCircle(24 + rnd() * 80, 14 + rnd() * 62, 3.6);
+      if (i % 5 === 0) {
+        g.fillStyle(0xf6d878, 0.9);
+        g.fillCircle(24 + rnd() * 80, 14 + rnd() * 62, 1.8);
+      }
+    }
+  });
+  make('stove', 84, 64, (g) => {
+    g.fillStyle(0x000000, 0.2);
+    g.fillRect(6, 56, 72, 7);
+    g.fillStyle(0x3a4d3f, 1); // green ceramic stove base
+    g.fillRoundedRect(10, 12, 64, 46, 5);
+    g.lineStyle(1.5, 0x5c7863, 1); // tile seams
+    for (let y = 24; y < 56; y += 11) g.lineBetween(12, y, 72, y);
+    for (let x = 26; x < 70; x += 16) g.lineBetween(x, 14, x, 56);
+    g.fillStyle(0x2a241f, 1); // iron hearth door
+    g.fillRoundedRect(28, 34, 26, 20, 3);
+    g.fillStyle(0xf08c3a, 0.9); // warm ember glow
+    g.fillRect(34, 42, 14, 7);
+    g.fillStyle(0xd8b04a, 1); // brass kettle on top
+    g.fillEllipse(52, 10, 18, 10);
+    g.fillStyle(0x52575b, 1); // stovepipe
+    g.fillRect(20, 0, 10, 14);
+  });
+  make('valley-map', 88, 54, (g) => {
+    g.fillStyle(0x4b2f1f, 1);
+    g.fillRoundedRect(0, 0, 88, 50, 3);
+    g.fillStyle(0xf1e6c8, 1);
+    g.fillRect(5, 5, 78, 40);
+    g.fillStyle(0x6a9a4e, 0.8); // garden & orchards
+    g.fillCircle(18, 28, 6);
+    g.fillCircle(44, 22, 8);
+    g.lineStyle(2, 0x4f8fa6, 1); // river
+    g.lineBetween(8, 38, 80, 14);
+    g.lineStyle(2, 0xd84a5f, 1); // dashed trail to mill
+    g.lineBetween(44, 22, 70, 32);
+    g.fillStyle(0xb5633c, 1);
+    g.fillRect(67, 29, 7, 7);
+  });
+  make('herb-rack', 88, 56, (g) => {
+    g.fillStyle(0x5e3d29, 1);
+    g.fillRect(4, 6, 80, 7);
+    g.fillRect(10, 2, 6, 50);
+    g.fillRect(72, 2, 6, 50);
+    const colors = [0x9b84d6, 0x6a9a4e, 0xd9c26a, 0x8db05a, 0xc87890];
+    for (let i = 0; i < 5; i++) {
+      const bx = 18 + i * 13;
+      g.fillStyle(0x8a603d, 1);
+      g.fillRect(bx - 1, 13, 3, 6);
+      g.fillStyle(colors[i], 1);
+      g.fillTriangle(bx - 5, 36, bx + 5, 36, bx, 17);
+    }
+  });
+  make('tea-table', 84, 50, (g) => {
+    g.fillStyle(0x000000, 0.2);
+    g.fillEllipse(42, 44, 72, 10);
+    g.fillStyle(0x5e3d29, 1);
+    g.fillRect(22, 26, 6, 18);
+    g.fillRect(56, 26, 6, 18);
+    g.fillStyle(0xa8753f, 1);
+    g.fillEllipse(42, 22, 78, 26);
+    g.fillStyle(0xf1e6c8, 1); // two teacups
+    g.fillCircle(28, 20, 4.5);
+    g.fillCircle(54, 22, 4.5);
+    g.fillStyle(0x6a9a4e, 1);
+    g.fillCircle(54, 22, 2);
+    g.fillStyle(0xb5633c, 1); // teapot
+    g.fillCircle(41, 18, 6);
+  });
+  make('seed-chest', 68, 44, (g) => {
+    g.fillStyle(0x000000, 0.2);
+    g.fillRect(4, 37, 60, 6);
+    g.fillStyle(0x6e4529, 1);
+    g.fillRoundedRect(4, 12, 60, 28, 4);
+    g.fillStyle(0x9c5a3c, 1); // painted lid
+    g.fillRoundedRect(2, 6, 64, 14, 4);
+    g.fillStyle(0xd8b04a, 1); // brass clasp
+    g.fillRect(31, 16, 6, 8);
+    g.fillStyle(0xf1e6c8, 1); // seed packet peeking out
+    g.fillRect(14, 8, 10, 6);
+  });
+
   g.destroy();
 }
 

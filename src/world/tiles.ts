@@ -32,6 +32,7 @@ export const TILES = {
   floor: { color: 0xb88a5a, detail: 0xa47849, solid: false, style: 'planks', variants: 2 },
   rails: { color: 0x8d836f, detail: 0x5c4734, solid: false, style: 'rails', variants: 2 },
   brickWall: { color: 0x7d4537, detail: 0x5c3026, solid: true, style: 'brick', variants: 1 },
+  orchardGrass: { color: 0x8cb058, detail: 0xa4c66d, solid: false, style: 'grass', variants: 3 },
 } satisfies Record<string, TileDef>;
 
 export type TileId = keyof typeof TILES;

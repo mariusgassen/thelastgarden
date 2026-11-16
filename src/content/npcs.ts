@@ -9,6 +9,23 @@ export const NPCS: NpcDef[] = [
     interactLabel: 'Ansprechen',
     color: 0x2b2b33,
     dialogues: [
+      { dialogueId: 'crow-orchard-after', mapId: 'orchard', requires: ['episode-3-complete'] },
+      { dialogueId: 'crow-orchard-waiting', mapId: 'orchard', requires: ['crow-orchard-talked'] },
+      {
+        dialogueId: 'crow-orchard-intro',
+        mapId: 'orchard',
+        requires: ['episode-2-complete'],
+        forbids: ['crow-orchard-talked'],
+        setFlags: ['crow-orchard-talked'],
+      },
+      { dialogueId: 'crow-hill-waiting', mapId: 'hill-path', requires: ['hill-crow-talked'] },
+      {
+        dialogueId: 'crow-hill-intro',
+        mapId: 'hill-path',
+        requires: ['episode-2-complete'],
+        forbids: ['hill-crow-talked'],
+        setFlags: ['hill-crow-talked'],
+      },
       { dialogueId: 'crow-heart-after', requires: ['crow-heart-talked', 'bed-restored:bed-heart-fern'] },
       { dialogueId: 'crow-heart-waiting', requires: ['crow-heart-talked'] },
       {
@@ -48,6 +65,8 @@ export const NPCS: NpcDef[] = [
     interactLabel: 'Ansprechen',
     color: 0xb9946b,
     dialogues: [
+      { dialogueId: 'owl-episode3-after', requires: ['episode-3-complete'] },
+      { dialogueId: 'owl-hill-hint', requires: ['episode-2-complete'], forbids: ['episode-3-complete'] },
       { dialogueId: 'owl-after-vial', requires: ['owl-gave-vial'] },
       {
         dialogueId: 'owl-gives-vial',
@@ -60,5 +79,29 @@ export const NPCS: NpcDef[] = [
       { dialogueId: 'owl-intro', forbids: ['owl-met'], setFlags: ['owl-met'] },
     ],
     dialogueId: 'owl-waiting',
+  },
+  {
+    id: 'm',
+    name: 'M.',
+    description: 'Die frühere Gärtnerin von Erlenbrück. Auf ihrem Strohhut steckt eine kleine getrocknete Lavendelblüte.',
+    interactLabel: 'Sprechen',
+    color: 0x5d8a45,
+    dialogues: [
+      { dialogueId: 'm-after', requires: ['episode-3-complete'] },
+      {
+        dialogueId: 'm-orchard-awakened',
+        requires: ['m-met', 'orchard-sluice-repaired', 'bed-restored:bed-orchard-violet', 'journal-read:page-orchard'],
+        forbids: ['m-orchard-celebrated'],
+        setFlags: ['m-orchard-celebrated'],
+      },
+      { dialogueId: 'm-waiting', requires: ['m-met'] },
+      {
+        dialogueId: 'm-intro',
+        forbids: ['m-met'],
+        setFlags: ['m-met'],
+        giveItems: [{ itemId: 'seed-night-violet', count: 1 }],
+      },
+    ],
+    dialogueId: 'm-waiting',
   },
 ];

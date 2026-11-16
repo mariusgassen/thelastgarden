@@ -228,4 +228,110 @@ export const QUESTS: QuestDef[] = [
     ],
     rewardFlags: ['episode-2-complete'],
   },
+  // ── Episode 3: Hügelpfad & Die alten Obstwiesen ─────────────────────────
+  // Optional side quest placed before q-hill-mist so the HUD tracker highlights the main journey first.
+  {
+    id: 'q-vestibule-garden',
+    title: 'Ein Beet für den Vorraum',
+    summary: 'Im Vorraum des Gewächshauses liegt noch ein ungenutztes Pflanzbeet. Etwas Blühendes würde dem Glasraum gut tun.',
+    startsWhen: ['episode-2-complete'],
+    objectives: [
+      {
+        type: 'flag',
+        flag: 'bed-restored:bed-vestibule',
+        description: 'Bepflanze das Beet im Gewächshaus-Vorraum und lass die Pflanze reifen.',
+        markers: ['greenhouse-door', 'bed:bed-vestibule'],
+      },
+    ],
+    rewardItems: [
+      { itemId: 'resource-sunlight', count: 2 },
+      { itemId: 'resource-dew', count: 2 },
+    ],
+  },
+  {
+    id: 'q-hill-mist',
+    title: 'Über den Hügel im Nebel',
+    summary: 'Hinter dem Wasserturm führt ein alter Pfad über den Hügelkamm zu den Obstwiesen. Mit dem Licht des Mondfarns solltest du den Nebel teilen können.',
+    startsWhen: ['episode-2-complete'],
+    objectives: [
+      {
+        type: 'visitZone',
+        zoneId: 'hill-south',
+        description: 'Nimm den nördlichen Pfad beim Wasserturm hinauf zum Hügelpfad.',
+        markers: ['tower-to-hill'],
+      },
+      {
+        type: 'unblock',
+        obstacleId: 'fog-hill-ridge',
+        description: 'Teile den dichten Nebel auf dem Hügelkamm mit dem Licht des Mondfarns.',
+        markers: ['obstacle:fog-hill-ridge'],
+      },
+      {
+        type: 'visitZone',
+        zoneId: 'orchard-entrance',
+        description: 'Folge dem Kamm hinunter auf die alten Obstwiesen.',
+        markers: ['hill-to-orchard'],
+      },
+    ],
+  },
+  {
+    id: 'q-find-m',
+    title: 'Die Gärtnerin am Mutterbaum',
+    summary: 'Du hast die Obstwiesen hinter dem Hügel erreicht. Sprich mit der Krähe und finde M. auf der oberen Terrasse.',
+    startsWhen: ['quest-completed:q-hill-mist'],
+    objectives: [
+      {
+        type: 'flag',
+        flag: 'crow-orchard-talked',
+        description: 'Sprich am Eingang der Obstwiesen mit der Krähe.',
+        markers: ['npc:crow'],
+      },
+      {
+        type: 'unblock',
+        obstacleId: 'bramble-orchard-terrace',
+        description: 'Teile die Dornenhecke am Hang zur oberen Terrasse.',
+        markers: ['obstacle:bramble-orchard-terrace'],
+      },
+      {
+        type: 'flag',
+        flag: 'm-met',
+        description: 'Begegne M. beim alten Mutterbaum.',
+        markers: ['npc:m'],
+      },
+    ],
+  },
+  {
+    id: 'q-orchard-revival',
+    title: 'Wenn die Obstwiesen erwachen',
+    summary: 'Hilf M., die alten Bäume wiederzubeleben: öffne die Bewässerungsrinne, säe Nachtviolen für die Bienen und lies ihr Obstwiesen-Notizbuch.',
+    startsWhen: ['quest-completed:q-find-m'],
+    objectives: [
+      {
+        type: 'flag',
+        flag: 'orchard-sluice-repaired',
+        description: 'Repariere die alte Bewässerungsrinne (2 Sonnenlicht, 2 Tau, 1 Fundstück).',
+        markers: ['orchard-sluice'],
+      },
+      {
+        type: 'flag',
+        flag: 'bed-restored:bed-orchard-violet',
+        description: 'Pflanze Nachtviolen beim Bienenstand und lass sie erblühen.',
+        markers: ['bed:bed-orchard-violet', 'resource:orchard-seed-violet-1'],
+      },
+      {
+        type: 'flag',
+        flag: 'journal-read:page-orchard',
+        description: 'Lies M.s Obstwiesen-Notizbuch in ihrem Gartenhaus.',
+        markers: ['orchard-to-cottage', 'journal:page-orchard'],
+      },
+      {
+        type: 'flag',
+        flag: 'm-orchard-celebrated',
+        description: 'Kehre zu M. am Mutterbaum zurück.',
+        markers: ['npc:m'],
+      },
+    ],
+    rewardFlags: ['episode-3-complete'],
+    rewardItems: [{ itemId: 'orchard-apple-graft', count: 1 }],
+  },
 ];

@@ -20,6 +20,9 @@ export const WATER_TOWER_MAP: MapDef = {
     { op: 'rect', tile: 'brickWall', rect: { x: 14, y: 6, w: 4, h: 3 } },
     { op: 'rect', tile: 'soil', rect: { x: 20, y: 15, w: 4, h: 2 } },
     { op: 'rect', tile: 'paving', rect: { x: 24, y: 11, w: 5, h: 7 } },
+    // Northern ridge trail toward Hill Path (unlocked once Episode 2 completes)
+    { op: 'rect', tile: 'grass', rect: { x: 19, y: 4, w: 5, h: 3 } },
+    { op: 'rect', tile: 'overgrownPath', rect: { x: 20, y: 0, w: 3, h: 7 } },
   ],
   zones: [{ id: 'water-tower-plaza', name: 'Am Wasserturm', rect: { x: 0, y: 0, w: 32, h: 28 } }],
   obstacles: [],
@@ -37,6 +40,7 @@ export const WATER_TOWER_MAP: MapDef = {
       showWhenFlag: 'tower-cistern-repaired',
     },
     { texture: 'stump', at: { x: 8.5, y: 14.5 }, solid: { x: 8, y: 13.9, w: 1, h: 0.6 } },
+    { texture: 'signpost-north', at: { x: 23.4, y: 5.5 } },
     { texture: 'railing', at: { x: 27.6, y: 13.5 }, solid: { x: 26.2, y: 12.7, w: 2.8, h: 0.6 } },
     { texture: 'railing', at: { x: 27.6, y: 16.5 }, solid: { x: 26.2, y: 15.7, w: 2.8, h: 0.6 } },
     { texture: 'bench', at: { x: 25.5, y: 11.8 }, solid: { x: 24.4, y: 11, w: 2.2, h: 0.7 } },
@@ -48,6 +52,24 @@ export const WATER_TOWER_MAP: MapDef = {
       at: { x: 1.5, y: 14 },
       label: 'Zur Trasse',
       target: { mapId: 'tramline', spawn: 'east' },
+    },
+    {
+      id: 'water-tower-sign-north',
+      type: 'dialogue',
+      at: { x: 23.4, y: 5.8 },
+      label: 'Lesen',
+      dialogueId: 'tower-sign-north',
+    },
+    {
+      id: 'tower-to-hill',
+      type: 'door',
+      at: { x: 21.5, y: 1.4 },
+      label: 'Zum Hügelpfad',
+      locked: true,
+      unlockFlag: 'episode-2-complete',
+      lockedDialogueId: 'hill-path-locked',
+      target: { mapId: 'hill-path', spawn: 'south' },
+      radius: 64,
     },
     {
       id: 'water-tower-door',
@@ -105,5 +127,6 @@ export const WATER_TOWER_MAP: MapDef = {
   spawns: {
     default: { x: 3, y: 14 },
     west: { x: 3, y: 14 },
+    north: { x: 21.5, y: 2.8 },
   },
 };
