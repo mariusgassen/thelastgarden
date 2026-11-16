@@ -19,7 +19,7 @@ import { NpcLayer } from '../systems/npcs';
 import { ObstacleLayer } from '../systems/obstacles';
 import { PlantLayer } from '../systems/plantLayer';
 import { ToolLayer } from '../systems/toolLayer';
-import { getToolMode, isToolActing, setToolMode } from '../systems/tools';
+import { getToolMode, isToolActing, peekTool, setToolMode } from '../systems/tools';
 import { FEET_OFFSET_Y, PlayerController } from '../systems/player';
 import { QuestMarkerLayer } from '../systems/questMarkers';
 import { ResourceLayer } from '../systems/resources';
@@ -209,8 +209,11 @@ export class WorldScene extends Phaser.Scene implements WorldApi {
       if (inputState.modal || this.transitioning) return;
       const p = this.cameras.main.getWorldPoint(x, y);
       if (getBuildMode().active) this.building.tap(p.x, p.y);
-      else if (isToolActing()) this.tools.tap(p.x, p.y);
-      else this.interaction.interactAt(p.x, p.y);
+      else if (isToolActing()) {
+        const acts = peekTool(this.map.id, { x: this.player.feetX, y: this.player.feetY });
+        if (!acts && this.interaction.interactAt(p.x, p.y)) return;
+        this.tools.tap(p.x, p.y);
+      } else this.interaction.interactAt(p.x, p.y);
     });
 
     this.cameras.main.fadeIn(300, 31, 46, 29);
@@ -223,19 +226,20 @@ export class WorldScene extends Phaser.Scene implements WorldApi {
   }
 
   override update(_time: number, delta: number): void {
+    const acts = isToolActing() ? peekTool(this.map.id, { x: this.player.feetX, y: this.player.feetY }) : null;
     if (inputState.consumeInteract()) {
       if (inputState.modal) bus.emit('dialogue-advance', undefined);
       else if (!this.transitioning) {
         if (getBuildMode().active) this.building.confirm();
         else if (getToolMode().open) setToolMode(false);
-        else if (isToolActing()) this.tools.confirm();
-        else this.interaction.interactFocused();
+        else if (acts) this.tools.confirm();
+        else if (!this.interaction.interactFocused() && isToolActing()) this.tools.confirm();
       }
     }
 
     if (inputState.bottomInset !== this.appliedInset) this.applyZoom();
     const frozen = inputState.modal || this.transitioning;
-    const building = getBuildMode().active || isToolActing() || getToolMode().open;
+    const suppressInteract = getBuildMode().active || getToolMode().open || acts !== null;
     const onBlight = isBlightedPx(this.map.id, this.player.feetX, this.player.feetY);
     const restedHorse = isRidingHere(this.map.id) && isHorseRested() ? RESTED_SPEED_FACTOR : 1;
     const blightDrag = onBlight && !isBlightproof() ? BLIGHT_SPEED_FACTOR : 1;
@@ -245,8 +249,8 @@ export class WorldScene extends Phaser.Scene implements WorldApi {
     this.tools.update(delta);
     this.horse.update(this.player.feetX, this.player.feetY, delta, frozen);
     this.atmosphere.update(delta);
-    // While building, picking a tool, or working with a tool, E and taps act on the world, so nothing else takes the focus.
-    this.interaction.update(!frozen && !building);
+    // While building, picking a tool, or standing at a live tool target, suppress normal interactable focus.
+    this.interaction.update(!frozen && !suppressInteract);
     this.updateMarker();
     this.updateZone();
     if (!this.transitioning) this.syncPlayerToSave();

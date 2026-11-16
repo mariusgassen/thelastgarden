@@ -2572,10 +2572,12 @@ function generateItemAndUiTextures(make: MakeFn): void {
     g.strokeRoundedRect(1, 1, 54, 54, 10);
   });
   make('ui-slot-selected', 56, 56, (g) => {
-    g.fillStyle(0x364a2d, 1);
+    g.fillStyle(0x5b4d21, 1);
     g.fillRoundedRect(0, 0, 56, 56, 11);
-    g.lineStyle(2.5, 0xe9a23b, 1);
+    g.lineStyle(3, 0xe9a23b, 1);
     g.strokeRoundedRect(1.5, 1.5, 53, 53, 10);
+    g.lineStyle(1.2, 0xfff6e0, 0.85);
+    g.strokeRoundedRect(3.5, 3.5, 49, 49, 8);
   });
   make('ui-slot-ready', 56, 56, (g) => {
     g.fillStyle(0x273a21, 0.98);

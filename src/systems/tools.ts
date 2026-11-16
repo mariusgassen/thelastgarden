@@ -192,8 +192,21 @@ export function cycleSeed(): string | undefined {
   const state = readState();
   state.seed = next;
   writeState(state);
+  gameState.save();
   announce();
   return next;
+}
+
+/** Picks a specific seed species for the satchel if the player carries seeds for it. */
+export function setSowSeed(plantId: string): boolean {
+  if (!getSowableSpecies().includes(plantId)) return false;
+  const state = readState();
+  if (state.seed === plantId) return true;
+  state.seed = plantId;
+  writeState(state);
+  gameState.save();
+  announce();
+  return true;
 }
 
 export function describeTool(toolId: string): { title: string; hint: string } {
@@ -209,7 +222,7 @@ export function describeTool(toolId: string): { title: string; hint: string } {
     const seed = getSowSeed();
     if (!seed) return { title: `${name} · leer`, hint: 'Ohne Samen im Beutel gibt es nichts zu säen.' };
     const def = content.plants.get(seed);
-    const more = getSowableSpecies().length > 1 ? ' Nochmal antippen: andere Sorte.' : '';
+    const more = getSowableSpecies().length > 1 ? ' Sorte links wählen oder erneut antippen.' : '';
     return {
       title: `${name} · ${def.name} (${gameState.getItemCount(def.seedItemId as string)})`,
       hint: tool.hint + more,
