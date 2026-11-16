@@ -40,6 +40,14 @@ export class HudButton {
     return this.shown;
   }
 
+  get x(): number {
+    return this.container.x;
+  }
+
+  get y(): number {
+    return this.container.y;
+  }
+
   setPosition(x: number, y: number): void {
     this.container.setPosition(x, y);
   }

@@ -379,9 +379,11 @@ Produce is spent at a workbench. Recipes are content, crafting is a Phaser-free 
   the map board in the vestibule), `getTravelStops()`, `travelTo(mapId)` → emits `fast-travel`,
   which `WorldScene` turns into `changeMap`. A stop is known once any zone of its map was
   visited, and its spawn is the one the player first arrives by, so travel never skips an
-  obstacle. `ui/MapPanel.ts` is the modal sheet (**M** or the map button; arrows + E, or tap).
-- **HUD.** `ui/HudButton.ts`: two small round buttons above the context button, shown once
-  unlocked and hidden while a modal is open.
+  obstacle. `ui/MapPanel.ts` is the modal sheet (**M** or the map button in the top-left
+  `ResourceBar`, after Menü and Beutel; arrows + E, or tap).
+- **HUD.** `ui/HudButton.ts`: `ResourceBar` (top-left: Menü leftmost, Beutel, Karte once unlocked)
+  and a bottom-right column above the context button (tool button lowest, build button, horse
+  button) shown once unlocked and hidden while a modal is open.
 - **Save.** Only `ext.horse = { riding }`. Everything else derives from flags and visited
   zones that older saves already have, so they get the map at once and `q-horse` on load.
 - **New outdoor map?** Add a `TravelStopDef` (a unit test checks every outdoor map has one);
@@ -489,20 +491,26 @@ Four craftable tools make the garden work easier. None is used up, nothing is so
   rule of a bed. The blight side is `pushBackBlight(mapId, px, py, radiusTiles)` in
   `systems/blight.ts`: it only clears what is there, it is not a ward, so it never seals a heart
   and the blight may creep back at night.
-- **Tool selection and active use.** The tool button (**T**) never jumps when opening `ui/ToolBar.ts`:
-  while the picker overlays the bottom edge, `ContextButton` is suppressed and the `HudButton`
-  column stays put. Quick-tapping the tool button opens the picker when empty-handed or puts the
-  equipped tool away when one is in hand; pressing and holding (or dragging) opens the picker,
-  highlights the hovered slot (`setPreview` / `slotAt`), and selects + closes on release. Picking any
-  slot (1–6 or tap, where slot 5 is the **Gärtnerhand** `AUTO_TOOL` and slot 6 is **Ablegen**
-  `DESELECT_TOOL`) closes the picker cleanly (`Esc` closes the picker or unequips the active tool).
-  Once a work tool (`isToolActing()`) is equipped and build mode is off, the picker stays closed and
-  the big round `ContextButton` becomes the tool icon itself (`peekTool(mapId, at)` dims it when
-  nothing is in reach) while E and taps act with the tool. A carried plant never blocks
-  `AUTO_TOOL`: with no free bed in reach it moves on to sickle/satchel. The satchel slot carries
-  the seed it sows as a badge (picking it again cycles seeds), and the spade slot carries the
-  uprooted plant as a badge. The lantern needs no action mode: picking it closes the bar and it
-  just shines.
+- **Tool selection and active use.** The tool button (**T**) sits lowest in the right HUD column
+  (above `ContextButton`, below build/horse) and never jumps when opening `ui/ToolBar.ts`: `ToolBar`
+  opens as a parallel vertical column to the left of the HUD buttons, animated smoothly out of the
+  tool button (`positionNear` / `setVisible`). Quick-tapping the tool button puts the equipped tool
+  away, re-equips the last used tool (`reEquipLastTool` / `getLastToolId`) when hands are empty, or
+  opens the picker if no tool was used yet; pressing and holding (or dragging)
+  opens the picker, highlights the hovered slot (`setPreview` / `slotAt`) with a left-side label pill,
+  and selects + closes on release. Picking any slot (1–6 or tap, where slot 5 is **Gärtnerhand**
+  `AUTO_TOOL` and slot 6 is **Ablegen** `DESELECT_TOOL`) closes the picker cleanly (`Esc` closes the
+  picker or unequips the active tool). Once a work tool (`isToolActing()`) is equipped and build
+  mode is off, the picker stays closed and the big round `ContextButton` becomes the tool icon itself
+  (`peekTool(mapId, at)` acts with the tool when a work target is in reach, or yields E, taps, and
+  `ContextButton` to nearby interactables such as doors, NPCs, or signs while keeping the tool in
+  hand — falling back to the dimmed tool icon when neither is in reach). A
+  carried plant never blocks `AUTO_TOOL`: with no free bed in reach it moves on to sickle/satchel.
+  The satchel slot carries the seed it sows as a badge; when 2+ seed types are carried, a horizontal
+  seed sub-strip expands left from the satchel slot (`seedAt` / `setSowSeed`) so any seed can be
+  picked directly by tap, click, or hold-drag release (picking satchel again cycles seeds). The spade
+  slot carries the uprooted plant as a badge. The lantern needs no action mode: picking it closes the
+  bar and it just shines.
 - **World.** `systems/toolLayer.ts` (`ToolLayer`): the lantern on its pole beside the player, puffs
   where a tool worked, a sickle sweep, and the blight push-back every 250 ms. `AtmosphereLayer`
   takes a `carriedLight` callback and punches the player's light into the night veil (redrawn at

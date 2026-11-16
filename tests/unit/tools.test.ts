@@ -19,12 +19,14 @@ import {
   equipTool,
   getCarriedLight,
   getEquippedTool,
+  getLastToolId,
   getOwnedTools,
   getSowSeed,
   getToolMode,
   isAutoTool,
   isToolActing,
   peekTool,
+  reEquipLastTool,
   setToolMode,
   useTool,
 } from '../../src/systems/tools';
@@ -309,5 +311,21 @@ describe('tools', () => {
     expect(getOwnedTools()).toEqual([]);
     expect(getEquippedTool()).toBeUndefined();
     expect(useTool('garden', feet()).ok).toBe(false);
+  });
+
+  it('remembers the last equipped tool after unequipping and re-equips it on one tap', () => {
+    expect(getLastToolId()).toBeUndefined();
+    expect(reEquipLastTool()).toBe(false);
+
+    give({ 'tool-sickle': 1, 'tool-shovel': 1 });
+    expect(equipTool('tool-shovel')).toBe(true);
+    expect(getLastToolId()).toBe('tool-shovel');
+
+    expect(equipTool(null)).toBe(true);
+    expect(getEquippedTool()).toBeUndefined();
+    expect(getLastToolId()).toBe('tool-shovel');
+
+    expect(reEquipLastTool()).toBe(true);
+    expect(getEquippedTool()?.id).toBe('tool-shovel');
   });
 });
