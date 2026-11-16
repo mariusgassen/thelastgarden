@@ -327,6 +327,11 @@ test.describe('Desktop gameplay and PWA', () => {
       )
       .toBe('river-farms');
 
+    // The poll above can retry once more after the trip already happened (the save lags the scene restart), which
+    // reopens the town map over the character. Close it so the pixel checks look at the courtyard.
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(200);
+
     expect(((await flushAndReadSave(page))?.ext.horse as { riding: boolean }).riding).toBe(true);
     await expect
       .poll(() => countColorPixels(page, { x: 460, y: 120, width: 360, height: 400 }, STRAW_HAT_RGB), {
