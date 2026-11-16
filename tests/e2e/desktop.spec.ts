@@ -757,19 +757,62 @@ test.describe('Desktop gameplay and PWA', () => {
       )
       .toBe(true);
 
-    // Row east out into the river
-    const boatStartX = (await flushAndReadSave(page))!.player.x;
+    // Row east across the river to the secluded east island (x >= 39 * 32)
     await page.keyboard.down('KeyD');
     await expect
-      .poll(async () => (await flushAndReadSave(page))?.player.x ?? boatStartX, { timeout: 15_000, intervals: [80] })
-      .toBeGreaterThan(boatStartX + 40);
+      .poll(async () => (await flushAndReadSave(page))?.player.x ?? 0, { timeout: 15_000, intervals: [80] })
+      .toBeGreaterThan(39.1 * 32);
     await page.keyboard.up('KeyD');
 
-    // Row back west toward the pier/shore, then disembark ("Anlegen" via KeyR)
+    // Disembark onto the east island -> lands at x ~ 40.5*32 and parks boat beside island
+    await expect
+      .poll(
+        async () => {
+          if (!(await isBoat())) return false;
+          await page.keyboard.press('KeyR');
+          await page.waitForTimeout(250);
+          return isBoat();
+        },
+        { timeout: 15_000, intervals: [150] },
+      )
+      .toBe(false);
+
+    const islandSave = await flushAndReadSave(page);
+    expect(islandSave?.player.x).toBeGreaterThan(40 * 32);
+    expect((islandSave?.ext.boat as { parked?: Record<string, { x: number; y: number }> } | undefined)?.parked?.['river-farms']).toBeDefined();
+
+    // Walk east onto the island to verify the player is not stuck in collisions after disembarking
+    const landX = islandSave!.player.x;
+    await page.keyboard.down('KeyD');
+    await expect
+      .poll(async () => (await flushAndReadSave(page))?.player.x ?? landX, { timeout: 10_000, intervals: [80] })
+      .toBeGreaterThan(landX + 20);
+    await page.keyboard.up('KeyD');
+
+    // Walk back toward the island's west bank and board the parked boat via KeyE
+    await page.keyboard.down('KeyA');
+    await expect
+      .poll(async () => (await flushAndReadSave(page))?.player.x ?? 9999, { timeout: 10_000, intervals: [80] })
+      .toBeLessThan(landX + 8);
+    await page.keyboard.up('KeyA');
+
+    await expect
+      .poll(
+        async () => {
+          if (await isBoat()) return true;
+          await page.keyboard.press('KeyE');
+          await page.waitForTimeout(250);
+          return isBoat();
+        },
+        { timeout: 15_000, intervals: [150] },
+      )
+      .toBe(true);
+
+    // Row back west toward the pier and land back on the pier ("Anlegen" via KeyR)
     await page.keyboard.down('KeyA');
     await expect
       .poll(async () => (await flushAndReadSave(page))?.player.x ?? 9999, { timeout: 15_000, intervals: [80] })
-      .toBeLessThan(boatStartX + 16);
+      .toBeLessThan(37.6 * 32);
     await page.keyboard.up('KeyA');
 
     await expect

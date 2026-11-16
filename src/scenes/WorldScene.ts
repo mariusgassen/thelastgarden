@@ -7,7 +7,7 @@ import { getMealSpeedFactor, isBlightproof } from '../systems/meals';
 import { BlightLayer } from '../systems/blightLayer';
 import { baseTileAt, CLEARED_TILE, getBuildMode, getClearedTiles, getPieceAt, groundGrid, isTileWalkable } from '../systems/building';
 import { BuildLayer } from '../systems/buildLayer';
-import { clearBoating, disembarkBoat, findLandingTile, isBoatingHere, isOpenWaterTile } from '../systems/boat';
+import { boardBoat, clearBoating, disembarkBoat, findLandingTile, getParkedBoat, isBoatingHere, isOpenWaterTile } from '../systems/boat';
 import { bus } from '../systems/events';
 import { HORSE_FLAG, isRidingHere } from '../systems/horse';
 import { HorseFollower } from '../systems/horseFollower';
@@ -66,6 +66,7 @@ export class WorldScene extends Phaser.Scene implements WorldApi {
   solids!: Phaser.Physics.Arcade.StaticGroup;
   private ground!: Phaser.Tilemaps.TilemapLayer;
   private marker!: Phaser.GameObjects.Image;
+  private parkedBoat!: Phaser.GameObjects.Image;
   /** Decorative trees by the forest tile they stand on, so Roden can fell them. */
   private trees = new Map<string, Phaser.GameObjects.Image>();
   private horse!: HorseFollower;
@@ -119,6 +120,7 @@ export class WorldScene extends Phaser.Scene implements WorldApi {
         this.dropTreesAround(x, y);
       }
       this.syncGroundCollisions();
+      this.syncParkedBoat();
     });
 
     this.physics.world.setBounds(0, 0, widthPx, heightPx);
@@ -128,6 +130,17 @@ export class WorldScene extends Phaser.Scene implements WorldApi {
     this.trees = new Map();
     this.decorate(grid);
     this.placeProps();
+    this.parkedBoat = this.add.image(0, 0, 'river-boat').setOrigin(0.5, 0.5).setScale(0.72).setVisible(false);
+    if (!prefersReducedMotion()) {
+      this.tweens.add({
+        targets: this.parkedBoat,
+        angle: { from: -1.5, to: 1.5 },
+        duration: 1400,
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.easeInOut',
+      });
+    }
 
     this.interaction = new InteractionSystem(() => ({
       world: this,
@@ -143,6 +156,21 @@ export class WorldScene extends Phaser.Scene implements WorldApi {
       getPosition: () => findLandingTile(this.map.id, this.player.feetX, this.player.feetY) ?? { x: this.player.feetX, y: this.player.feetY },
       canInteract: () => isBoatingHere(this.map.id) && findLandingTile(this.map.id, this.player.feetX, this.player.feetY) !== null,
       onInteract: () => disembarkBoat(this.map.id, this.player.feetX, this.player.feetY),
+    });
+    this.interaction.register({
+      id: 'boat-parked',
+      label: 'Ins Boot steigen',
+      radius: 76,
+      markerOffset: 24,
+      getPosition: () => {
+        const p = getParkedBoat(this.map.id);
+        return p ? { x: (p.x + 0.5) * TILE_SIZE, y: (p.y + 0.5) * TILE_SIZE } : { x: -9999, y: -9999 };
+      },
+      canInteract: () => !isBoatingHere(this.map.id) && getParkedBoat(this.map.id) !== null,
+      onInteract: () => {
+        const p = getParkedBoat(this.map.id);
+        if (p) boardBoat(this.map.id, p);
+      },
     });
     this.obstacles = new ObstacleLayer(this, this.map, this.solids, this.interaction);
     this.building = new BuildLayer(
@@ -172,6 +200,7 @@ export class WorldScene extends Phaser.Scene implements WorldApi {
     this.player.setRiding(isRidingHere(this.map.id));
     this.player.setBoating(isBoatingHere(this.map.id));
     this.syncGroundCollisions();
+    this.syncParkedBoat();
     this.horse = new HorseFollower(this, this.map.id, this.isWalkablePx);
     this.horse.sync(this.player.feetX, this.player.feetY, this.player.facing);
     bus.onScene(this, 'riding-changed', () => this.applyRiding());
@@ -318,12 +347,14 @@ export class WorldScene extends Phaser.Scene implements WorldApi {
     const boating = isBoatingHere(this.map.id);
     if (boating === this.player.isBoating) return;
     const saved = gameState.data.player;
+    this.player.setBoating(boating);
     if (saved.mapId === this.map.id && saved.x >= 0 && saved.y >= 0) {
       this.player.sprite.setPosition(saved.x, saved.y - FEET_OFFSET_Y);
+      (this.player.sprite.body as Phaser.Physics.Arcade.Body).reset(this.player.sprite.x, this.player.sprite.y);
       this.player.sprite.setVelocity(0, 0);
     }
-    this.player.setBoating(boating);
     this.syncGroundCollisions();
+    this.syncParkedBoat();
     this.horse.sync(this.player.feetX, this.player.feetY, this.player.facing);
     const puff = this.add.particles(this.player.feetX, this.player.feetY - 6, 'sparkle', {
       angle: { min: 180, max: 360 },
@@ -335,6 +366,18 @@ export class WorldScene extends Phaser.Scene implements WorldApi {
     });
     puff.setDepth(this.player.feetY + 1).explode(8);
     this.time.delayedCall(600, () => puff.destroy());
+  }
+
+  private syncParkedBoat(): void {
+    if (!this.parkedBoat) return;
+    const parked = !isBoatingHere(this.map.id) ? getParkedBoat(this.map.id) : null;
+    if (!parked) {
+      this.parkedBoat.setVisible(false);
+      return;
+    }
+    const cx = (parked.x + 0.5) * TILE_SIZE;
+    const cy = (parked.y + 0.5) * TILE_SIZE;
+    this.parkedBoat.setPosition(cx, cy).setDepth(cy - 1).setVisible(true);
   }
 
   private syncGroundCollisions(): void {
