@@ -89,7 +89,11 @@ export class QuestLog {
       .setOrigin(1, 0);
     this.list = scene.add.container(0, 0);
     this.listMask = scene.add.graphics().setVisible(false);
-    this.list.setMask(this.listMask.createGeometryMask());
+    if (scene.renderer.type === Phaser.WEBGL) {
+      this.list.enableFilters().filters?.external.addMask(this.listMask);
+    } else {
+      this.list.setMask(this.listMask.createGeometryMask());
+    }
     this.panel = scene.add
       .container(0, 0, [this.panelBg, this.panelTitle, this.closeText, this.list])
       .setDepth(96_000)
