@@ -488,7 +488,7 @@ Four craftable tools make the garden work easier. None is used up, nothing is so
   interacting, like build mode, and the two modes close each other. A fifth slot, the
   **Gärtnerhand** (`AUTO_TOOL`, equipped as `ext.tools.equipped = 'auto'`, the default when the
   mode opens with nothing in hand), picks per spot: sets down a carried plant, else harvests,
-  else sows. While the bar is open the big round action button shows the tool in hand as an icon
+  else sows (a carried plant never blocks it: with no free bed in reach it moves on). `peekTool(mapId, at)` says what a press would do right now, so the action button shows that tool's icon, dimmed when nothing is in reach, and the spade's slot carries the carried plant as a badge. While the bar is open the big round action button shows the tool in hand as an icon
   and uses it, so touch needs no world tap; on touch the bar has bigger slots and only the
   name, and the satchel slot carries the seed it sows as a small badge. The lantern needs no mode:
   picking it closes the bar and it just shines.

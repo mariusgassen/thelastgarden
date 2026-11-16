@@ -10,6 +10,7 @@ import {
   isBedPlanted,
   isProduceReady,
   plantSeed,
+  transplantInto,
   STAGE_DURATION_MS,
 } from '../../src/systems/plants';
 import { parseSave } from '../../src/systems/save';
@@ -26,6 +27,7 @@ import {
   getToolMode,
   isAutoTool,
   isToolActing,
+  peekTool,
   setToolMode,
   useTool,
 } from '../../src/systems/tools';
@@ -146,6 +148,28 @@ describe('tools', () => {
     debugRewindGrowth(10 * STAGE_DURATION_MS);
     const reaped = useTool('garden', feet(0.5));
     expect(reaped.ok && reaped.used).toBe('sickle');
+  });
+
+  it('does not let a carried plant block the all-round hand, and says what a press would do', () => {
+    buildPlanters(1);
+    give({ 'seed-lavender': 2, 'seed-glowcap': 1, 'tool-sickle': 1, 'tool-shovel': 1 });
+    plantSeed(planter(0), 'lavender');
+    debugRewindGrowth(10 * STAGE_DURATION_MS);
+    equipTool('tool-shovel');
+    expect(peekTool('garden', feet(0))).toBe('shovel'); // the spade could dig the lavender up
+    useTool('garden', feet(0)); // digs the lavender out
+    expect(getCarriedPlant()).toBeDefined();
+    expect(peekTool('garden', feet(0))).toBe('shovel'); // three free slots take it
+    equipTool(AUTO_TOOL);
+    expect(peekTool('garden', feet(0))).toBe('shovel');
+    // Fill the other slots so the carried plant has no place, then something ripe appears.
+    for (const id of slotsOf(0)) transplantInto(id, { plantId: 'glowcap', progressMs: 10 * STAGE_DURATION_MS });
+    expect(peekTool('garden', feet(0))).toBe('sickle');
+    const reaped = useTool('garden', feet(0));
+    expect(reaped.ok && reaped.used).toBe('sickle');
+    const stuck = useTool('garden', feet(0)); // nothing left to do, but it says why
+    expect(stuck.ok).toBe(false);
+    expect(stuck.text).toMatch(/trägst/);
   });
 
   it('opens the tool mode with the all-round hand when nothing is in hand yet', () => {
