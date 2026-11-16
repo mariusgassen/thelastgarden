@@ -26,6 +26,7 @@ export function generateTextures(scene: Phaser.Scene): void {
 
   generateTileset(g);
   generateItemAndUiTextures(make);
+  generateBuildAndBlightTextures(make);
 
   make('shadow', 32, 12, (g) => {
     g.fillStyle(0x000000, 0.22);
@@ -2227,7 +2228,51 @@ const ITEM_ICON_DRAWERS: Record<string, (g: G) => void> = {
     g.fillStyle(0xf1e6c8, 1);
     g.fillRect(18, 28, 3, 5);
   },
+  // ── Raw materials (build mode) ──
+  'mat-wood': (g) => {
+    g.fillStyle(0x000000, 0.2);
+    g.fillEllipse(18, 30, 26, 5);
+    g.fillStyle(0x7a5233, 1);
+    g.fillRoundedRect(4, 18, 28, 9, 4);
+    g.fillStyle(0xa8753f, 1);
+    g.fillRoundedRect(6, 10, 26, 9, 4);
+    g.fillStyle(0xd9b98a, 1);
+    g.fillEllipse(30, 14.5, 5, 8);
+    g.fillEllipse(30, 22.5, 5, 8);
+    g.lineStyle(1.2, 0x7a5233, 0.9);
+    g.strokeEllipse(30, 14.5, 2.4, 4);
+    g.lineBetween(9, 13, 22, 13);
+  },
+  'mat-stone': (g) => {
+    g.fillStyle(0x000000, 0.2);
+    g.fillEllipse(18, 30, 28, 5);
+    g.fillStyle(0x7f7b72, 1);
+    g.fillEllipse(12, 23, 16, 12);
+    g.fillStyle(0x9a968c, 1);
+    g.fillEllipse(23, 21, 18, 15);
+    g.fillStyle(0xb9b5aa, 1);
+    g.fillEllipse(17, 13, 13, 10);
+    g.fillStyle(0xd6d2c6, 0.8);
+    g.fillEllipse(15, 11, 5, 3);
+    g.fillEllipse(25, 17, 5, 3);
+  },
+  'mat-scrap': (g) => {
+    g.fillStyle(0x000000, 0.2);
+    g.fillEllipse(18, 30, 26, 5);
+    g.fillStyle(0x8a8f96, 1);
+    g.fillTriangle(5, 27, 14, 9, 22, 27);
+    g.fillStyle(0xb07a52, 1);
+    g.fillRoundedRect(15, 15, 16, 12, 2);
+    g.lineStyle(1.6, 0x6e4a35, 1);
+    g.lineBetween(17, 19, 29, 19);
+    g.lineBetween(17, 23, 29, 23);
+    g.lineStyle(2.2, 0x5c636b, 1);
+    g.strokeCircle(11, 12, 4.5);
+    g.fillStyle(0xd9dde2, 0.9);
+    g.fillCircle(10, 20, 1.3);
+  },
 };
+
 
 export const ITEM_ICON_IDS = Object.keys(ITEM_ICON_DRAWERS);
 
@@ -2292,5 +2337,230 @@ function generateItemAndUiTextures(make: MakeFn): void {
       g.fillStyle(p.dot, 1);
       g.fillCircle(p.x + 6.5, p.y + 11, 3);
     }
+  });
+}
+
+/** Gather piles, the pieces of the build mode (`build-<id>`, see systems/buildLayer.ts) and the blight. */
+function generateBuildAndBlightTextures(make: MakeFn): void {
+  // ── Piles to chop, dig and salvage (ResourceNodeDef.texture) ──
+  make('node-wood', 44, 32, (g) => {
+    g.fillStyle(0x000000, 0.2);
+    g.fillEllipse(22, 28, 40, 7);
+    g.fillStyle(0x6e4a2f, 1);
+    g.fillRoundedRect(3, 17, 30, 9, 4);
+    g.fillRoundedRect(13, 19, 28, 9, 4);
+    g.fillStyle(0x8a603d, 1);
+    g.fillRoundedRect(8, 9, 30, 9, 4);
+    g.fillStyle(0xc9a47a, 1);
+    g.fillEllipse(36, 13.5, 6, 8);
+    g.fillEllipse(39, 23.5, 6, 8);
+    g.fillEllipse(5, 21.5, 5, 8);
+    g.lineStyle(1.2, 0x6e4a2f, 1);
+    g.strokeEllipse(36, 13.5, 3, 4);
+    g.strokeEllipse(39, 23.5, 3, 4);
+    g.fillStyle(0x6a9a4e, 0.9);
+    g.fillCircle(15, 10, 3);
+    g.fillCircle(26, 20, 2.5);
+  });
+  make('node-stone', 42, 30, (g) => {
+    g.fillStyle(0x000000, 0.2);
+    g.fillEllipse(21, 26, 38, 7);
+    g.fillStyle(0x7a5a3c, 1);
+    g.fillEllipse(21, 23, 36, 9);
+    g.fillStyle(0x7f7b72, 1);
+    g.fillEllipse(11, 19, 16, 12);
+    g.fillEllipse(31, 20, 15, 11);
+    g.fillStyle(0x9a968c, 1);
+    g.fillEllipse(21, 14, 18, 15);
+    g.fillStyle(0xc4c0b4, 0.85);
+    g.fillEllipse(18, 10, 7, 4);
+    g.fillEllipse(30, 17, 5, 3);
+    g.fillEllipse(9, 16, 5, 3);
+  });
+  make('node-scrap', 44, 34, (g) => {
+    g.fillStyle(0x000000, 0.2);
+    g.fillEllipse(22, 30, 40, 7);
+    g.fillStyle(0x8a8f96, 1);
+    g.fillTriangle(4, 29, 16, 7, 27, 29);
+    g.fillStyle(0xa9b0b8, 0.8);
+    g.fillTriangle(9, 26, 16, 11, 19, 26);
+    g.fillStyle(0xb07a52, 1);
+    g.fillRoundedRect(20, 15, 20, 14, 2);
+    g.lineStyle(1.6, 0x6e4a35, 1);
+    g.lineBetween(22, 20, 38, 20);
+    g.lineBetween(22, 25, 38, 25);
+    g.lineStyle(2.4, 0x5c636b, 1);
+    g.strokeCircle(31, 10, 5);
+    g.lineBetween(6, 12, 12, 20);
+    g.fillStyle(0x6a9a4e, 0.9);
+    g.fillCircle(8, 28, 3);
+    g.fillCircle(37, 29, 2.5);
+  });
+
+  // ── Built pieces ──
+  make('build-fence', 32, 34, (g) => {
+    g.fillStyle(0x000000, 0.18);
+    g.fillEllipse(16, 31, 30, 5);
+    g.fillStyle(0x8a603d, 1);
+    g.fillRect(0, 12, 32, 4);
+    g.fillRect(0, 21, 32, 4);
+    g.fillStyle(0xa8753f, 1);
+    g.fillRect(0, 12, 32, 1.5);
+    g.fillRect(0, 21, 32, 1.5);
+    for (const x of [3, 13, 23]) {
+      g.fillStyle(0x6d4a30, 1);
+      g.fillRoundedRect(x, 4, 6, 27, 2);
+      g.fillTriangle(x, 5, x + 3, 0, x + 6, 5);
+      g.fillStyle(0x8a603d, 1);
+      g.fillRect(x + 1, 5, 2, 25);
+    }
+  });
+  make('build-hedge', 34, 38, (g) => {
+    g.fillStyle(0x000000, 0.2);
+    g.fillEllipse(17, 35, 32, 6);
+    g.fillStyle(0x3f6b35, 1);
+    g.fillRoundedRect(1, 10, 32, 25, 9);
+    g.fillStyle(0x4c7a3d, 1);
+    g.fillCircle(9, 13, 8);
+    g.fillCircle(24, 12, 9);
+    g.fillCircle(17, 9, 8);
+    g.fillStyle(0x6a9a4e, 1);
+    g.fillCircle(12, 9, 5);
+    g.fillCircle(24, 8, 5);
+    g.fillCircle(8, 22, 4);
+    g.fillCircle(25, 24, 4);
+    g.fillStyle(0x6b2e4a, 1);
+    for (const [x, y] of [
+      [7, 16],
+      [19, 20],
+      [28, 15],
+      [15, 29],
+    ])
+      g.fillCircle(x, y, 1.8);
+  });
+  make('build-lantern', 22, 46, (g) => {
+    g.fillStyle(0x000000, 0.2);
+    g.fillEllipse(11, 43, 18, 5);
+    g.fillStyle(0xf3e38a, 0.28);
+    g.fillCircle(11, 12, 11);
+    g.fillStyle(0x4a4a46, 1);
+    g.fillRect(9.5, 20, 3, 23);
+    g.fillRoundedRect(5, 40, 12, 4, 2);
+    g.fillStyle(0x5c636b, 1);
+    g.fillTriangle(4, 6, 11, 0, 18, 6);
+    g.fillRect(5, 19, 12, 2.5);
+    g.fillStyle(0xf9e8a3, 1);
+    g.fillRoundedRect(6, 6, 10, 13, 2);
+    g.fillStyle(0xfffbe0, 1);
+    g.fillEllipse(11, 13, 5, 8);
+    g.lineStyle(1.2, 0x4a4a46, 1);
+    g.strokeRoundedRect(6, 6, 10, 13, 2);
+    g.lineBetween(11, 6, 11, 19);
+  });
+  make('build-planter', 32, 24, (g) => {
+    g.fillStyle(0x000000, 0.2);
+    g.fillEllipse(16, 21, 30, 5);
+    g.fillStyle(0x9a968c, 1);
+    g.fillRoundedRect(2, 17, 28, 5, 2);
+    g.fillStyle(0x8a603d, 1);
+    g.fillRoundedRect(1, 5, 30, 14, 3);
+    g.fillStyle(0x6d4a30, 1);
+    g.fillRect(1, 11, 30, 1.5);
+    g.fillRect(10, 5, 1.5, 14);
+    g.fillRect(20.5, 5, 1.5, 14);
+    g.fillStyle(0x5a4029, 1);
+    g.fillRoundedRect(3, 2, 26, 6, 3);
+    g.fillStyle(0x7a5a3c, 1);
+    g.fillEllipse(16, 4.5, 22, 3.5);
+  });
+  make('build-bridge', 32, 32, (g) => {
+    g.fillStyle(0x3a2a1e, 0.35);
+    g.fillRect(0, 2, 32, 30);
+    for (let i = 0; i < 4; i++) {
+      g.fillStyle(i % 2 === 0 ? 0xb88a5a : 0xa47849, 1);
+      g.fillRoundedRect(0.5, i * 8 + 0.5, 31, 7, 1.5);
+      g.fillStyle(0x6e4529, 0.9);
+      g.fillCircle(4, i * 8 + 4, 1);
+      g.fillCircle(28, i * 8 + 4, 1);
+    }
+  });
+  make('build-shelter', 44, 54, (g) => {
+    g.fillStyle(0x000000, 0.2);
+    g.fillEllipse(22, 50, 42, 7);
+    // Bedroll under the roof.
+    g.fillStyle(0xc9b28a, 1);
+    g.fillRoundedRect(11, 40, 22, 8, 4);
+    g.fillStyle(0x9b5a4a, 1);
+    g.fillRoundedRect(11, 40, 8, 8, 4);
+    // Posts on stone feet.
+    g.fillStyle(0x9a968c, 1);
+    g.fillRoundedRect(3, 46, 8, 5, 2);
+    g.fillRoundedRect(33, 46, 8, 5, 2);
+    g.fillStyle(0x6d4a30, 1);
+    g.fillRect(5, 20, 4, 28);
+    g.fillRect(35, 20, 4, 28);
+    g.fillStyle(0x8a603d, 1);
+    g.fillRect(5, 20, 1.5, 28);
+    g.fillRect(35, 20, 1.5, 28);
+    // Mossy lean-to roof with a tin patch.
+    g.fillStyle(0x6e4a2f, 1);
+    g.fillTriangle(0, 24, 22, 2, 44, 24);
+    g.fillStyle(0x8a603d, 1);
+    g.fillTriangle(4, 22, 22, 5, 40, 22);
+    g.lineStyle(1.2, 0x6e4a2f, 1);
+    for (const x of [12, 17, 27, 32]) g.lineBetween(x, 22, 22, 5);
+    g.fillStyle(0x9ea5ad, 1);
+    g.fillRoundedRect(24, 13, 9, 6, 1);
+    g.fillStyle(0x6a9a4e, 0.95);
+    g.fillCircle(10, 21, 3.5);
+    g.fillCircle(16, 14, 3);
+    g.fillCircle(31, 21, 3);
+  });
+
+  // ── The blight ──
+  make('blight-tile', 44, 44, (g) => {
+    const rnd = seededRandom(7411);
+    g.fillStyle(0x4b4456, 0.5);
+    g.fillRoundedRect(4, 4, 36, 36, 12);
+    for (let i = 0; i < 9; i++) {
+      g.fillStyle(i % 2 === 0 ? 0x3a3344 : 0x5f566b, 0.42);
+      g.fillCircle(8 + rnd() * 28, 8 + rnd() * 28, 5 + rnd() * 6);
+    }
+    g.lineStyle(1.4, 0x2a2533, 0.55);
+    for (let i = 0; i < 5; i++) {
+      const x = 8 + rnd() * 28;
+      const y = 8 + rnd() * 28;
+      g.lineBetween(x, y, x + (rnd() - 0.5) * 16, y + (rnd() - 0.5) * 16);
+    }
+    g.fillStyle(0x9a8fa8, 0.5);
+    for (let i = 0; i < 5; i++) g.fillCircle(8 + rnd() * 28, 8 + rnd() * 28, 1.2);
+  });
+  const drawHeart = (g: G, root: number, knot: number, core: number, coreAlpha: number): void => {
+    g.fillStyle(0x000000, 0.25);
+    g.fillEllipse(24, 38, 44, 8);
+    g.lineStyle(4, root, 1);
+    g.lineBetween(24, 28, 3, 36);
+    g.lineBetween(24, 28, 45, 37);
+    g.lineBetween(24, 26, 9, 14);
+    g.lineBetween(24, 26, 40, 12);
+    g.lineBetween(24, 24, 24, 4);
+    g.fillStyle(knot, 1);
+    g.fillCircle(24, 26, 12);
+    g.fillCircle(15, 30, 7);
+    g.fillCircle(33, 30, 7);
+    g.fillStyle(core, coreAlpha * 0.35);
+    g.fillCircle(24, 25, 9);
+    g.fillStyle(core, coreAlpha);
+    g.fillCircle(24, 25, 4.5);
+  };
+  make('blight-heart', 48, 42, (g) => drawHeart(g, 0x2f2a38, 0x443c50, 0xb48ad6, 0.9));
+  make('blight-heart-sealed', 48, 42, (g) => {
+    drawHeart(g, 0x6f6a66, 0x8a8580, 0xb9b5aa, 0.5);
+    // A first green shoot on the quiet knot.
+    g.fillStyle(0x3f6b35, 1);
+    g.fillRect(23, 8, 2, 12);
+    g.fillStyle(0x8fbd66, 1);
+    g.fillEllipse(20, 9, 7, 4);
+    g.fillEllipse(28, 7, 7, 4);
   });
 }

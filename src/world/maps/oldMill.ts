@@ -151,6 +151,14 @@ export const OLD_MILL_MAP: MapDef = {
     { id: 'dew-mill-2', itemId: 'resource-dew', at: { x: 25, y: 19 }, label: 'Tau sammeln', respawnMs: 45_000 },
     { id: 'curio-mill-yard', itemId: 'resource-curio', at: { x: 39, y: 11 }, label: 'Aufheben' },
     { id: 'curio-mill-pier', itemId: 'resource-curio', at: { x: 26.5, y: 3.2 }, label: 'Aufheben' },
+    // Piles to chop, dig and salvage: raw material for build mode (systems/building.ts).
+    { id: 'wood-mill-1', itemId: 'mat-wood', at: { x: 38, y: 20 }, label: 'Holz hacken', respawnMs: 60_000, texture: 'node-wood', count: 2 },
+    { id: 'stone-mill-1', itemId: 'mat-stone', at: { x: 27, y: 10 }, label: 'Steine ausgraben', respawnMs: 60_000, texture: 'node-stone' },
+    { id: 'scrap-mill-1', itemId: 'mat-scrap', at: { x: 7.5, y: 20 }, label: 'Schrott bergen', respawnMs: 60_000, texture: 'node-scrap' },
+  ],
+  // Where the blight grows from once Episode 1 is done (systems/blight.ts).
+  blightHearts: [
+    { id: 'heart-mill-meadow', at: { x: 40, y: 9 }, reach: 6 },
   ],
   spawns: {
     default: { x: 2.5, y: 13.5 },

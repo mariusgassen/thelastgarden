@@ -198,6 +198,14 @@ export const GARDEN_MAP: MapDef = {
     { id: 'seed-lily-2', itemId: 'seed-glow-lily', at: { x: 39, y: 42 }, label: 'Samen einsammeln' },
     { id: 'seed-lavender-1', itemId: 'seed-lavender', at: { x: 9, y: 33 }, label: 'Samen einsammeln' },
     { id: 'seed-lavender-2', itemId: 'seed-lavender', at: { x: 3, y: 36 }, label: 'Samen einsammeln' },
+    // Piles to chop, dig and salvage: raw material for build mode (systems/building.ts).
+    { id: 'wood-garden-1', itemId: 'mat-wood', at: { x: 34.5, y: 28.5 }, label: 'Holz hacken', respawnMs: 60_000, texture: 'node-wood', count: 2 },
+    { id: 'wood-garden-2', itemId: 'mat-wood', at: { x: 15, y: 38.5 }, label: 'Holz hacken', respawnMs: 60_000, texture: 'node-wood', count: 2 },
+    { id: 'wood-garden-3', itemId: 'mat-wood', at: { x: 33, y: 60.5 }, label: 'Holz hacken', respawnMs: 60_000, texture: 'node-wood', count: 2 },
+    { id: 'stone-garden-1', itemId: 'mat-stone', at: { x: 38.5, y: 44 }, label: 'Steine ausgraben', respawnMs: 60_000, texture: 'node-stone' },
+    { id: 'stone-garden-2', itemId: 'mat-stone', at: { x: 3.5, y: 30.5 }, label: 'Steine ausgraben', respawnMs: 60_000, texture: 'node-stone' },
+    { id: 'scrap-garden-1', itemId: 'mat-scrap', at: { x: 27, y: 64.5 }, label: 'Schrott bergen', respawnMs: 60_000, texture: 'node-scrap' },
+    { id: 'scrap-garden-2', itemId: 'mat-scrap', at: { x: 10.5, y: 27.5 }, label: 'Schrott bergen', respawnMs: 60_000, texture: 'node-scrap' },
   ],
   // The crow perches on the stump until Episode 1 completes; in Episode 4 all friends gather on the central plaza.
   npcs: [
@@ -229,6 +237,12 @@ export const GARDEN_MAP: MapDef = {
       appearsWhenFlag: 'bed-restored:bed-lavender',
       itemId: 'journal-page-lavender',
     },
+  ],
+  // Where the blight grows from once Episode 1 is done (systems/blight.ts).
+  blightHearts: [
+    { id: 'heart-plaza', at: { x: 7, y: 62 }, reach: 6 },
+    { id: 'heart-pond', at: { x: 46, y: 43 }, reach: 6 },
+    { id: 'heart-clearing', at: { x: 16, y: 11 }, reach: 7 },
   ],
   spawns: {
     default: { x: 25.5, y: 31 },

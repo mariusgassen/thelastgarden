@@ -101,3 +101,13 @@ export function drawHorseIcon(g: Phaser.GameObjects.Graphics, color: number): vo
     g.fillCircle(Math.cos(a) * 8.5, -1 + Math.sin(a) * 8.5, 1);
   }
 }
+
+/** A hammer: build mode. */
+export function drawHammerIcon(g: Phaser.GameObjects.Graphics, color: number): void {
+  g.lineStyle(4, 0x8a603d, 1);
+  g.lineBetween(-8, 10, 4, -3);
+  g.fillStyle(color, 1);
+  g.fillRoundedRect(-3, -12, 15, 8, 2);
+  g.fillStyle(THEME.sun, 1);
+  g.fillRect(-3, -12, 4, 8);
+}

@@ -62,6 +62,7 @@ describe('content registries', () => {
       for (const n of map.resourceNodes ?? []) knownMarkerIds.add(`resource:${n.id}`);
       for (const p of map.journalPages ?? []) knownMarkerIds.add(`journal:${p.id}`);
       for (const npc of map.npcs ?? []) knownMarkerIds.add(`npc:${npc.npcId}`);
+      for (const h of map.blightHearts ?? []) knownMarkerIds.add(`blight-heart:${h.id}`);
     }
 
     const obstacleIds = new Set(allObstacles().map((o) => o.id));

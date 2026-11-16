@@ -84,6 +84,14 @@ export class TutorialHints {
             : 'Taste I oder ein Klick auf die Leiste oben links öffnet deinen Beutel.',
           ttlMs: 10_000,
         });
+      } else if (itemId.startsWith('mat-')) {
+        this.enqueue({
+          id: 'build',
+          text: touch
+            ? 'Baumaterial! Der Hammer-Knopf unten rechts öffnet den Baumodus: Stück wählen, dann ein freies Feld antippen.'
+            : 'Baumaterial! Taste B oder der Hammer-Knopf öffnet den Baumodus: Stück wählen, dann auf ein freies Feld klicken.',
+          ttlMs: 14_000,
+        });
       } else if (itemId === 'pocket-workbench') {
         this.enqueue({
           id: 'pocket-workbench',
@@ -116,6 +124,13 @@ export class TutorialHints {
     bus.onScene(scene, 'flag-changed', ({ key, value }) => {
       if (key === TRAVEL_MAP_FLAG && value) mapHint();
       if (key === HORSE_FLAG && value) horseHint();
+    });
+    bus.onScene(scene, 'blight-changed', () => {
+      this.enqueue({
+        id: 'blight',
+        text: 'Die Welke ist erwacht. Sie wächst nachts, bremst deine Schritte und verschluckt, was dort lag. Zäune halten sie auf, Laternen und ausgewachsene Pflanzen drängen sie zurück.',
+        ttlMs: 16_000,
+      });
     });
     bus.onScene(scene, 'plant-planted', () => {
       this.dismiss('seed');

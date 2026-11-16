@@ -168,7 +168,7 @@ interface SaveGame {
 ## Input
 
 - **Desktop:** WASD or the arrow keys to move. E, Space or Enter to interact or advance dialogue.
-- **Inventory:** I opens the bag, C the pocket workbench (once owned), Q or Tab the quest log, M the town map and R mounts or dismounts the horse (each once unlocked).
+- **Inventory:** I opens the bag, C the pocket workbench (once owned), Q or Tab the quest log, M the town map, R mounts or dismounts the horse and B toggles build mode (each once unlocked).
 - **Touch:** a floating joystick that appears wherever the finger goes down. The context button sits bottom-right and is only visible while something is in range. A short tap on an object that is in range interacts with it. Up to 3 pointers are tracked, so you can move and press the button at the same time.
 - **Safe areas:** `env(safe-area-inset-*)` is read through `#safe-area-probe` in `index.html`. The HUD re-runs its layout on resize.
 
@@ -386,6 +386,63 @@ Produce is spent at a workbench. Recipes are content, crafting is a Phaser-free 
   zones that older saves already have, so they get the map at once and `q-horse` on load.
 - **New outdoor map?** Add a `TravelStopDef` (a unit test checks every outdoor map has one);
   mark interiors `indoor: true`.
+
+## Gathering, free building and the blight
+
+A survival edge on top of the garden: gather raw material, build freely on the tile grid, and
+push back a grey wilt that creeps in at night. No money, no chores, no fail state.
+
+- **Raw materials.** `mat-wood`, `mat-stone`, `mat-scrap` (`category: 'material'`). They come
+  from piles: ordinary `ResourceNodeDef`s with two new optional fields, `texture` (`node-wood`,
+  `node-stone`, `node-scrap` instead of the glowing orb) and `count` (wood gives 2). They regrow
+  after 60 s. The first material sets `gathered-material`, which unlocks build mode.
+- **Pieces.** `content/buildables.ts` → `content.buildables`, each a `BuildableDef { cost, on,
+  solid?, wardRadius?, lightRadius?, planter?, rest? }`:
+
+  | Piece | Cost | Does |
+  |---|---|---|
+  | Zaun | 1 Holz | wall; the blight never grows through a piece |
+  | Hecke | 1 Holz, 1 Brombeertrieb | wall, wards 1.5 tiles |
+  | Laterne | 1 Schrott, 1 Lichtpollen | wards 2.5 tiles, lights the night veil |
+  | Pflanzkübel | 2 Holz, 1 Feldstein | a planting bed; a mature plant in it wards like any bed |
+  | Steg | 2 Holz | on water next to the bank or another plank; makes it walkable |
+  | Unterstand | 4 Holz, 2 Feldstein, 1 Schrott | wards 3.5 tiles; *Rasten* skips to 07:00 |
+
+- **System.** `systems/building.ts` (no Phaser): `whyNotPlace` / `placePiece` / `removePiece`
+  (full refund; a planter also returns its seed), `isTileWalkable`, `getPieces`, and the
+  runtime-only build mode (`getBuildMode`, `setBuildMode`, `selectBuildPiece`, emits
+  `build-mode-changed`). Placement refuses solid tiles, indoor maps, blocked obstacles, the tiles
+  of beds and solid props, a ~1 tile circle around every interactable, NPC, pickup, page and
+  spawn (so nothing important can be walled off), the player's own tile for solid pieces, and
+  anything beyond 3.5 tiles. Other systems can veto tiles with `addPlacementBlocker`.
+  Planters reach `allPlantingBeds()` through `setDynamicBedProvider` in `world/index.ts`, so
+  plants, wards and nights treat them like any bed (id `planter:<mapId>:<x>:<y>`).
+- **Rendering.** `systems/buildLayer.ts` (`BuildLayer`): sprites `build-<id>`, colliders,
+  bridges switch the ground tile's collision off, a cursor (ghost + green/red/orange outline) on
+  desktop, and a shelter's *Rasten* interactable. While build mode is on, E and taps place or
+  remove instead of interacting.
+- **HUD.** Hammer `HudButton` (**B**) above the horse and map buttons, outdoors once unlocked.
+  `ui/BuildBar.ts` is the piece picker at the bottom (tap a slot or 1–6; Esc/B closes).
+- **The blight.** `systems/blight.ts` (logic) and `systems/blightLayer.ts` (patches, spores,
+  hearts). It wakes with `episode-1-complete`. `MapDef.blightHearts` (`{ id, at, reach }`, whole
+  tiles; garden ×3, tramline, orchard, old mill) each take `GROWTH_PER_NIGHT` (6) tiles per
+  in-game night, nearest first, never further than `reach` steps, never onto a built piece or a
+  warded tile (pieces with `wardRadius`, and every mature bed, ~3–4 tiles). `refreshBlight`
+  drops warded tiles and everything cut off from its heart, so a lantern at the edge pushes it
+  back and a ward on the heart (`isHeartSealed`) dries it all up for as long as it stands. It
+  runs on `build-changed` and every second for the current map (plants mature on their own
+  clock). On blight the player walks at 60 %, nothing can be built, and renewable pickups stay
+  away (one-time finds never do). Every night on every map grows once (`startBlightScheduler`
+  watches the day clock; a shelter's rest counts as the night).
+- **Quest.** Optional `q-blight` (starts with `episode-1-complete`): gather, build, inspect a
+  heart (`blight-seen`), seal one (`blight-heart-sealed`). Reward 4 Holz, 2 Schrott.
+- **Save.** Only `ext.building = { pieces: { [mapId]: { id, x, y }[] } }` and
+  `ext.blight = { tiles: { [mapId]: "x,y"[] } }`. Old saves start empty; past Episode 1 the
+  blight simply begins with the next night.
+- **Debug.** `__tlg.placePiece(mapId, id, x, y)`, `removePiece`, `getPieces`, `setBuildMode`,
+  `blightNightfall()`, `refreshBlight(mapId)`, `getBlightTiles(mapId)`.
+- **New outdoor map?** Optionally add `blightHearts`; a unit test checks hearts sit on open
+  ground, away from spawns and beds.
 
 ## Wave boundaries
 

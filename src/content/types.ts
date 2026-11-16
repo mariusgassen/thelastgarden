@@ -48,6 +48,26 @@ export interface RecipeDef {
   requiresFlag?: string;
 }
 
+/** Something the player can place on the map grid in build mode (content/buildables.ts, systems/building.ts). */
+export interface BuildableDef {
+  id: string;
+  name: string;
+  description: string;
+  cost: { itemId: string; count: number }[];
+  /** `water` pieces (the footbridge) go on water tiles and make them walkable; everything else needs open ground. */
+  on: 'ground' | 'water';
+  /** Collision box inside the tile, in tile fractions; omit for walkable pieces. */
+  solid?: { x: number; y: number; w: number; h: number };
+  /** Tiles (from the piece's centre) kept free of blight (systems/blight.ts). */
+  wardRadius?: number;
+  /** Light radius in px that opens the night veil (systems/atmosphere.ts). */
+  lightRadius?: number;
+  /** Holds one plant: the piece doubles as a planting bed (systems/plants.ts). */
+  planter?: boolean;
+  /** Resting here skips to the next morning. */
+  rest?: boolean;
+}
+
 interface QuestObjectiveBase {
   description: string;
   /**
