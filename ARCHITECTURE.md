@@ -168,6 +168,7 @@ interface SaveGame {
 ## Input
 
 - **Desktop:** WASD or the arrow keys to move. E, Space or Enter to interact or advance dialogue.
+- **Inventory:** I opens the bag, C the pocket workbench (once owned), Q or Tab the quest log.
 - **Touch:** a floating joystick that appears wherever the finger goes down. The context button sits bottom-right and is only visible while something is in range. A short tap on an object that is in range interacts with it. Up to 3 pointers are tracked, so you can move and press the button at the same time.
 - **Safe areas:** `env(safe-area-inset-*)` is read through `#safe-area-probe` in `index.html`. The HUD re-runs its layout on resize.
 
@@ -337,6 +338,26 @@ Produce is spent at a workbench. Recipes are content, crafting is a Phaser-free 
   The crow (orchard) and M. hand over the produce for the first Episode 3 crafts, so nobody
   has to walk back to the garden.
 - **Save.** Nothing new: crafted things are ordinary inventory items.
+
+## Inventory, pocket workbench and crafting tutorials
+
+- **Inventory ("Beutel").** `systems/inventory.ts` `getInventoryGroups()` groups carried items
+  by category (no Phaser); `ui/InventoryPanel.ts` renders them as a scrollable modal. It opens
+  by tapping the resource bar (`ResourceBar.contains`) or with **I**, and closes with × / Esc /
+  a tap outside. `UIScene.syncModal()` keeps `inputState.modal` true while a dialogue, the
+  quest log or the inventory is open.
+- **Pocket workbench.** The item `pocket-workbench` ("Werkzeugrolle") is the reward of
+  `q-craft-cutting`. While `hasPocketWorkbench()` is true, the inventory shows a "Werkeln"
+  button and **C** opens the same crafting menu as a workbench, on any map. Fixed workbenches
+  stay; they are how the first cutting is made.
+- **Tutorial quests.** `q-craft-cutting`, `q-craft-lantern` and `q-craft-sachet` start with
+  `quest-completed:q-journal-pages` (before `q-greenhouse` in the list, so the tracker keeps
+  the main journey); `q-craft-seed-mix` starts with `journal-read:page-mill`. Each has a
+  harvest step and a craft step whose text names the ingredients. They use two sticky flags:
+  `harvested:<produceItemId>` (set by `harvestBed`) and `crafted:<recipeId>` (set by `craft`).
+  The repair and bramble objectives of the main quests name their ingredients too.
+- **Hints.** `TutorialHints` explains the bag on the first harvest and the pocket workbench
+  when it is received.
 
 ## Wave boundaries
 

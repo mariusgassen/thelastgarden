@@ -62,6 +62,17 @@ describe('quests, NPCs, journal, resources, and interaction', () => {
       if (page.itemId) expect(gameState.getItemCount(page.itemId)).toBe(1);
     }
     expect(getCompletedQuests().map((q) => q.id)).toContain('q-journal-pages');
+    expect(getActiveQuests().map((q) => q.id)).toEqual(['q-craft-cutting', 'q-craft-lantern', 'q-craft-sachet', 'q-greenhouse']);
+    expect(getTrackedObjective()?.quest.id).toBe('q-greenhouse');
+
+    // Crafting tutorials: harvest, then craft. The first one rewards the pocket workbench.
+    gameState.setFlag('harvested:produce-tendril');
+    expect(gameState.getItemCount('pocket-workbench')).toBe(0);
+    gameState.setFlag('crafted:bramble-cutting');
+    expect(gameState.getItemCount('pocket-workbench')).toBe(1);
+    for (const flag of ['harvested:produce-light-pollen', 'crafted:lily-lantern', 'harvested:produce-scent-bundle', 'crafted:lavender-sachet']) {
+      gameState.setFlag(flag);
+    }
     expect(getActiveQuests().map((q) => q.id)).toEqual(['q-greenhouse']);
 
     // Receive key, unlock greenhouse, read map board -> completes Episode 1 and starts Episode 2 quests
@@ -152,6 +163,10 @@ describe('quests, NPCs, journal, resources, and interaction', () => {
     gameState.setFlag('mill-apple-grafted');
     gameState.setFlag('bed-restored:bed-mill-hollyhock');
     gameState.setFlag('journal-read:page-mill');
+    expect(getActiveQuests().map((q) => q.id)).toEqual(['q-mill-and-farms', 'q-craft-seed-mix']);
+    gameState.setFlag('harvested:produce-seed-pod');
+    gameState.setFlag('crafted:seed-mix');
+    expect(getCompletedQuests().map((q) => q.id)).toContain('q-craft-seed-mix');
     gameState.markZoneVisited('river-farms-yard');
     gameState.markPathUnblocked('bramble-farm-gate');
     gameState.setFlag('bed-restored:bed-farms-hollyhock');

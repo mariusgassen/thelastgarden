@@ -14,7 +14,7 @@ interface Row {
   text: Phaser.GameObjects.Text;
 }
 
-/** Compact, always-visible resource/seed/harvest counts. Top-left, never intercepts touches (no hit area). */
+/** Compact, always-visible resource/seed/harvest counts. Top-left; UIScene opens the inventory when it is tapped. */
 export class ResourceBar {
   private readonly container: Phaser.GameObjects.Container;
   private readonly bg: Phaser.GameObjects.Graphics;
@@ -50,6 +50,12 @@ export class ResourceBar {
 
   get rightEdge(): number {
     return this.container.x - 14 + this.pillW;
+  }
+
+  /** Pointer (CSS px) hit-test: the bar doubles as the button that opens the inventory. */
+  contains(x: number, y: number): boolean {
+    const left = this.container.x - 14;
+    return x >= left - 6 && x <= left + this.pillW + 6 && Math.abs(y - this.container.y) <= 22;
   }
 
   setPosition(x: number, y: number): void {

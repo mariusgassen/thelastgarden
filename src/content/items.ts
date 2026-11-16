@@ -130,6 +130,14 @@ export const ITEMS: ItemDef[] = [
     color: 0xd9a37c,
   },
   {
+    id: 'pocket-workbench',
+    name: 'Werkzeugrolle',
+    description: 'M.s alte Lederrolle mit Ahle, Bindfaden und Wachs. Damit kannst du überall werkeln — öffne den Beutel und wähle „Werkeln“.',
+    category: 'tool',
+    stackable: false,
+    color: 0x8a603d,
+  },
+  {
     id: 'craft-bramble-cutting',
     name: 'Brombeer-Steckling',
     description: 'Zwei bewurzelte Triebe in feuchtem Moos. An einem Dornengestrüpp gesetzt, windet er sich hindurch und öffnet einen Weg.',

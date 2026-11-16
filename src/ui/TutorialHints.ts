@@ -72,6 +72,26 @@ export class TutorialHints {
         this.enqueue({ id: 'seed', text: 'Samen! Pflanze sie auf ein freies Beet — die dunkle Erde im Hauptgarten.', ttlMs: 12_000 });
       }
     });
+    bus.onScene(scene, 'inventory-changed', ({ itemId, count }) => {
+      if (count <= 0) return;
+      if (content.items.find(itemId)?.category === 'produce') {
+        this.enqueue({
+          id: 'inventory',
+          text: touch
+            ? 'Tippe auf die Leiste oben links, um in deinen Beutel zu sehen.'
+            : 'Taste I oder ein Klick auf die Leiste oben links öffnet deinen Beutel.',
+          ttlMs: 10_000,
+        });
+      } else if (itemId === 'pocket-workbench') {
+        this.enqueue({
+          id: 'pocket-workbench',
+          text: touch
+            ? 'Die Werkzeugrolle ist deine Werkbank für unterwegs: Beutel öffnen und „Werkeln“ antippen.'
+            : 'Die Werkzeugrolle ist deine Werkbank für unterwegs: Taste C, oder im Beutel „Werkeln“.',
+          ttlMs: 12_000,
+        });
+      }
+    });
     bus.onScene(scene, 'plant-planted', () => {
       this.dismiss('seed');
       this.enqueue({ id: 'planted', text: 'Pflanzen brauchen Zeit. Schau später wieder vorbei — und achte nachts auf deine Beete.', ttlMs: 8_000 });

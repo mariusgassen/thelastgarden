@@ -224,6 +224,63 @@ test.describe('Desktop gameplay and PWA', () => {
     expect(errors).toEqual([]);
   });
 
+  test('opens the bag and crafts anywhere with the pocket workbench', async ({ page }) => {
+    const errors = trackErrors(page);
+
+    await page.addInitScript((key) => {
+      if (localStorage.getItem(key)) return;
+      localStorage.setItem(
+        key,
+        JSON.stringify({
+          version: 1,
+          savedAt: Date.now(),
+          // Out in the garden, far from any workbench
+          player: { mapId: 'garden', x: 25.5 * 32, y: 36 * 32, facing: 'right' },
+          world: {
+            unblockedPaths: [],
+            visitedZones: ['garden'],
+            flags: { 'crow-met': true, 'journal-read:page-bramble': true },
+          },
+          inventory: { items: { 'pocket-workbench': 1, 'produce-tendril': 2, 'resource-dew': 1 } },
+          quests: { active: ['q-restore-beds'], completed: ['q-meet-crow'], progress: {} },
+          ext: {},
+        }),
+      );
+    }, SAVE_KEY);
+
+    await page.goto('/');
+    await waitForGameBoot(page);
+
+    // The bag opens with I and blocks movement while open; Escape closes it again
+    const before = (await flushAndReadSave(page)) as SaveSnapshot;
+    await page.keyboard.press('KeyI');
+    await page.waitForTimeout(300);
+    await page.keyboard.down('KeyD');
+    await page.waitForTimeout(500);
+    await page.keyboard.up('KeyD');
+    expect(((await flushAndReadSave(page)) as SaveSnapshot).player.x).toBe(before.player.x);
+    await page.keyboard.press('Escape');
+
+    // C opens the recipe list anywhere (1 = Brombeer-Steckling)
+    await expect
+      .poll(
+        async () => {
+          const have = (await flushAndReadSave(page))?.inventory.items['craft-bramble-cutting'] ?? 0;
+          if (have > 0) return have;
+          await page.keyboard.press('KeyC');
+          await page.waitForTimeout(400);
+          await page.keyboard.press('Digit1');
+          await page.waitForTimeout(300);
+          return (await flushAndReadSave(page))?.inventory.items['craft-bramble-cutting'] ?? 0;
+        },
+        { timeout: 15_000, intervals: [100] },
+      )
+      .toBe(1);
+
+    expect(((await flushAndReadSave(page)) as SaveSnapshot).world.flags['crafted:bramble-cutting']).toBe(true);
+    expect(errors).toEqual([]);
+  });
+
   test('completes greenhouse vestibule unlock and Episode 1 ending from seeded save', async ({ page }) => {
     const errors = trackErrors(page);
 
