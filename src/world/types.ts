@@ -239,6 +239,8 @@ export interface MapDef {
   npcs?: NpcPlacementDef[];
   /** Flag-gated readable notes (Wave 3). */
   journalPages?: JournalPageDef[];
+  /** Forest the player may cut back with the *Roden* build piece (systems/building.ts); everything else stays wall. */
+  clearable?: TileRect[];
   /** Sources of the nightly blight; outdoor maps only. */
   blightHearts?: BlightHeartDef[];
   /** Named spawn points (tiles). `default` is required. */
