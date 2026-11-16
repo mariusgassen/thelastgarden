@@ -90,4 +90,25 @@ export const RECIPES: RecipeDef[] = [
     ],
     requiresFlag: 'journal-read:page-mill',
   },
+  // Cooking is learned by the first harvest of its crop (flag `harvested:<item>`), not from a page.
+  {
+    id: 'berry-mash',
+    name: 'Beerenmus',
+    result: [{ itemId: 'meal-berry-mash', count: 1 }],
+    cost: [
+      { itemId: 'produce-honeyberry', count: 2 },
+      { itemId: 'resource-sunlight', count: 1 },
+    ],
+    requiresFlag: 'harvested:produce-honeyberry',
+  },
+  {
+    id: 'turnip-stew',
+    name: 'Rübeneintopf',
+    result: [{ itemId: 'meal-turnip-stew', count: 1 }],
+    cost: [
+      { itemId: 'produce-gold-turnip', count: 2 },
+      { itemId: 'produce-glowcap', count: 1 },
+    ],
+    requiresFlag: 'harvested:produce-gold-turnip',
+  },
 ];

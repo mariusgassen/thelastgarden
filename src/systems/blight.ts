@@ -31,14 +31,14 @@ import type { BlightHeartDef } from '../world/types';
 import { addPlacementBlocker, getPieceAt, getPieces, isTileWalkable } from './building';
 import { getDayTime, setDayTimeHour } from './dayClock';
 import { bus } from './events';
-import { isBedMature } from './plants';
+import { getBedState, isBedMature } from './plants';
 import { gameState } from './state';
 
 /** The blight wakes once the garden's first chapter is done; older saves that are past it get it on load. */
 export const BLIGHT_FLAG = 'episode-1-complete';
 /** New tiles per living heart and night. */
 export const GROWTH_PER_NIGHT = 6;
-/** A mature plant wards this many tiles around its bed (plus a little for wide beds). */
+/** A mature plant wards this many tiles around its bed (plus a little for wide beds), unless its species says otherwise (`PlantDef.wardRadius`). */
 const PLANT_WARD_TILES = 3;
 
 export type HeartWithMap = BlightHeartDef & { mapId: string };
@@ -112,10 +112,11 @@ export function getWards(mapId: string): Ward[] {
   }
   for (const bed of allPlantingBeds()) {
     if (bed.mapId !== mapId || !isBedMature(bed.id)) continue;
+    const species = content.plants.get(getBedState(bed.id)!.plantId);
     wards.push({
       x: bed.rect.x + bed.rect.w / 2,
       y: bed.rect.y + bed.rect.h / 2,
-      radius: PLANT_WARD_TILES + Math.max(bed.rect.w, bed.rect.h) / 4,
+      radius: (species.wardRadius ?? PLANT_WARD_TILES) + Math.max(bed.rect.w, bed.rect.h) / 4,
     });
   }
   return wards;

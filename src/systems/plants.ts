@@ -42,7 +42,20 @@ export const DEW_BOOST_MS = STAGE_DURATION_MS;
 const DEW_ITEM_ID = 'resource-dew';
 
 /** Species tried, in order, on a bed that accepts any plant (PlantingBedDef.plantId is omitted). */
-const ANY_BED_SPECIES_ORDER = ['bramble-vine', 'glow-lily', 'lavender', 'night-violet', 'moon-fern', 'hollyhock'];
+const ANY_BED_SPECIES_ORDER = [
+  'bramble-vine',
+  'glow-lily',
+  'lavender',
+  'night-violet',
+  'moon-fern',
+  'hollyhock',
+  'glowcap',
+  'thornroot',
+  'reed',
+  'willow',
+  'honeyberry',
+  'gold-turnip',
+];
 
 function readState(): PlantsExt {
   return gameState.getExt<PlantsExt>('plants', { beds: {} });

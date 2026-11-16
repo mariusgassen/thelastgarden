@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { content, type DialogueLine } from '../content';
 import { isBlightedPx } from '../systems/blight';
+import { getMealSpeedFactor, isBlightproof } from '../systems/meals';
 import { BlightLayer } from '../systems/blightLayer';
 import { getBuildMode, isTileWalkable } from '../systems/building';
 import { BuildLayer } from '../systems/buildLayer';
@@ -193,7 +194,7 @@ export class WorldScene extends Phaser.Scene implements WorldApi {
     const frozen = inputState.modal || this.transitioning;
     const building = getBuildMode().active;
     const onBlight = isBlightedPx(this.map.id, this.player.feetX, this.player.feetY);
-    this.player.update(delta, frozen, onBlight ? BLIGHT_SPEED_FACTOR : 1);
+    this.player.update(delta, frozen, (onBlight && !isBlightproof() ? BLIGHT_SPEED_FACTOR : 1) * getMealSpeedFactor());
     this.building.update(!frozen);
     this.horse.update(this.player.feetX, this.player.feetY, delta, frozen);
     this.atmosphere.update(delta);

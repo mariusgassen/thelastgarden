@@ -145,6 +145,7 @@ export const OLD_MILL_MAP: MapDef = {
     { id: 'bed-mill-extra', rect: { x: 34, y: 11, w: 4, h: 2 } },
   ],
   resourceNodes: [
+    { id: 'mill-seed-reed', itemId: 'seed-reed', at: { x: 21.5, y: 17.5 }, label: 'Samen einsammeln' },
     { id: 'sun-mill-1', itemId: 'resource-sunlight', at: { x: 9, y: 10 }, label: 'Sonnenlicht sammeln', respawnMs: 45_000 },
     { id: 'sun-mill-2', itemId: 'resource-sunlight', at: { x: 38, y: 16 }, label: 'Sonnenlicht sammeln', respawnMs: 45_000 },
     { id: 'dew-mill-1', itemId: 'resource-dew', at: { x: 17.5, y: 19 }, label: 'Tau sammeln', respawnMs: 45_000 },
