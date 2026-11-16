@@ -8,19 +8,26 @@ import {
   unblockPath,
 } from '../../src/systems/obstacles';
 import {
+  canWaterBed,
   currentStage,
   debugRewindGrowth,
   getAllPlantedBeds,
   getBedState,
   getLightSources,
   getMatureClearingKind,
+  getPlantableSpecies,
+  HARVEST_REGROW_MS,
+  harvestBed,
   hasAbility,
   isBedMature,
   isBedPlanted,
+  isProduceReady,
   plantSeed,
+  SEED_DROP_EVERY,
   shiftGrowth,
   STAGE_DURATION_MS,
   startGrowthTicker,
+  waterBed,
 } from '../../src/systems/plants';
 import { gameState } from '../../src/systems/state';
 import { findObstacle } from '../../src/world';
@@ -101,6 +108,98 @@ describe('plants and obstacles systems', () => {
     expect(gameState.hasFlag('ability:emit-light')).toBe(true);
     expect(hasAbility('emit-light')).toBe(true);
     expect(getLightSources()).toEqual([{ bedId: 'bed-lily', mapId: 'garden', lightRadius: 150 }]);
+  });
+
+  it('lets the player pick the species for an open bed', () => {
+    expect(getPlantableSpecies('unknown-bed')).toEqual([]);
+    gameState.addItem('seed-glow-lily', 1);
+    gameState.addItem('seed-lavender', 1);
+    expect(getPlantableSpecies('bed-extra')).toEqual(['glow-lily', 'lavender']);
+    expect(getPlantableSpecies('bed-lavender')).toEqual(['lavender']); // species-locked bed
+
+    expect(plantSeed('bed-extra', 'bramble-vine')).toBe(false); // no such seed owned
+    expect(plantSeed('bed-lavender', 'glow-lily')).toBe(false); // bed does not accept it
+    expect(plantSeed('bed-extra', 'lavender')).toBe(true);
+    expect(getBedState('bed-extra')?.plantId).toBe('lavender');
+    expect(gameState.getItemCount('seed-lavender')).toBe(0);
+    expect(gameState.getItemCount('seed-glow-lily')).toBe(1);
+  });
+
+  it('waters a growing bed with dew once per stage, and never needs dew to mature', () => {
+    gameState.addItem('seed-glow-lily', 1);
+    expect(plantSeed('bed-lily')).toBe(true);
+    expect(canWaterBed('bed-lily')).toBe(false); // no dew
+    expect(waterBed('bed-lily')).toBe(false);
+
+    gameState.addItem('resource-dew', 3);
+    expect(waterBed('bed-lily')).toBe(true);
+    expect(gameState.getItemCount('resource-dew')).toBe(2);
+    expect(currentStage(getBedState('bed-lily')!)).toBe(1);
+    expect(waterBed('bed-lily')).toBe(false); // this stage is already watered
+    expect(gameState.getItemCount('resource-dew')).toBe(2);
+
+    vi.advanceTimersByTime(STAGE_DURATION_MS);
+    expect(waterBed('bed-lily')).toBe(true);
+    expect(isBedMature('bed-lily')).toBe(true);
+    expect(waterBed('bed-lily')).toBe(false); // mature beds are not watered
+    expect(gameState.getItemCount('resource-dew')).toBe(1);
+
+    // Without dew the same species still matures on its own
+    gameState.addItem('seed-glow-lily', 1);
+    expect(plantSeed('bed-tower-lily')).toBe(true);
+    vi.advanceTimersByTime(STAGE_DURATION_MS * 3);
+    expect(isBedMature('bed-tower-lily')).toBe(true);
+  });
+
+  it('harvests regrowing produce from mature beds and drops a seed on every third harvest', () => {
+    gameState.addItem('seed-bramble-vine', 1);
+    expect(plantSeed('bed-bramble')).toBe(true);
+    expect(isProduceReady('bed-bramble')).toBe(false);
+    expect(harvestBed('bed-bramble')).toBeNull(); // not mature yet
+    expect(harvestBed('unknown-bed')).toBeNull();
+
+    vi.advanceTimersByTime(STAGE_DURATION_MS * 3);
+    expect(isProduceReady('bed-bramble')).toBe(true);
+
+    const harvested: string[] = [];
+    const onHarvest = (p: { itemId: string }) => harvested.push(p.itemId);
+    bus.on('plant-harvested', onHarvest);
+
+    // First harvest: produce plus a seed, so the species is never lost
+    expect(harvestBed('bed-bramble')).toEqual({ itemId: 'produce-tendril', seedItemId: 'seed-bramble-vine' });
+    expect(gameState.getItemCount('produce-tendril')).toBe(1);
+    expect(gameState.getItemCount('seed-bramble-vine')).toBe(1);
+    expect(gameState.hasFlag('harvested-once')).toBe(true);
+    expect(isBedMature('bed-bramble')).toBe(true); // the plant stays
+
+    // Produce has to regrow first
+    expect(harvestBed('bed-bramble')).toBeNull();
+    vi.advanceTimersByTime(HARVEST_REGROW_MS - 1);
+    expect(isProduceReady('bed-bramble')).toBe(false);
+    vi.advanceTimersByTime(1);
+
+    for (let i = 1; i < SEED_DROP_EVERY; i++) {
+      expect(harvestBed('bed-bramble')).toEqual({ itemId: 'produce-tendril', seedItemId: undefined });
+      vi.advanceTimersByTime(HARVEST_REGROW_MS);
+    }
+    expect(harvestBed('bed-bramble')).toEqual({ itemId: 'produce-tendril', seedItemId: 'seed-bramble-vine' });
+    expect(gameState.getItemCount('produce-tendril')).toBe(SEED_DROP_EVERY + 1);
+    expect(gameState.getItemCount('seed-bramble-vine')).toBe(2);
+
+    // debugRewindGrowth also fast-forwards regrowth
+    expect(isProduceReady('bed-bramble')).toBe(false);
+    debugRewindGrowth(HARVEST_REGROW_MS);
+    expect(isProduceReady('bed-bramble')).toBe(true);
+
+    bus.off('plant-harvested', onHarvest);
+    expect(harvested).toHaveLength(SEED_DROP_EVERY + 1);
+
+    // A plant without produce (moon fern) is never harvestable
+    gameState.addItem('seed-moon-fern', 1);
+    expect(plantSeed('bed-heart-fern')).toBe(true);
+    vi.advanceTimersByTime(STAGE_DURATION_MS * 3);
+    expect(isBedMature('bed-heart-fern')).toBe(true);
+    expect(isProduceReady('bed-heart-fern')).toBe(false);
   });
 
   it('manages obstacles and lets mature plant abilities clear matching obstacles', () => {

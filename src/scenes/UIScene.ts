@@ -209,6 +209,7 @@ export class UIScene extends Phaser.Scene {
   }
 
   private applyDialogueChoice(choice: DialogueChoice): void {
+    if (choice.id && this.dialogue.id) bus.emit('dialogue-choice', { dialogueId: this.dialogue.id, choiceId: choice.id });
     for (const item of choice.giveItems ?? []) {
       gameState.addItem(item.itemId, item.count);
       this.enqueueToast(`+${item.count} ${content.items.get(item.itemId).name}`);

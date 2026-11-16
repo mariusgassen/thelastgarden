@@ -51,6 +51,10 @@ export interface GameEvents {
   'plant-planted': { bedId: string; plantId: string };
   /** A planted bed just reached full growth (see systems/plants.ts isBedMature). */
   'plant-matured': { bedId: string; plantId: string };
+  /** A mature bed's produce was harvested (see systems/plants.ts harvestBed). */
+  'plant-harvested': { bedId: string; plantId: string; itemId: string };
+  /** The player picked a dialogue choice that carries an `id` (DialogueChoice.id). */
+  'dialogue-choice': { dialogueId: string; choiceId: string };
   /** A resource/seed pickup in the world was collected. */
   'resource-collected': { nodeId: string; itemId: string };
   'save-loaded': { save: SaveGame };

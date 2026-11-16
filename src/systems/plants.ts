@@ -3,7 +3,7 @@
  * systems/plantLayer.ts (scene-bound), the same split as obstacles.ts / ObstacleLayer.
  *
  * State lives in `ext.plants` (see save.ts `ext`), keyed by bed id:
- *   { beds: { [bedId]: { bedId, plantId, plantedAt } } }
+ *   { beds: { [bedId]: { bedId, plantId, plantedAt, harvestedAt?, harvests?, wateredStage? } } }
  * Growth is computed from `plantedAt` + STAGE_DURATION_MS, not stored as a stage number,
  * so it is always correct after a reload or a map change, with no per-frame bookkeeping.
  */
@@ -18,6 +18,12 @@ export interface PlantedBed {
   bedId: string;
   plantId: string;
   plantedAt: number;
+  /** Epoch ms of the last harvest; unset = never harvested (produce is ready as soon as the bed matures). */
+  harvestedAt?: number;
+  /** Harvests so far; drives the seed-drop rhythm (see SEED_DROP_EVERY). */
+  harvests?: number;
+  /** Growth stage last watered with dew; each stage can be watered once. */
+  wateredStage?: number;
 }
 
 interface PlantsExt {
@@ -26,6 +32,14 @@ interface PlantsExt {
 
 /** Uniform stage length in ms. Total grow time for a species = growthStages * STAGE_DURATION_MS. */
 export const STAGE_DURATION_MS = 15_000;
+
+/** How long a harvested plant needs to regrow its produce. */
+export const HARVEST_REGROW_MS = 60_000;
+/** The 1st, 4th, 7th … harvest of a bed also yields one seed of its species. */
+export const SEED_DROP_EVERY = 3;
+/** Watering a growing bed spends one dew and skips this much growth time. Never required. */
+export const DEW_BOOST_MS = STAGE_DURATION_MS;
+const DEW_ITEM_ID = 'resource-dew';
 
 /** Species tried, in order, on a bed that accepts any plant (PlantingBedDef.plantId is omitted). */
 const ANY_BED_SPECIES_ORDER = ['bramble-vine', 'glow-lily', 'lavender', 'night-violet', 'moon-fern', 'hollyhock'];
@@ -59,17 +73,26 @@ export function isBedMature(bedId: string): boolean {
   return currentStage(bed) >= content.plants.get(bed.plantId).growthStages;
 }
 
-/** Plants a seed on an empty bed. False if already planted, unknown bed, or no matching seed owned. */
-export function plantSeed(bedId: string): boolean {
+/** Species this bed accepts that the player owns a seed for, in planting-priority order. */
+export function getPlantableSpecies(bedId: string): string[] {
   const bedDef = findPlantingBed(bedId);
-  if (!bedDef || isBedPlanted(bedId)) return false;
-
+  if (!bedDef) return [];
   const candidates = bedDef.plantId ? [bedDef.plantId] : ANY_BED_SPECIES_ORDER;
-  const plantId = candidates.find((id) => {
+  return candidates.filter((id) => {
     const seedItemId = content.plants.get(id).seedItemId;
     return seedItemId !== undefined && gameState.getItemCount(seedItemId) > 0;
   });
-  if (!plantId) return false;
+}
+
+/**
+ * Plants a seed on an empty bed. `plantId` picks the species (open beds); omitted = the first
+ * plantable one. False if already planted, unknown bed, or no matching seed owned.
+ */
+export function plantSeed(bedId: string, plantId?: string): boolean {
+  if (isBedPlanted(bedId)) return false;
+  const plantable = getPlantableSpecies(bedId);
+  plantId ??= plantable[0];
+  if (!plantId || !plantable.includes(plantId)) return false;
 
   const seedItemId = content.plants.get(plantId).seedItemId as string;
   gameState.removeItem(seedItemId, 1);
@@ -81,6 +104,57 @@ export function plantSeed(bedId: string): boolean {
   gameState.save();
   bus.emit('plant-planted', { bedId, plantId });
   return true;
+}
+
+/** True if the bed is growing, has not been watered in its current stage, and the player carries dew. */
+export function canWaterBed(bedId: string): boolean {
+  const bed = getBedState(bedId);
+  if (!bed || isBedMature(bedId)) return false;
+  return currentStage(bed) !== bed.wateredStage && gameState.getItemCount(DEW_ITEM_ID) > 0;
+}
+
+/** Spends one dew to push a growing bed forward by DEW_BOOST_MS. Optional help, never a requirement. */
+export function waterBed(bedId: string): boolean {
+  if (!canWaterBed(bedId)) return false;
+  gameState.removeItem(DEW_ITEM_ID, 1);
+  const state = readState();
+  const bed = state.beds[bedId];
+  bed.plantedAt -= DEW_BOOST_MS;
+  bed.wateredStage = currentStage(bed);
+  writeState(state);
+  gameState.save();
+  return true;
+}
+
+/** True if the bed is mature and its produce has (re)grown. */
+export function isProduceReady(bedId: string): boolean {
+  const bed = getBedState(bedId);
+  if (!bed || !isBedMature(bedId) || !content.plants.get(bed.plantId).produceItemId) return false;
+  return bed.harvestedAt === undefined || Date.now() - bed.harvestedAt >= HARVEST_REGROW_MS;
+}
+
+/**
+ * Harvests a mature bed: one produce item, plus a seed of the species on every
+ * SEED_DROP_EVERY-th harvest (starting with the first). The plant stays and regrows.
+ * Returns what was gained, or null if nothing is ready.
+ */
+export function harvestBed(bedId: string): { itemId: string; seedItemId?: string } | null {
+  if (!isProduceReady(bedId)) return null;
+  const state = readState();
+  const bed = state.beds[bedId];
+  const def = content.plants.get(bed.plantId);
+  const itemId = def.produceItemId as string;
+  const harvests = bed.harvests ?? 0;
+  const seedItemId = harvests % SEED_DROP_EVERY === 0 ? def.seedItemId : undefined;
+  bed.harvestedAt = Date.now();
+  bed.harvests = harvests + 1;
+  writeState(state);
+  gameState.addItem(itemId, 1);
+  if (seedItemId) gameState.addItem(seedItemId, 1);
+  gameState.setFlag('harvested-once');
+  gameState.save();
+  bus.emit('plant-harvested', { bedId, plantId: bed.plantId, itemId });
+  return { itemId, seedItemId };
 }
 
 /** A mature plant (on any map) whose PlantDef.clears includes `kind`, or undefined. */
@@ -181,10 +255,13 @@ export function shiftGrowth(bedId: string, ms: number): boolean {
   return true;
 }
 
-/** Dev-only: rewinds every planted bed's clock so growth advances immediately (see window.__tlg). */
+/** Dev-only: rewinds every planted bed's clock so growth and regrowth advance immediately (see window.__tlg). */
 export function debugRewindGrowth(ms: number): void {
   const state = readState();
-  for (const bed of Object.values(state.beds)) bed.plantedAt -= ms;
+  for (const bed of Object.values(state.beds)) {
+    bed.plantedAt -= ms;
+    if (bed.harvestedAt !== undefined) bed.harvestedAt -= ms;
+  }
   writeState(state);
   gameState.save();
 }

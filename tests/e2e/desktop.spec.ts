@@ -81,6 +81,100 @@ test.describe('Desktop gameplay and PWA', () => {
     expect(errors).toEqual([]);
   });
 
+  test('harvests regrowing produce from a mature bed', async ({ page }) => {
+    const errors = trackErrors(page);
+
+    await page.addInitScript((key) => {
+      if (localStorage.getItem(key)) return;
+      localStorage.setItem(
+        key,
+        JSON.stringify({
+          version: 1,
+          savedAt: Date.now(),
+          // Standing just below bed-bramble (tiles 16..20 × 29..31)
+          player: { mapId: 'garden', x: 18 * 32, y: 32 * 32, facing: 'right' },
+          world: { unblockedPaths: [], visitedZones: ['garden'], flags: { 'crow-met': true, 'bed-restored:bed-bramble': true } },
+          inventory: { items: {} },
+          quests: { active: ['q-restore-beds'], completed: ['q-meet-crow'], progress: {} },
+          ext: {
+            plants: {
+              beds: { 'bed-bramble': { bedId: 'bed-bramble', plantId: 'bramble-vine', plantedAt: Date.now() - 600_000 } },
+            },
+          },
+        }),
+      );
+    }, SAVE_KEY);
+
+    await page.goto('/');
+    await waitForGameBoot(page);
+
+    // Harvest: one produce item plus a seed on the first harvest; the plant stays in its bed
+    await expect
+      .poll(
+        async () => {
+          await page.keyboard.press('KeyE');
+          await page.waitForTimeout(300);
+          return (await flushAndReadSave(page))?.inventory.items['produce-tendril'] ?? 0;
+        },
+        { timeout: 15_000, intervals: [100] },
+      )
+      .toBe(1);
+    const harvested = (await flushAndReadSave(page)) as SaveSnapshot;
+    expect(harvested.inventory.items['seed-bramble-vine']).toBe(1);
+    expect(harvested.world.flags['harvested-once']).toBe(true);
+    expect((harvested.ext.plants as { beds: Record<string, unknown> }).beds['bed-bramble']).toBeDefined();
+
+    expect(errors).toEqual([]);
+  });
+
+  test('offers a seed picker on an open bed when several kinds of seed are carried', async ({ page }) => {
+    const errors = trackErrors(page);
+
+    await page.addInitScript((key) => {
+      if (localStorage.getItem(key)) return;
+      localStorage.setItem(
+        key,
+        JSON.stringify({
+          version: 1,
+          savedAt: Date.now(),
+          // Standing just below bed-extra (tiles 30..34 × 41..43)
+          player: { mapId: 'garden', x: 32 * 32, y: 44 * 32, facing: 'right' },
+          world: { unblockedPaths: [], visitedZones: ['garden'], flags: { 'crow-met': true } },
+          inventory: { items: { 'seed-glow-lily': 1, 'seed-lavender': 2 } },
+          quests: { active: ['q-restore-beds'], completed: ['q-meet-crow'], progress: {} },
+          ext: {},
+        }),
+      );
+    }, SAVE_KEY);
+
+    await page.goto('/');
+    await waitForGameBoot(page);
+
+    const plantedIn = (save: SaveSnapshot | null): string | undefined =>
+      (save?.ext.plants as { beds?: Record<string, { plantId: string }> } | undefined)?.beds?.['bed-extra']?.plantId;
+
+    // E opens the picker (1 = Leuchtlilie, 2 = Lavendel); 2 plants the lavender
+    await expect
+      .poll(
+        async () => {
+          const planted = plantedIn(await flushAndReadSave(page));
+          if (planted) return planted;
+          await page.keyboard.press('KeyE');
+          await page.waitForTimeout(400);
+          await page.keyboard.press('Digit2');
+          await page.waitForTimeout(300);
+          return plantedIn(await flushAndReadSave(page));
+        },
+        { timeout: 15_000, intervals: [100] },
+      )
+      .toBe('lavender');
+
+    const save = (await flushAndReadSave(page)) as SaveSnapshot;
+    expect(save.inventory.items['seed-lavender']).toBe(1);
+    expect(save.inventory.items['seed-glow-lily']).toBe(1);
+    expect(errors).toEqual([]);
+  });
+
   test('completes greenhouse vestibule unlock and Episode 1 ending from seeded save', async ({ page }) => {
     const errors = trackErrors(page);
 
