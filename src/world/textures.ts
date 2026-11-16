@@ -27,6 +27,7 @@ export function generateTextures(scene: Phaser.Scene): void {
   generateTileset(g);
   generateItemAndUiTextures(make);
   generateBuildAndBlightTextures(make);
+  generateCropTextures(make);
 
   make('shadow', 32, 12, (g) => {
     g.fillStyle(0x000000, 0.22);
@@ -2063,6 +2064,31 @@ const ITEM_ICON_DRAWERS: Record<string, (g: G) => void> = {
   },
 
   // ── Produce ──
+  'produce-egg': (g) => {
+    g.fillStyle(0xc9a47a, 1);
+    g.fillEllipse(18, 27, 24, 8);
+    g.fillStyle(0xf2e4c9, 1);
+    g.fillEllipse(18, 17, 15, 19);
+    g.fillStyle(0xfff6e0, 0.8);
+    g.fillEllipse(14.5, 12.5, 4, 6);
+    g.lineStyle(1.2, 0xb99a6a, 0.9);
+    g.strokeEllipse(18, 17, 15, 19);
+  },
+  'produce-honey': (g) => {
+    g.fillStyle(0xe0a02b, 1);
+    g.fillRoundedRect(8, 12, 20, 18, 6);
+    g.fillStyle(0xf2c35a, 0.9);
+    g.fillRoundedRect(10, 14, 6, 12, 3);
+    g.fillStyle(0xc9a47a, 1);
+    g.fillRoundedRect(10, 7, 16, 6, 2);
+    g.fillStyle(0xfff6e0, 1);
+    g.fillRoundedRect(12, 18, 12, 7, 2);
+    g.fillStyle(0xe0a02b, 1);
+    g.fillCircle(18, 21.5, 2);
+    g.fillStyle(0xe0a02b, 1);
+    g.fillRect(23, 11, 2.6, 8);
+    g.fillCircle(24.3, 19, 1.8);
+  },
   'produce-tendril': (g) => {
     g.lineStyle(2.8, 0x4f7a3f, 1);
     g.beginPath();
@@ -2169,6 +2195,7 @@ const ITEM_ICON_DRAWERS: Record<string, (g: G) => void> = {
     g.lineStyle(2, 0xf1e6c8, 0.9);
     g.lineBetween(18, 11.5, 18, 25.5);
   },
+
   'craft-flour': (g) => {
     g.fillStyle(0x000000, 0.15);
     g.fillEllipse(18, 29, 22, 5);
@@ -2288,6 +2315,162 @@ const ITEM_ICON_DRAWERS: Record<string, (g: G) => void> = {
     g.strokeCircle(11, 12, 4.5);
     g.fillStyle(0xd9dde2, 0.9);
     g.fillCircle(10, 20, 1.3);
+  },
+
+  // ── Guarding, building and food plants ──
+  'seed-glowcap': (g) =>
+    drawSeedPacket(g, 0xdfe9d0, 0xbccfa4, (g) => {
+      g.fillStyle(0x9be86b, 1);
+      g.fillEllipse(18, 18, 12, 7);
+      g.fillStyle(0xe8f5d0, 1);
+      g.fillRect(17, 20, 2, 6);
+      g.fillStyle(0xd5ffb0, 0.9);
+      g.fillCircle(15, 17, 1);
+    }),
+  'seed-thornroot': (g) =>
+    drawSeedPacket(g, 0xe3d3c0, 0xc9ae90, (g) => {
+      g.fillStyle(0x8c4a3a, 1);
+      g.fillCircle(18, 21, 4.2);
+      g.fillTriangle(18, 14, 15.5, 18, 20.5, 18);
+      g.fillTriangle(11.5, 21, 15, 18.5, 15, 23.5);
+      g.fillTriangle(24.5, 21, 21, 18.5, 21, 23.5);
+    }),
+  'seed-reed': (g) =>
+    drawSeedPacket(g, 0xe9e3c4, 0xcfc78f, (g) => {
+      g.lineStyle(1.8, 0x9a9650, 1);
+      g.lineBetween(14, 27, 14, 15);
+      g.lineBetween(18, 27, 18, 14);
+      g.lineBetween(22, 27, 22, 16);
+      g.fillStyle(0x7a5a3c, 1);
+      g.fillEllipse(18, 13, 3.5, 6);
+    }),
+  'seed-willow': (g) =>
+    drawSeedPacket(g, 0xe2e6cb, 0xbec99a, (g) => {
+      g.lineStyle(1.8, 0x8a7a4a, 1);
+      g.lineBetween(14, 27, 17, 15);
+      g.lineBetween(20, 27, 22, 16);
+      g.fillStyle(0x7fa35a, 1);
+      g.fillEllipse(17, 15, 6, 3);
+      g.fillEllipse(22, 15.5, 6, 3);
+    }),
+  'seed-honeyberry': (g) =>
+    drawSeedPacket(g, 0xf0e2bd, 0xd9c186, (g) => {
+      g.fillStyle(0xe0a33a, 1);
+      g.fillCircle(15.5, 21, 3);
+      g.fillCircle(21, 20, 3);
+      g.fillCircle(18, 25, 3);
+      g.fillStyle(0xfbe3a0, 0.9);
+      g.fillCircle(14.8, 20.2, 1);
+    }),
+  'seed-gold-turnip': (g) =>
+    drawSeedPacket(g, 0xf0e6c4, 0xd9c98c, (g) => {
+      g.fillStyle(0xe6b84a, 1);
+      g.fillCircle(18, 22, 5);
+      g.fillStyle(0x5d7f45, 1);
+      g.fillTriangle(18, 13, 15, 18, 21, 18);
+    }),
+  'produce-glowcap': (g) => {
+    g.fillStyle(0x9be86b, 0.25);
+    g.fillCircle(18, 19, 14);
+    g.fillStyle(0xe8f5d0, 1);
+    g.fillRoundedRect(15.5, 19, 5, 11, 2);
+    g.fillStyle(0x9be86b, 1);
+    g.fillEllipse(18, 17, 22, 14);
+    g.fillStyle(0xd5ffb0, 0.9);
+    g.fillCircle(13, 16, 1.8);
+    g.fillCircle(19, 12.5, 1.5);
+    g.fillCircle(23, 17, 1.8);
+  },
+  'produce-thorn-cane': (g) => {
+    g.lineStyle(3.2, 0x8c4a3a, 1);
+    g.beginPath();
+    g.arc(20, 22, 11, Phaser.Math.DegToRad(200), Phaser.Math.DegToRad(20), false);
+    g.strokePath();
+    g.fillStyle(0xc9876e, 1);
+    for (const [x, y] of [
+      [10, 18],
+      [14, 11],
+      [22, 9.5],
+      [29, 14],
+    ]) {
+      g.fillTriangle(x - 2, y + 2, x + 2, y + 2, x, y - 3);
+    }
+    g.fillStyle(0x5d7f45, 1);
+    g.fillEllipse(30, 25, 6, 3.5);
+  },
+  'produce-reed-bundle': (g) => {
+    g.lineStyle(2.4, 0xb7b46a, 1);
+    for (const x of [12, 15.5, 19, 22.5, 26]) g.lineBetween(x, 30, x + (x - 19) * 0.25, 7);
+    g.fillStyle(0x7a5a3c, 1);
+    g.fillEllipse(19, 9, 4, 7);
+    g.lineStyle(3, 0x8a603d, 1);
+    g.lineBetween(10, 21, 28, 21);
+  },
+  'produce-willow-switch': (g) => {
+    g.lineStyle(2.4, 0xb69a62, 1);
+    g.lineBetween(6, 29, 30, 8);
+    g.lineStyle(1.6, 0x9d8450, 1);
+    g.lineBetween(9, 30, 31, 14);
+    g.fillStyle(0x7fa35a, 1);
+    g.fillEllipse(14, 21, 7, 3.5);
+    g.fillEllipse(22, 15, 7, 3.5);
+    g.fillEllipse(27, 20, 6, 3);
+  },
+  'produce-honeyberry': (g) => {
+    g.fillStyle(0xf0b84a, 0.22);
+    g.fillCircle(18, 20, 13);
+    g.fillStyle(0xe0a33a, 1);
+    g.fillCircle(14, 21, 5.5);
+    g.fillCircle(22.5, 20, 5.5);
+    g.fillCircle(18, 14.5, 5.5);
+    g.fillStyle(0xfbe3a0, 0.9);
+    g.fillCircle(12.5, 19.5, 1.6);
+    g.fillCircle(21, 18.5, 1.6);
+    g.fillCircle(16.5, 13, 1.6);
+    g.fillStyle(0x5d7f45, 1);
+    g.fillEllipse(18, 8, 8, 3.5);
+  },
+  'produce-gold-turnip': (g) => {
+    g.fillStyle(0x5d7f45, 1);
+    g.fillTriangle(18, 6, 14, 15, 22, 15);
+    g.fillTriangle(10, 9, 13, 16, 17, 14);
+    g.fillTriangle(26, 9, 23, 16, 19, 14);
+    g.fillStyle(0xefc45c, 1);
+    g.fillEllipse(18, 22, 18, 15);
+    g.fillStyle(0xf8de94, 0.8);
+    g.fillEllipse(14.5, 19, 5, 3.5);
+    g.lineStyle(1.6, 0x8a603d, 1);
+    g.lineBetween(18, 29, 18, 33);
+  },
+  'meal-berry-mash': (g) => {
+    g.fillStyle(0x000000, 0.2);
+    g.fillEllipse(18, 29, 24, 5);
+    g.fillStyle(0xd9c9a0, 1);
+    g.fillRoundedRect(7, 17, 22, 11, 5);
+    g.fillStyle(0xe0a33a, 1);
+    g.fillEllipse(18, 17, 22, 8);
+    g.fillStyle(0xfbe3a0, 0.9);
+    g.fillCircle(14, 16, 1.6);
+    g.fillCircle(21, 17, 1.4);
+    g.lineStyle(1.4, 0xf1e6c8, 0.7);
+    g.lineBetween(14, 12, 15, 7);
+    g.lineBetween(21, 12, 22, 6);
+  },
+  'meal-turnip-stew': (g) => {
+    g.fillStyle(0x000000, 0.2);
+    g.fillEllipse(18, 30, 26, 5);
+    g.fillStyle(0x6e4a2f, 1);
+    g.fillRoundedRect(5, 16, 26, 13, 6);
+    g.fillRect(4, 15, 28, 3);
+    g.fillStyle(0xe6b84a, 1);
+    g.fillEllipse(18, 16, 24, 7);
+    g.fillStyle(0x9be86b, 1);
+    g.fillCircle(15, 15.5, 2);
+    g.fillCircle(22, 16.5, 1.8);
+    g.lineStyle(1.4, 0xf1e6c8, 0.7);
+    g.lineBetween(13, 11, 14, 6);
+    g.lineBetween(19, 11, 20, 5);
+    g.lineBetween(25, 11, 26, 6);
   },
 };
 
@@ -2502,6 +2685,61 @@ function generateBuildAndBlightTextures(make: MakeFn): void {
       g.fillCircle(28, i * 8 + 4, 1);
     }
   });
+  make('build-thorn-hedge', 34, 38, (g) => {
+    g.fillStyle(0x000000, 0.2);
+    g.fillEllipse(17, 35, 32, 6);
+    g.fillStyle(0x6e3a2d, 1);
+    g.fillRoundedRect(1, 11, 32, 24, 9);
+    g.lineStyle(3, 0x8c4a3a, 1);
+    for (const [x1, y1, x2, y2] of [
+      [4, 32, 6, 9],
+      [12, 33, 15, 5],
+      [21, 33, 24, 6],
+      [29, 32, 30, 10],
+      [6, 24, 28, 18],
+    ])
+      g.lineBetween(x1, y1, x2, y2);
+    g.fillStyle(0xc9876e, 1);
+    for (const [x, y] of [[6, 9], [15, 5], [24, 6], [30, 10], [9, 20], [20, 16], [27, 26], [12, 29]])
+      g.fillTriangle(x - 2, y + 1.5, x + 2, y + 1.5, x, y - 3);
+    g.fillStyle(0xc4607a, 1);
+    g.fillCircle(18, 12, 2);
+    g.fillCircle(8, 27, 1.8);
+  });
+  make('build-wattle', 32, 34, (g) => {
+    g.fillStyle(0x000000, 0.18);
+    g.fillEllipse(16, 31, 30, 5);
+    for (const x of [3, 14, 25]) {
+      g.fillStyle(0x6d4a30, 1);
+      g.fillRoundedRect(x, 6, 4, 25, 1.5);
+    }
+    g.lineStyle(3, 0xb69a62, 1);
+    for (const [y, dy] of [[12, 1.5], [18, -1.5], [24, 1.5]]) {
+      g.beginPath();
+      g.moveTo(0, y);
+      g.lineTo(8, y + dy);
+      g.lineTo(16, y - dy);
+      g.lineTo(24, y + dy);
+      g.lineTo(32, y - dy);
+      g.strokePath();
+    }
+    g.fillStyle(0x7fa35a, 1);
+    g.fillEllipse(6, 8, 6, 3);
+    g.fillEllipse(27, 9, 6, 3);
+  });
+  make('build-reed-bridge', 32, 32, (g) => {
+    g.fillStyle(0x3a2a1e, 0.35);
+    g.fillRect(0, 2, 32, 30);
+    for (let i = 0; i < 4; i++) {
+      g.fillStyle(i % 2 === 0 ? 0xcfc77e : 0xbdb56c, 1);
+      g.fillRoundedRect(0.5, i * 8 + 0.5, 31, 7, 3);
+      g.lineStyle(1, 0x9a9650, 0.9);
+      g.lineBetween(3, i * 8 + 3.5, 29, i * 8 + 3.5);
+      g.lineStyle(1.6, 0x8a603d, 1);
+      g.lineBetween(9, i * 8 + 1, 9, i * 8 + 7);
+      g.lineBetween(23, i * 8 + 1, 23, i * 8 + 7);
+    }
+  });
   make('build-shelter', 44, 54, (g) => {
     g.fillStyle(0x000000, 0.2);
     g.fillEllipse(22, 50, 42, 7);
@@ -2533,6 +2771,146 @@ function generateBuildAndBlightTextures(make: MakeFn): void {
     g.fillCircle(10, 21, 3.5);
     g.fillCircle(16, 14, 3);
     g.fillCircle(31, 21, 3);
+  });
+
+  // ── Animal homes and their residents (systems/animals.ts, systems/animalLayer.ts) ──
+  make('build-beehive', 30, 40, (g) => {
+    g.fillStyle(0x000000, 0.18);
+    g.fillEllipse(15, 37, 28, 5);
+    g.fillStyle(0x6d4a30, 1);
+    g.fillRect(5, 28, 3, 10);
+    g.fillRect(22, 28, 3, 10);
+    g.fillRoundedRect(3, 25, 24, 5, 2);
+    g.fillStyle(0xd9a441, 1);
+    g.fillRoundedRect(6, 8, 18, 18, 3);
+    g.fillStyle(0xb98530, 1);
+    g.fillRect(6, 13, 18, 2);
+    g.fillRect(6, 19, 18, 2);
+    g.fillStyle(0x6e4a2f, 1);
+    g.fillRoundedRect(4, 3, 22, 7, 3);
+    g.fillStyle(0x3a2a1e, 1);
+    g.fillEllipse(15, 22, 6, 4);
+    g.fillStyle(0x6a9a4e, 0.9);
+    g.fillCircle(7, 4.5, 2.4);
+    g.fillCircle(24, 5, 2);
+  });
+  make('build-henhouse', 40, 40, (g) => {
+    g.fillStyle(0x000000, 0.18);
+    g.fillEllipse(20, 37, 38, 6);
+    g.fillStyle(0x8a603d, 1);
+    g.fillRoundedRect(4, 15, 32, 21, 2);
+    g.lineStyle(1.2, 0x6e4a2f, 1);
+    for (const x of [11, 18, 25, 32]) g.lineBetween(x, 16, x, 35);
+    g.fillStyle(0x6e4a2f, 1);
+    g.fillTriangle(0, 17, 20, 2, 40, 17);
+    g.fillStyle(0xa8753f, 1);
+    g.fillTriangle(5, 16, 20, 5, 35, 16);
+    g.fillStyle(0x2c2018, 1);
+    g.fillRoundedRect(15, 24, 10, 12, 4);
+    g.fillStyle(0xe9d089, 1);
+    g.fillRect(6, 33, 8, 3);
+    g.fillStyle(0xf2e4c9, 1);
+    g.fillEllipse(30, 34, 5, 6);
+  });
+  make('build-goatpen', 44, 36, (g) => {
+    g.fillStyle(0x000000, 0.18);
+    g.fillEllipse(22, 33, 42, 6);
+    g.fillStyle(0x9a8a4a, 0.55);
+    g.fillEllipse(22, 26, 36, 12);
+    for (const x of [2, 15, 28, 39]) {
+      g.fillStyle(0x6d4a30, 1);
+      g.fillRoundedRect(x, 8, 4, 24, 1.5);
+    }
+    g.fillStyle(0x8a603d, 1);
+    g.fillRect(0, 13, 44, 3.5);
+    g.fillRect(0, 22, 44, 3.5);
+    g.fillStyle(0xa8753f, 1);
+    g.fillRect(0, 13, 44, 1.2);
+    g.fillRect(0, 22, 44, 1.2);
+    g.fillStyle(0xe9d089, 1);
+    g.fillRoundedRect(17, 26, 10, 5, 2);
+  });
+  make('build-stable', 52, 52, (g) => {
+    g.fillStyle(0x000000, 0.2);
+    g.fillEllipse(26, 48, 50, 7);
+    g.fillStyle(0x7a5233, 1);
+    g.fillRoundedRect(4, 20, 44, 28, 2);
+    g.lineStyle(1.2, 0x5c3b25, 1);
+    for (const x of [12, 20, 28, 36, 44]) g.lineBetween(x, 21, x, 47);
+    g.fillStyle(0x5c3b25, 1);
+    g.fillTriangle(0, 22, 26, 3, 52, 22);
+    g.fillStyle(0x8a603d, 1);
+    g.fillTriangle(6, 21, 26, 6, 46, 21);
+    g.fillStyle(0x2c2018, 1);
+    g.fillRoundedRect(13, 28, 26, 20, 3);
+    // Mohn looks out over the half door.
+    g.fillStyle(0x9a6a42, 1);
+    g.fillEllipse(26, 36, 12, 11);
+    g.fillTriangle(21, 31, 24, 28, 24, 33);
+    g.fillTriangle(31, 31, 28, 28, 28, 33);
+    g.fillStyle(0xd9b48a, 1);
+    g.fillEllipse(26, 41, 7, 5);
+    g.fillStyle(0x2c2018, 1);
+    g.fillCircle(23, 35, 1);
+    g.fillCircle(29, 35, 1);
+    g.fillStyle(0x8a603d, 1);
+    g.fillRect(13, 42, 26, 6);
+    g.fillStyle(0xe9d089, 1);
+    g.fillRect(6, 44, 6, 3);
+  });
+  make('hen', 24, 22, (g) => {
+    g.fillStyle(0x000000, 0.16);
+    g.fillEllipse(12, 20, 18, 4);
+    g.fillStyle(0xd9a441, 1);
+    g.fillRect(9, 15, 1.6, 5);
+    g.fillRect(14, 15, 1.6, 5);
+    g.fillStyle(0xf2e4c9, 1);
+    g.fillEllipse(11, 12, 18, 13);
+    g.fillTriangle(2, 8, 5, 12, 2, 14);
+    g.fillStyle(0xd9c7a3, 1);
+    g.fillEllipse(9, 13, 9, 7);
+    g.fillStyle(0xf2e4c9, 1);
+    g.fillCircle(17, 6, 4.5);
+    g.fillStyle(0xd84a3a, 1);
+    g.fillCircle(16, 2, 1.8);
+    g.fillCircle(18.5, 2.3, 1.5);
+    g.fillStyle(0xe9a23b, 1);
+    g.fillTriangle(20.5, 5, 24, 6.5, 20.5, 8);
+    g.fillStyle(0x3a2a1e, 1);
+    g.fillCircle(18, 5.5, 0.9);
+  });
+  make('goat', 34, 30, (g) => {
+    g.fillStyle(0x000000, 0.16);
+    g.fillEllipse(17, 28, 28, 5);
+    g.fillStyle(0xd8d0bf, 1);
+    g.fillRoundedRect(7, 19, 3.5, 9, 1);
+    g.fillRoundedRect(21, 19, 3.5, 9, 1);
+    g.fillStyle(0xf1ead9, 1);
+    g.fillEllipse(15, 17, 24, 13);
+    g.fillRoundedRect(11, 20, 3.5, 8, 1);
+    g.fillRoundedRect(24, 20, 3.5, 8, 1);
+    g.fillTriangle(22, 12, 28, 5, 30, 13);
+    g.fillEllipse(29, 8, 9, 7);
+    g.fillStyle(0xb9a98a, 1);
+    g.fillTriangle(25, 4, 27, 0, 28, 5);
+    g.fillTriangle(30, 4, 31.5, 0, 31, 5);
+    g.fillStyle(0xf1ead9, 1);
+    g.fillTriangle(28, 12, 30, 12, 29, 17);
+    g.fillStyle(0x3a2a1e, 1);
+    g.fillCircle(30, 7, 0.9);
+    g.fillEllipse(33, 9, 2.5, 2);
+    g.fillStyle(0xb9a98a, 1);
+    g.fillEllipse(3.5, 14, 5, 3);
+  });
+  make('bee', 8, 8, (g) => {
+    g.fillStyle(0xdff2f7, 0.8);
+    g.fillEllipse(3, 2, 4, 3);
+    g.fillEllipse(5, 2, 4, 3);
+    g.fillStyle(0xe9b83b, 1);
+    g.fillEllipse(4, 5, 6, 4);
+    g.fillStyle(0x2c2018, 1);
+    g.fillRect(3, 3.5, 1, 3);
+    g.fillRect(5, 3.5, 1, 3);
   });
 
   make('build-rain-barrel', 34, 40, (g) => {
@@ -2690,5 +3068,195 @@ function generateBuildAndBlightTextures(make: MakeFn): void {
     g.fillStyle(0x8fbd66, 1);
     g.fillEllipse(20, 9, 7, 4);
     g.fillEllipse(28, 7, 7, 4);
+  });
+}
+
+
+/** Growth stages of the guarding, building and food plants (`plant-<id>-sprout|growing|mature`, see systems/plantLayer.ts). */
+function generateCropTextures(make: MakeFn): void {
+  const shadow = (g: G, w: number, h: number): void => {
+    g.fillStyle(0x000000, 0.18);
+    g.fillEllipse(w / 2, h - 3, w * 0.7, 6);
+  };
+  const cap = (g: G, x: number, y: number, r: number): void => {
+    g.fillStyle(0xe8f5d0, 1);
+    g.fillRect(x - r * 0.18, y, r * 0.36, r * 0.9);
+    g.fillStyle(0x9be86b, 1);
+    g.fillEllipse(x, y, r * 2, r * 1.3);
+    g.fillStyle(0xd5ffb0, 0.9);
+    g.fillCircle(x - r * 0.4, y - r * 0.1, r * 0.2);
+    g.fillCircle(x + r * 0.35, y - r * 0.25, r * 0.17);
+  };
+
+  // Glowcap
+  make('plant-glowcap-sprout', 18, 18, (g) => cap(g, 9, 11, 5));
+  make('plant-glowcap-growing', 28, 28, (g) => {
+    cap(g, 9, 17, 6.5);
+    cap(g, 20, 20, 5);
+  });
+  make('plant-glowcap-mature', 40, 40, (g) => {
+    shadow(g, 40, 40);
+    g.fillStyle(0x4c7a3d, 1);
+    g.fillEllipse(20, 35, 32, 8);
+    cap(g, 12, 24, 8);
+    cap(g, 28, 26, 7);
+    cap(g, 20, 15, 9);
+  });
+
+  // Thornroot
+  const thorns = (g: G, pts: number[][]): void => {
+    g.fillStyle(0xc9876e, 1);
+    for (const [x, y] of pts) g.fillTriangle(x - 2, y + 1.5, x + 2, y + 1.5, x, y - 3);
+  };
+  make('plant-thornroot-sprout', 18, 18, (g) => {
+    g.lineStyle(2, 0x8c4a3a, 1);
+    g.lineBetween(9, 17, 9, 8);
+    g.lineBetween(9, 11, 14, 6);
+    thorns(g, [[14, 6], [9, 7]]);
+  });
+  make('plant-thornroot-growing', 28, 36, (g) => {
+    g.lineStyle(2.6, 0x8c4a3a, 1);
+    g.lineBetween(14, 34, 8, 12);
+    g.lineBetween(14, 34, 14, 7);
+    g.lineBetween(14, 34, 21, 14);
+    thorns(g, [[8, 12], [14, 7], [21, 14], [11, 22], [18, 24]]);
+    g.fillStyle(0x5d7f45, 1);
+    g.fillEllipse(8, 26, 7, 3.5);
+  });
+  make('plant-thornroot-mature', 44, 48, (g) => {
+    shadow(g, 44, 48);
+    g.fillStyle(0x6e3a2d, 1);
+    g.fillRoundedRect(4, 18, 36, 26, 12);
+    g.lineStyle(3, 0x8c4a3a, 1);
+    for (const [x1, y1, x2, y2] of [
+      [8, 40, 6, 12],
+      [16, 42, 18, 6],
+      [26, 42, 30, 8],
+      [36, 40, 39, 15],
+      [12, 30, 30, 22],
+    ])
+      g.lineBetween(x1, y1, x2, y2);
+    thorns(g, [[6, 12], [18, 6], [30, 8], [39, 15], [12, 24], [24, 20], [33, 30], [10, 36], [26, 34]]);
+    g.fillStyle(0xc4607a, 1);
+    g.fillCircle(21, 14, 2.4);
+    g.fillCircle(34, 22, 2);
+  });
+
+  // Reed
+  const blade = (g: G, x: number, y: number, top: number, lean: number): void => {
+    g.lineStyle(2, 0xa7a45a, 1);
+    g.lineBetween(x, y, x + lean, top);
+  };
+  make('plant-reed-sprout', 18, 18, (g) => {
+    blade(g, 7, 17, 8, -1);
+    blade(g, 11, 17, 6, 1);
+  });
+  make('plant-reed-growing', 28, 38, (g) => {
+    for (const [x, top, lean] of [[8, 14, -2], [12, 8, -1], [16, 5, 0], [20, 10, 2], [24, 16, 3]]) blade(g, x, 36, top, lean);
+  });
+  make('plant-reed-mature', 40, 54, (g) => {
+    shadow(g, 40, 54);
+    for (const [x, top, lean] of [[8, 22, -3], [13, 10, -2], [18, 4, -1], [23, 7, 1], [28, 14, 2], [33, 24, 4]]) {
+      blade(g, x, 50, top, lean);
+      g.fillStyle(0x7a5a3c, 1);
+      g.fillEllipse(x + lean, top + 2, 3.5, 8);
+    }
+    g.fillStyle(0xd2cf84, 1);
+    g.fillEllipse(14, 38, 9, 3.5);
+    g.fillEllipse(27, 34, 9, 3.5);
+  });
+
+  // Willow
+  const leaves = (g: G, pts: number[][]): void => {
+    g.fillStyle(0x7fa35a, 1);
+    for (const [x, y] of pts) g.fillEllipse(x, y, 7, 3.5);
+  };
+  make('plant-willow-sprout', 18, 18, (g) => {
+    g.lineStyle(1.8, 0xb69a62, 1);
+    g.lineBetween(9, 17, 9, 5);
+    leaves(g, [[6, 8], [12, 6]]);
+  });
+  make('plant-willow-growing', 30, 40, (g) => {
+    g.lineStyle(2.4, 0xb69a62, 1);
+    g.lineBetween(15, 38, 15, 8);
+    g.lineBetween(15, 30, 8, 14);
+    g.lineBetween(15, 26, 23, 12);
+    leaves(g, [[8, 12], [23, 10], [15, 6], [11, 20], [20, 19]]);
+  });
+  make('plant-willow-mature', 48, 56, (g) => {
+    shadow(g, 48, 56);
+    g.lineStyle(3, 0x9d8450, 1);
+    g.lineBetween(24, 52, 24, 14);
+    g.lineBetween(24, 28, 10, 12);
+    g.lineBetween(24, 24, 38, 10);
+    g.lineStyle(1.8, 0x7fa35a, 1);
+    for (const x of [8, 13, 18, 30, 35, 40]) g.lineBetween(x, 14, x + (x < 24 ? -2 : 2), 38 + (x % 3) * 3);
+    g.lineBetween(24, 10, 24, 34);
+    g.fillStyle(0x93b86c, 1);
+    g.fillEllipse(24, 11, 30, 12);
+    g.fillStyle(0x7fa35a, 1);
+    g.fillEllipse(14, 14, 16, 9);
+    g.fillEllipse(34, 14, 16, 9);
+  });
+
+  // Honeyberry
+  const berries = (g: G, pts: number[][], r: number): void => {
+    for (const [x, y] of pts) {
+      g.fillStyle(0xe0a33a, 1);
+      g.fillCircle(x, y, r);
+      g.fillStyle(0xfbe3a0, 0.9);
+      g.fillCircle(x - r * 0.3, y - r * 0.3, r * 0.35);
+    }
+  };
+  make('plant-honeyberry-sprout', 18, 18, (g) => {
+    g.fillStyle(0x4c7a3d, 1);
+    g.fillEllipse(6, 12, 7, 4);
+    g.fillEllipse(12, 11, 7, 4);
+    g.lineStyle(1.6, 0x3f6b35, 1);
+    g.lineBetween(9, 17, 9, 10);
+  });
+  make('plant-honeyberry-growing', 28, 30, (g) => {
+    g.fillStyle(0x4c7a3d, 1);
+    g.fillEllipse(14, 21, 24, 16);
+    g.fillStyle(0x6a9a4e, 1);
+    g.fillCircle(9, 17, 5);
+    g.fillCircle(19, 16, 5);
+    berries(g, [[11, 24]], 2);
+  });
+  make('plant-honeyberry-mature', 38, 40, (g) => {
+    shadow(g, 38, 40);
+    g.fillStyle(0x3f6b35, 1);
+    g.fillEllipse(19, 28, 34, 20);
+    g.fillStyle(0x4c7a3d, 1);
+    g.fillCircle(11, 22, 8);
+    g.fillCircle(27, 22, 8);
+    g.fillCircle(19, 17, 9);
+    g.fillStyle(0x6a9a4e, 1);
+    g.fillCircle(16, 14, 4);
+    berries(g, [[9, 24], [15, 28], [22, 24], [29, 27], [19, 18], [26, 17], [12, 17]], 2.8);
+  });
+
+  // Golden turnip
+  const leafTuft = (g: G, x: number, y: number, s: number): void => {
+    g.fillStyle(0x5d7f45, 1);
+    g.fillTriangle(x, y - 9 * s, x - 3 * s, y, x + 3 * s, y);
+    g.fillTriangle(x - 7 * s, y - 6 * s, x - 5 * s, y, x - 1 * s, y);
+    g.fillTriangle(x + 7 * s, y - 6 * s, x + 5 * s, y, x + 1 * s, y);
+  };
+  make('plant-gold-turnip-sprout', 18, 18, (g) => leafTuft(g, 9, 16, 0.9));
+  make('plant-gold-turnip-growing', 28, 28, (g) => {
+    leafTuft(g, 14, 22, 1.3);
+    g.fillStyle(0x7a5a3c, 1);
+    g.fillEllipse(14, 25, 14, 5);
+  });
+  make('plant-gold-turnip-mature', 36, 40, (g) => {
+    shadow(g, 36, 40);
+    g.fillStyle(0x7a5a3c, 1);
+    g.fillEllipse(18, 34, 28, 9);
+    leafTuft(g, 18, 28, 1.9);
+    g.fillStyle(0xefc45c, 1);
+    g.fillEllipse(18, 31, 14, 8);
+    g.fillStyle(0xf8de94, 0.8);
+    g.fillEllipse(15, 29.5, 4, 2.5);
   });
 }

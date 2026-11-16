@@ -13,6 +13,7 @@ export interface InventoryGroup {
 const GROUPS: { title: string; categories: ItemCategory[] }[] = [
   { title: 'Samen', categories: ['seed'] },
   { title: 'Ernte', categories: ['produce'] },
+  { title: 'Speisen', categories: ['meal'] },
   { title: 'Rohstoffe', categories: ['resource'] },
   { title: 'Werkzeug & Bauteile', categories: ['tool', 'material'] },
   { title: 'Schlüssel & Andenken', categories: ['key'] },

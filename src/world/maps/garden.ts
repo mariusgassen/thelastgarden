@@ -179,6 +179,8 @@ export const GARDEN_MAP: MapDef = {
     { id: 'bed-extra', rect: { x: 30, y: 41, w: 4, h: 2 } },
   ],
   resourceNodes: [
+    { id: 'garden-seed-honeyberry', itemId: 'seed-honeyberry', at: { x: 36.5, y: 33.5 }, label: 'Samen einsammeln' },
+    { id: 'garden-seed-gold-turnip', itemId: 'seed-gold-turnip', at: { x: 13.5, y: 44.5 }, label: 'Samen einsammeln' },
     // Sonnenlicht — sunny open spots, respawn.
     { id: 'sun-1', itemId: 'resource-sunlight', at: { x: 17, y: 22 }, label: 'Sonnenlicht sammeln', respawnMs: 45_000 },
     { id: 'sun-2', itemId: 'resource-sunlight', at: { x: 20, y: 34 }, label: 'Sonnenlicht sammeln', respawnMs: 45_000 },

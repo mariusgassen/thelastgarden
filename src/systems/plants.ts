@@ -42,7 +42,20 @@ export const DEW_BOOST_MS = STAGE_DURATION_MS;
 const DEW_ITEM_ID = 'resource-dew';
 
 /** Species tried, in order, on a bed that accepts any plant (PlantingBedDef.plantId is omitted). */
-const ANY_BED_SPECIES_ORDER = ['bramble-vine', 'glow-lily', 'lavender', 'night-violet', 'moon-fern', 'hollyhock'];
+const ANY_BED_SPECIES_ORDER = [
+  'bramble-vine',
+  'glow-lily',
+  'lavender',
+  'night-violet',
+  'moon-fern',
+  'hollyhock',
+  'glowcap',
+  'thornroot',
+  'reed',
+  'willow',
+  'honeyberry',
+  'gold-turnip',
+];
 
 function readState(): PlantsExt {
   return gameState.getExt<PlantsExt>('plants', { beds: {} });
@@ -272,6 +285,31 @@ export function shiftGrowth(bedId: string, ms: number): boolean {
   writeState(state);
   gameState.save();
   return true;
+}
+
+/**
+ * Helpers speed these beds up by `ms`: a growing bed gets older, a harvested one regrows sooner.
+ * Saves once. Returns how many beds changed (bees, see systems/animals.ts).
+ */
+export function speedUpBeds(bedIds: string[], ms: number): number {
+  const state = readState();
+  let changed = 0;
+  for (const id of bedIds) {
+    const bed = state.beds[id];
+    if (!bed) continue;
+    if (!isBedMature(id)) {
+      bed.plantedAt -= ms;
+      changed++;
+    } else if (bed.harvestedAt !== undefined && !isProduceReady(id)) {
+      bed.harvestedAt -= ms;
+      changed++;
+    }
+  }
+  if (changed > 0) {
+    writeState(state);
+    gameState.save();
+  }
+  return changed;
 }
 
 /** Dev-only: rewinds every planted bed's clock so growth and regrowth advance immediately (see window.__tlg). */
