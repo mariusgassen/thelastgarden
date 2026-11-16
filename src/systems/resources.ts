@@ -154,7 +154,7 @@ export function getNodeSpot(id: string): { x: number; y: number } | undefined {
 addPlacementBlocker((mapId, x, y) => {
   const state = readState();
   const hit = allResourceNodes().some((n) => {
-    if (n.mapId !== mapId) return false;
+    if (n.mapId !== mapId || (n.giftFlag && !gameState.hasFlag(n.giftFlag))) return false;
     const at = place(n, state).at;
     return Math.floor(at.x) === x && Math.floor(at.y) === y;
   });
@@ -166,6 +166,7 @@ function writeState(state: ResourceExt): void {
 }
 
 export function isNodeAvailable(def: ResourceNodeWithMap): boolean {
+  if (def.giftFlag) return gameState.hasFlag(def.giftFlag);
   const state = readState();
   if (def.respawnMs === undefined) return !state.collected.includes(def.id);
   const last = state.lastCollectedAt[def.id];
@@ -182,7 +183,8 @@ export function collectNode(id: string): boolean {
   const def = getResourceNodes().find((n) => n.id === id);
   if (!def || !isNodeAvailable(def) || isNodeBlighted(def)) return false;
   const state = readState();
-  if (def.respawnMs === undefined) state.collected.push(id);
+  if (def.giftFlag) gameState.setFlag(def.giftFlag, false);
+  else if (def.respawnMs === undefined) state.collected.push(id);
   else {
     state.lastCollectedAt[id] = Date.now();
     reroll(def, state);

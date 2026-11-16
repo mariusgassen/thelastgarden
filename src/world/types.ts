@@ -78,6 +78,8 @@ export interface ResourceNodeDef {
   texture?: string;
   /** Items per collection (default 1). */
   count?: number;
+  /** Only present while this flag is set (a gift left by a night event); collecting it clears the flag. */
+  giftFlag?: string;
 }
 
 /**
