@@ -8,18 +8,20 @@ import { inputState } from '../systems/input';
 import { eatMeal } from '../systems/meals';
 import { gameState } from '../systems/state';
 import { hasTravelMap, travelTo } from '../systems/travel';
+import { cycleSeed, equipTool, getEquippedTool, getOwnedTools, getToolMode, setToolMode } from '../systems/tools';
 import { Banner } from '../ui/Banner';
 import { BuildBar } from '../ui/BuildBar';
 import { ContextButton } from '../ui/ContextButton';
 import { CraftingPanel } from '../ui/CraftingPanel';
 import { DayClock } from '../ui/DayClock';
 import { DialoguePanel } from '../ui/DialoguePanel';
-import { drawHammerIcon, drawHorseIcon, drawMapIcon, HudButton } from '../ui/HudButton';
+import { drawHammerIcon, drawHorseIcon, drawMapIcon, drawToolIcon, HudButton } from '../ui/HudButton';
 import { InventoryPanel } from '../ui/InventoryPanel';
 import { Joystick } from '../ui/Joystick';
 import { MapPanel } from '../ui/MapPanel';
 import { QuestLog } from '../ui/QuestLog';
 import { ResourceBar } from '../ui/ResourceBar';
+import { ToolBar } from '../ui/ToolBar';
 import { TutorialHints } from '../ui/TutorialHints';
 import { DPR, isTouchDevice, readSafeArea, type SafeArea } from '../ui/viewport';
 import { SCENES } from './keys';
@@ -47,7 +49,9 @@ export class UIScene extends Phaser.Scene {
   private mapButton!: HudButton;
   private rideButton!: HudButton;
   private buildButton!: HudButton;
+  private toolButton!: HudButton;
   private buildBar!: BuildBar;
+  private toolBar!: ToolBar;
   private dayClock!: DayClock;
   private tutorial!: TutorialHints;
   private safe: SafeArea = { top: 0, right: 0, bottom: 0, left: 0 };
@@ -136,7 +140,13 @@ export class UIScene extends Phaser.Scene {
     this.mapButton = new HudButton(this, drawMapIcon, touch ? undefined : 'M');
     this.rideButton = new HudButton(this, drawHorseIcon, touch ? undefined : 'R');
     this.buildButton = new HudButton(this, drawHammerIcon, touch ? undefined : 'B');
+    this.toolButton = new HudButton(
+      this,
+      (g, color) => drawToolIcon(g, color, (getEquippedTool() ?? getOwnedTools()[0])?.kind ?? 'sickle'),
+      touch ? undefined : 'T',
+    );
     this.buildBar = new BuildBar(this, touch);
+    this.toolBar = new ToolBar(this, touch);
     this.dayClock = new DayClock(this);
     this.tutorial = new TutorialHints(this, touch, () => this.layoutTopStack());
 
@@ -165,8 +175,12 @@ export class UIScene extends Phaser.Scene {
     kb?.on('keydown-M', () => this.toggleMap());
     kb?.on('keydown-R', () => this.toggleRide());
     kb?.on('keydown-B', () => this.toggleBuild());
+    kb?.on('keydown-T', () => this.toggleTools());
     kb?.on('keydown-ESC', () => {
-      if (!inputState.modal) setBuildMode(false);
+      if (!inputState.modal) {
+        setBuildMode(false);
+        setToolMode(false);
+      }
       this.questLog.setOpen(false);
       this.inventory.setOpen(false);
       this.crafting.setOpen(false);
@@ -194,6 +208,9 @@ export class UIScene extends Phaser.Scene {
           if (picked) this.applyDialogueChoice(picked);
         } else if (this.crafting.isOpen) {
           this.crafting.craftIndex(idx);
+        } else if (this.toolBar.visible) {
+          const toolId = this.toolBar.toolAt(idx);
+          if (toolId) this.pickTool(toolId);
         } else if (this.buildBar.visible) {
           const pieceId = this.buildBar.pieceAt(idx);
           if (pieceId) selectBuildPiece(pieceId);
@@ -228,8 +245,14 @@ export class UIScene extends Phaser.Scene {
       } else this.advanceDialogue();
     });
     bus.onScene(this, 'build-mode-changed', () => this.buildBar.refresh());
+    bus.onScene(this, 'tool-changed', () => {
+      this.toolBar.refresh();
+      this.toolButton.refresh();
+    });
     bus.onScene(this, 'inventory-changed', () => {
       this.buildBar.refresh();
+      this.toolBar.refresh();
+      this.toolButton.refresh();
       this.resourceBar.refresh();
       this.inventory.refresh();
       this.crafting.refresh();
@@ -292,6 +315,7 @@ export class UIScene extends Phaser.Scene {
     this.crafting.layout(w, h, safe);
     this.mapPanel.layout(w, h, safe);
     this.buildBar.layout(w, h, safe);
+    this.toolBar.layout(w, h, safe);
     this.areaBanner.setMaxWidth(maxBannerW);
     this.toast.setMaxWidth(maxBannerW);
     this.tutorial.layout(w, 0, centerX, maxBannerW);
@@ -346,20 +370,34 @@ export class UIScene extends Phaser.Scene {
   private syncHudButtons(): void {
     const hidden = inputState.modal;
     const building = getBuildMode().active;
+    const tooling = getToolMode().open;
     this.buildBar.setVisible(building && !hidden);
+    this.toolBar.setVisible(tooling && !hidden);
+    this.toolButton.setVisible(!hidden && getOwnedTools().length > 0);
+    this.toolButton.setState(tooling);
     this.buildButton.setVisible(!hidden && isBuildUnlocked() && canRideHere());
     this.buildButton.setState(building);
     this.mapButton.setVisible(!hidden && hasTravelMap());
     this.rideButton.setVisible(!hidden && hasHorse());
     this.rideButton.setState(isRiding(), canRideHere());
-    const x = this.viewW - this.safe.right - 22 - HudButton.RADIUS;
-    let y = this.viewH - this.safe.bottom - 34 - this.button.radius * 2 - 16 - HudButton.RADIUS;
-    // The build bar takes the bottom edge on narrow screens; the column moves up above it.
-    if (this.buildBar.visible) y = Math.min(y, this.viewH - this.safe.bottom - this.buildBar.height - 26 - HudButton.RADIUS);
-    for (const b of [this.buildButton, this.rideButton, this.mapButton]) {
+    let x = this.viewW - this.safe.right - 22 - HudButton.RADIUS;
+    const startY = this.viewH - this.safe.bottom - 34 - this.button.radius * 2 - 16 - HudButton.RADIUS;
+    let y = startY;
+    // The bars take the bottom edge on narrow screens; the column moves up above them.
+    const bar = this.buildBar.visible ? this.buildBar : this.toolBar.visible ? this.toolBar : undefined;
+    if (bar) y = Math.min(y, this.viewH - this.safe.bottom - bar.height - 26 - HudButton.RADIUS);
+    const step = HudButton.RADIUS * 2 + 12;
+    // A short (landscape) screen starts a second column to the left instead of running into the clock.
+    const topLimit = this.dayClock.bottom + 12 + HudButton.RADIUS;
+    let columnTop = y;
+    for (const b of [this.buildButton, this.toolButton, this.rideButton, this.mapButton]) {
       if (!b.visible) continue;
+      if (y < topLimit && y !== columnTop) {
+        x -= HudButton.RADIUS * 2 + 12;
+        y = columnTop;
+      }
       b.setPosition(x, y);
-      y -= HudButton.RADIUS * 2 + 12;
+      y -= step;
     }
   }
 
@@ -373,6 +411,18 @@ export class UIScene extends Phaser.Scene {
     if (!isBuildUnlocked()) return;
     if (!canRideHere()) this.enqueueToast('Drinnen ist kein Platz zum Bauen.');
     else setBuildMode(!getBuildMode().active);
+  }
+
+  private toggleTools(): void {
+    if (inputState.modal || getOwnedTools().length === 0) return;
+    setToolMode(!getToolMode().open);
+  }
+
+  /** A tool slot was picked: take it in hand; the satchel again switches to the next kind of seed. */
+  private pickTool(toolId: string): void {
+    const inHand = getEquippedTool();
+    if (inHand?.id === toolId && inHand.kind === 'satchel') cycleSeed();
+    else equipTool(toolId);
   }
 
   private toggleRide(): void {
@@ -446,6 +496,11 @@ export class UIScene extends Phaser.Scene {
     if (this.crafting.pointerDown(p.x, p.y)) return;
     if (this.inventory.pointerDown(p.x, p.y)) return;
     if (this.questLog.pointerDown(p.x, p.y)) return;
+    const pickedTool = this.toolBar.pointerDown(p.x, p.y);
+    if (pickedTool !== undefined) {
+      if (pickedTool) this.pickTool(pickedTool);
+      return;
+    }
     const pickedPiece = this.buildBar.pointerDown(p.x, p.y);
     if (pickedPiece !== undefined) {
       if (pickedPiece) selectBuildPiece(pickedPiece);
@@ -453,6 +508,10 @@ export class UIScene extends Phaser.Scene {
     }
     if (this.buildButton.contains(p.x, p.y)) {
       this.toggleBuild();
+      return;
+    }
+    if (this.toolButton.contains(p.x, p.y)) {
+      this.toggleTools();
       return;
     }
     if (this.mapButton.contains(p.x, p.y)) {

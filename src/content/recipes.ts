@@ -90,6 +90,49 @@ export const RECIPES: RecipeDef[] = [
     ],
     requiresFlag: 'journal-read:page-mill',
   },
+  // Tools: unlocked by playing, not by a journal page (see ARCHITECTURE.md, "Tools and gadgets").
+  {
+    id: 'tool-sickle',
+    name: 'Sichel',
+    result: [{ itemId: 'tool-sickle', count: 1 }],
+    cost: [
+      { itemId: 'mat-wood', count: 2 },
+      { itemId: 'mat-scrap', count: 1 },
+    ],
+    requiresFlag: 'harvested-once',
+  },
+  {
+    id: 'tool-shovel',
+    name: 'Spaten',
+    result: [{ itemId: 'tool-shovel', count: 1 }],
+    cost: [
+      { itemId: 'mat-wood', count: 2 },
+      { itemId: 'mat-stone', count: 1 },
+    ],
+    requiresFlag: 'gathered-material',
+  },
+  {
+    id: 'tool-satchel',
+    name: 'Saatbeutel',
+    result: [{ itemId: 'tool-satchel', count: 1 }],
+    cost: [
+      { itemId: 'produce-tendril', count: 1 },
+      { itemId: 'produce-scent-bundle', count: 1 },
+      { itemId: 'mat-scrap', count: 1 },
+    ],
+    requiresFlag: 'harvested-once',
+  },
+  {
+    id: 'tool-pole-lantern',
+    name: 'Stablaterne',
+    result: [{ itemId: 'tool-pole-lantern', count: 1 }],
+    cost: [
+      { itemId: 'mat-wood', count: 1 },
+      { itemId: 'mat-scrap', count: 1 },
+      { itemId: 'produce-light-pollen', count: 2 },
+    ],
+    requiresFlag: 'built:lantern',
+  },
   // Cooking is learned by the first harvest of its crop (flag `harvested:<item>`), not from a page.
   {
     id: 'berry-mash',

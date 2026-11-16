@@ -51,6 +51,10 @@ export interface GameEvents {
   'plant-planted': { bedId: string; plantId: string };
   /** A planted bed just reached full growth (see systems/plants.ts isBedMature). */
   'plant-matured': { bedId: string; plantId: string };
+  /** A plant was dug out of a bed with the shovel (see systems/plants.ts uprootBed). */
+  'plant-removed': { bedId: string };
+  /** The equipped tool or tool mode changed (see systems/tools.ts). */
+  'tool-changed': { toolId: string | null; active: boolean };
   /** A mature bed's produce was harvested (see systems/plants.ts harvestBed). */
   'plant-harvested': { bedId: string; plantId: string; itemId: string };
   /** The player picked a dialogue choice that carries an `id` (DialogueChoice.id). */

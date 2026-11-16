@@ -55,6 +55,22 @@ export interface RecipeDef {
   requiresFlag?: string;
 }
 
+export type ToolKind = 'sickle' | 'shovel' | 'satchel' | 'light';
+
+/** A craftable, never-used-up tool (content/tools.ts, systems/tools.ts). `id` is the tool's item id. */
+export interface ToolDef {
+  id: string;
+  kind: ToolKind;
+  /** Short line for the tool bar: what it does. */
+  hint: string;
+  /** How far from the player's feet a bed may be and still be worked, in tiles. */
+  reachTiles?: number;
+  /** `light` tools: light radius in px that opens the night veil around the player. */
+  lightRadius?: number;
+  /** `light` tools: blight within this many tiles of the player dries up. */
+  pushBackTiles?: number;
+}
+
 /** Something the player can place on the map grid in build mode (content/buildables.ts, systems/building.ts). */
 export interface BuildableDef {
   id: string;

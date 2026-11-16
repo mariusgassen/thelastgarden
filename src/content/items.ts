@@ -322,6 +322,39 @@ export const ITEMS: ItemDef[] = [
     stackable: true,
     color: 0xb07a52,
   },
+  // Craftable tools of the tool mode (content/tools.ts, systems/tools.ts). Never used up.
+  {
+    id: 'tool-sickle',
+    name: 'Sichel',
+    description: 'Eine kleine, scharfe Sichel mit Holzgriff. Ein Schwung erntet alles Reife ringsum.',
+    category: 'tool',
+    stackable: false,
+    color: 0xb9c0c7,
+  },
+  {
+    id: 'tool-shovel',
+    name: 'Spaten',
+    description: 'Mit ihm hebst du eine Pflanze samt Erde aus und setzt sie woanders wieder ein, ohne dass sie Wuchs verliert.',
+    category: 'tool',
+    stackable: false,
+    color: 0x8a8f96,
+  },
+  {
+    id: 'tool-satchel',
+    name: 'Saatbeutel',
+    description: 'Ein genähter Beutel mit Kordel. Er sät eine Sorte in alle freien Beete ringsum.',
+    category: 'tool',
+    stackable: false,
+    color: 0xc9a56b,
+  },
+  {
+    id: 'tool-pole-lantern',
+    name: 'Stablaterne',
+    description: 'Eine Laterne an einer langen Stange. Wo du sie trägst, wird es hell, und die Welke weicht zurück.',
+    category: 'tool',
+    stackable: false,
+    color: 0xf3e38a,
+  },
   // Plants that guard, build and feed (content/plants.ts).
   {
     id: 'seed-glowcap',

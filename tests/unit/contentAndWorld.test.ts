@@ -47,9 +47,11 @@ describe('content registries', () => {
         expect(content.items.has(entry.itemId), `${recipe.id}: ${entry.itemId}`).toBe(true);
         expect(entry.count).toBeGreaterThan(0);
       }
-      // Page-taught recipes need a journal page that exists somewhere in the world; cooking is taught by its first harvest.
+      // Page-taught recipes need a journal page that exists somewhere in the world; cooking is taught by its first
+      // harvest, tools by playing (a flag).
       if (!recipe.requiresFlag?.startsWith('journal-read:')) {
-        expect(recipe.requiresFlag, recipe.id).toMatch(/^harvested:/);
+        if (content.tools.has(recipe.id)) expect(recipe.requiresFlag, recipe.id).toBeTruthy();
+        else expect(recipe.requiresFlag, recipe.id).toMatch(/^harvested:/);
         continue;
       }
       const pageId = recipe.requiresFlag.replace('journal-read:', '');

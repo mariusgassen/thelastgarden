@@ -323,6 +323,55 @@ export function debugRewindGrowth(ms: number): void {
   gameState.save();
 }
 
+/** A plant dug up with the shovel, ready to go into another bed with its growth intact (systems/tools.ts). */
+export interface UprootedPlant {
+  plantId: string;
+  /** How far it had grown, in ms of growth clock. */
+  progressMs: number;
+  /** Ms since its last harvest; unset = never harvested. */
+  sinceHarvestMs?: number;
+  harvests?: number;
+}
+
+/** Whether `plantId` may be planted in this bed (open beds take anything, the rest only their own species). */
+export function bedAccepts(bedId: string, plantId: string): boolean {
+  const bedDef = findPlantingBed(bedId);
+  return bedDef !== undefined && (bedDef.plantId === undefined || bedDef.plantId === plantId);
+}
+
+/** Digs a plant out of its bed without losing it. Returns what to carry, or undefined if the bed is empty. */
+export function uprootBed(bedId: string): UprootedPlant | undefined {
+  const state = readState();
+  const bed = state.beds[bedId];
+  if (!bed) return undefined;
+  const now = Date.now();
+  const out: UprootedPlant = { plantId: bed.plantId, progressMs: now - bed.plantedAt, harvests: bed.harvests };
+  if (bed.harvestedAt !== undefined) out.sinceHarvestMs = now - bed.harvestedAt;
+  delete state.beds[bedId];
+  writeState(state);
+  gameState.setFlag(`bed-restored:${bedId}`, false);
+  gameState.setFlag('moved-plant');
+  gameState.save();
+  bus.emit('plant-removed', { bedId });
+  return out;
+}
+
+/** Sets an uprooted plant into an empty bed that accepts it; growth carries on where it stopped. */
+export function transplantInto(bedId: string, plant: UprootedPlant): boolean {
+  if (isBedPlanted(bedId) || !bedAccepts(bedId, plant.plantId)) return false;
+  const now = Date.now();
+  const state = readState();
+  state.beds[bedId] = { bedId, plantId: plant.plantId, plantedAt: now - plant.progressMs };
+  const bed = state.beds[bedId];
+  if (plant.sinceHarvestMs !== undefined) bed.harvestedAt = now - plant.sinceHarvestMs;
+  if (plant.harvests !== undefined) bed.harvests = plant.harvests;
+  writeState(state);
+  gameState.setFlag(`bed-planted:${bedId}`);
+  gameState.save();
+  bus.emit('plant-planted', { bedId, plantId: plant.plantId });
+  return true;
+}
+
 /** All currently planted beds across all maps (dev/debug helper, also handy for a future quest HUD). */
 export function getAllPlantedBeds(): PlantedBed[] {
   return Object.values(readState().beds);

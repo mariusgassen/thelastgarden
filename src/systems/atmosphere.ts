@@ -7,6 +7,9 @@ import { getPieces } from './building';
 import { advanceDayClock, getDayTime } from './dayClock';
 import { getLightSources } from './plants';
 
+/** The night veil follows a carried light at most this often (ms). */
+const CARRIED_REDRAW_MS = 70;
+
 /**
  * Scene-bound ambience for the open world. Time itself lives in `dayClock.ts` so map
  * transitions keep the current hour; plants remain the persistent light source via `plants.ts`.
@@ -18,10 +21,14 @@ export class AtmosphereLayer {
   private readonly motes: Phaser.GameObjects.Particles.ParticleEmitter;
   private lastAlpha = -1;
   private lastSourcesKey = '';
+  private sinceDraw = 0;
+  private lastCarriedKey = '';
 
   constructor(
     scene: Phaser.Scene,
     private readonly map: MapDef,
+    /** A light the player carries (the lantern on a pole), in world px; null = none. */
+    private readonly carriedLight: () => { x: number; y: number; radius: number } | null = () => null,
   ) {
     const width = map.width * TILE_SIZE;
     const height = map.height * TILE_SIZE;
@@ -58,6 +65,7 @@ export class AtmosphereLayer {
     const nightFactor = Phaser.Math.Clamp(shadeAlpha / 0.52, 0, 1);
     const effectiveAlpha = this.map.baseTile === 'woodWall' ? shadeAlpha * 0.42 : shadeAlpha;
     this.motes.setAlpha(0.24 + nightFactor * 0.72);
+    this.sinceDraw += delta;
     this.drawShade(effectiveAlpha);
   }
 
@@ -73,10 +81,16 @@ export class AtmosphereLayer {
     this.shade.setVisible(true);
     const sources = getLightSources().filter((source) => source.mapId === this.map.id);
     const lamps = getPieces(this.map.id).filter((p) => content.buildables.find(p.id)?.lightRadius);
-    const sourcesKey = [...sources.map((s) => s.bedId), ...lamps.map((p) => `${p.x}:${p.y}`)].join(',');
+    // The carried light moves with the player: redraw when it has moved a few px, but not every frame.
+    const carried = this.carriedLight();
+    const carriedKey = carried ? `${Math.round(carried.x / 6)}:${Math.round(carried.y / 6)}:${carried.radius}` : '';
+    if (carriedKey !== this.lastCarriedKey && carriedKey !== '' && this.sinceDraw < CARRIED_REDRAW_MS) return;
+    const sourcesKey = [...sources.map((s) => s.bedId), ...lamps.map((p) => `${p.x}:${p.y}`), carriedKey].join(',');
     if (Math.abs(alpha - this.lastAlpha) < 0.01 && sourcesKey === this.lastSourcesKey) return;
     this.lastAlpha = alpha;
     this.lastSourcesKey = sourcesKey;
+    this.lastCarriedKey = carriedKey;
+    this.sinceDraw = 0;
 
     this.shade.clear();
     this.shade.fill(0x101936, alpha);
@@ -98,6 +112,7 @@ export class AtmosphereLayer {
     for (const lamp of lamps) {
       punch((lamp.x + 0.5) * TILE_SIZE, (lamp.y + 0.5) * TILE_SIZE - 12, content.buildables.get(lamp.id).lightRadius as number);
     }
+    if (carried) punch(carried.x, carried.y, carried.radius);
     this.shade.render();
   }
 }

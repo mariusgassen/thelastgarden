@@ -92,6 +92,14 @@ export class TutorialHints {
             : 'Baumaterial! Taste B oder der Hammer-Knopf öffnet den Baumodus: Stück wählen, dann auf ein freies Feld klicken.',
           ttlMs: 14_000,
         });
+      } else if (itemId.startsWith('tool-')) {
+        this.enqueue({
+          id: 'tools',
+          text: touch
+            ? 'Ein Werkzeug! Der Knopf unten rechts öffnet die Werkzeugleiste: Werkzeug wählen, dann irgendwo antippen, um es zu benutzen.'
+            : 'Ein Werkzeug! Taste T oder der Knopf unten rechts öffnet die Werkzeugleiste: Werkzeug wählen, dann E oder Klick, um es zu benutzen.',
+          ttlMs: 14_000,
+        });
       } else if (itemId === 'pocket-workbench') {
         this.enqueue({
           id: 'pocket-workbench',

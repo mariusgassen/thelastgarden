@@ -204,6 +204,27 @@ export function refreshBlight(mapId: string): number {
   return dried;
 }
 
+/**
+ * A carried light (the pole lantern, systems/tools.ts) dries up blight within `radiusTiles` of a
+ * point in px. Unlike a ward it only clears what is there: the blight may creep back at night.
+ * Returns how many tiles dried up.
+ */
+export function pushBackBlight(mapId: string, px: number, py: number, radiusTiles: number): number {
+  const before = tileSet(mapId);
+  if (before.size === 0) return 0;
+  const cx = px / TILE_SIZE;
+  const cy = py / TILE_SIZE;
+  const kept = [...before].filter((k) => {
+    const [x, y] = k.split(',').map(Number);
+    return Math.hypot(x + 0.5 - cx, y + 0.5 - cy) > radiusTiles;
+  });
+  const dried = before.size - kept.length;
+  if (dried === 0) return 0;
+  writeTiles(mapId, kept);
+  gameState.setFlag('blight-pushed-back');
+  return dried;
+}
+
 /** One night: on every map, each living heart takes its next few tiles. Returns the growth on the player's map. */
 export function blightNightfall(): number {
   if (!isBlightAwake()) return 0;
