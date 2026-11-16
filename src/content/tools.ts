@@ -14,7 +14,7 @@ export const TOOLS: ToolDef[] = [
   {
     id: 'tool-shovel',
     kind: 'shovel',
-    hint: 'Gräbt eine Pflanze samt Wuchs aus, setzt sie in ein freies Beet.',
+    hint: 'Gräbt eine Pflanze aus und legt ihren Samen zurück in den Beutel.',
     reachTiles: 3.2,
   },
   {

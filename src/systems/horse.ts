@@ -12,6 +12,7 @@
  *   toggleRiding()      mount/dismount; emits `riding-changed`
  */
 import { MAPS } from '../world';
+import { isBoatingHere } from './boat';
 import { bus } from './events';
 import { gameState } from './state';
 
@@ -38,17 +39,21 @@ export function isRiding(): boolean {
 }
 
 export function isRidingHere(mapId = gameState.data.player.mapId): boolean {
-  return isRiding() && canRideOn(mapId);
+  return isRiding() && canRideOn(mapId) && !isBoatingHere(mapId);
 }
 
 /** True when Mohn should trot beside/behind the player on foot in the current map. */
 export function shouldShowFollowerHorse(mapId = gameState.data.player.mapId): boolean {
-  return hasHorse() && canRideOn(mapId) && !isRidingHere(mapId);
+  return hasHorse() && canRideOn(mapId) && !isRidingHere(mapId) && !isBoatingHere(mapId);
 }
 
-/** Returns false (with a toast where it helps) if there is no horse or the map is indoors. */
+/** Returns false (with a toast where it helps) if there is no horse, boating, or the map is indoors. */
 export function setRiding(riding: boolean): boolean {
   if (!hasHorse()) return false;
+  if (riding && isBoatingHere()) {
+    bus.emit('toast', { text: 'Mohn wartet am Ufer auf dich.' });
+    return false;
+  }
   if (!canRideHere()) {
     bus.emit('toast', { text: 'Mohn wartet lieber draußen.' });
     return false;

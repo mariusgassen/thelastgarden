@@ -275,6 +275,119 @@ test.describe('Phone touch controls', () => {
     expect(errors).toEqual([]);
   });
 
+  test('opens build bar on phone and places a free soil bed via touch', async ({ page }) => {
+    const errors = trackErrors(page);
+
+    await page.addInitScript((key) => {
+      if (localStorage.getItem(key)) return;
+      localStorage.setItem(
+        key,
+        JSON.stringify({
+          version: 1,
+          savedAt: Date.now(),
+          player: { mapId: 'garden', x: 22.5 * 32, y: 37.5 * 32, facing: 'right' },
+          world: { unblockedPaths: [], visitedZones: ['garden'], flags: { 'gathered-material': true } },
+          inventory: { items: {} },
+          quests: { active: ['q-meet-crow'], completed: [], progress: {} },
+          ext: {},
+        }),
+      );
+    }, SAVE_KEY);
+
+    await page.goto('/');
+    await waitForGameBoot(page);
+
+    // Open build bar (bottom-right hammer button at 345, 687)
+    await page.touchscreen.tap(345, 687);
+    await page.waitForTimeout(200);
+
+    // Verify viewport doesn't overflow on phone with 4-row BuildBar open
+    const fit = await page.evaluate(() => ({
+      scrollWidth: document.documentElement.scrollWidth,
+      innerWidth: window.innerWidth,
+      scrollHeight: document.documentElement.scrollHeight,
+      innerHeight: window.innerHeight,
+    }));
+    expect(fit.scrollWidth).toBeLessThanOrEqual(fit.innerWidth);
+    expect(fit.scrollHeight).toBeLessThanOrEqual(fit.innerHeight);
+
+    // Pick Beet (slot index 4 in BuildBar: 270, 652), then tap tile right of player (~232, 422)
+    await expect
+      .poll(
+        async () => {
+          const pieces = ((await flushAndReadSave(page))?.ext.building as { pieces?: { garden?: { id: string }[] } } | undefined)
+            ?.pieces?.garden;
+          if (pieces?.some((p) => p.id === 'planter')) return true;
+          await page.touchscreen.tap(270, 652);
+          await page.waitForTimeout(150);
+          await page.touchscreen.tap(232, 422);
+          await page.waitForTimeout(300);
+          const next = ((await flushAndReadSave(page))?.ext.building as { pieces?: { garden?: { id: string }[] } } | undefined)
+            ?.pieces?.garden;
+          return next?.some((p) => p.id === 'planter') ?? false;
+        },
+        { timeout: 15_000, intervals: [150] },
+      )
+      .toBe(true);
+
+    expect(errors).toEqual([]);
+  });
+
+  test('boards boat and lands back on shore via phone touch controls', async ({ page }) => {
+    const errors = trackErrors(page);
+
+    await page.addInitScript((key) => {
+      if (localStorage.getItem(key)) return;
+      localStorage.setItem(
+        key,
+        JSON.stringify({
+          version: 1,
+          savedAt: Date.now(),
+          player: { mapId: 'river-farms', x: 35.4 * 32, y: 16.0 * 32, facing: 'right' },
+          world: { unblockedPaths: [], visitedZones: ['garden', 'river-farms-yard'], flags: { 'crow-met': true } },
+          inventory: { items: {} },
+          quests: { active: [], completed: ['q-meet-crow'], progress: {} },
+          ext: {},
+        }),
+      );
+    }, SAVE_KEY);
+
+    await page.goto('/');
+    await waitForGameBoot(page);
+
+    const isBoat = async () => Boolean(((await flushAndReadSave(page))?.ext.boat as { boating?: boolean } | undefined)?.boating);
+
+    // Tap context button ("Boot" at 326, 768) -> tap first choice ("Ins Boot steigen") -> verify boat active
+    await expect
+      .poll(
+        async () => {
+          if (await isBoat()) return true;
+          await page.touchscreen.tap(326, 768);
+          await page.waitForTimeout(300);
+          await page.touchscreen.tap(195, 672);
+          await page.waitForTimeout(300);
+          return isBoat();
+        },
+        { timeout: 15_000, intervals: [150] },
+      )
+      .toBe(true);
+
+    // Tap context button ("Anlegen" at 326, 768) to step back onto the pier
+    await expect
+      .poll(
+        async () => {
+          if (!(await isBoat())) return false;
+          await page.touchscreen.tap(326, 768);
+          await page.waitForTimeout(300);
+          return isBoat();
+        },
+        { timeout: 15_000, intervals: [150] },
+      )
+      .toBe(false);
+
+    expect(errors).toEqual([]);
+  });
+
   test('hold-to-select tool without button jump, action button collects wood with sickle, and tap/slot deselects', async ({
     page,
   }) => {

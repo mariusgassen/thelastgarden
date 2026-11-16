@@ -92,16 +92,22 @@ export function planterBedId(mapId: string, x: number, y: number): string {
   return `planter:${mapId}:${x}:${y}`;
 }
 
-// Built planters are planting beds like the ones in the map data (see world/index.ts).
+// Built planters and floating beds become planting beds like the ones in map data (see world/index.ts).
 setDynamicBedProvider(() => {
   const beds: (PlantingBedDef & { mapId: string })[] = [];
   for (const [mapId, pieces] of Object.entries(readState().pieces)) {
     for (const p of pieces) {
-      const slots = content.buildables.find(p.id)?.planter;
+      const def = content.buildables.find(p.id);
+      const slots = def?.planter;
       if (!slots) continue;
-      // The plants stand on the soil in the box, a little above the tile's lower edge. Slot 0 keeps
-      // the id the single-plant planter had, so plants from older saves stay where they were.
-      beds.push({ id: planterBedId(mapId, p.x, p.y), mapId, rect: { x: p.x, y: p.y - 0.3, w: 1, h: 1 }, slots, plantScale: 0.6 });
+      beds.push({
+        id: planterBedId(mapId, p.x, p.y),
+        mapId,
+        rect: { x: p.x, y: p.y - 0.1, w: 1, h: 1 },
+        slots,
+        plantScale: 0.78,
+        floating: def?.on === 'water',
+      });
     }
   }
   return beds;
@@ -215,7 +221,15 @@ const itemList = (items: { itemId: string; count: number }[]): string =>
   items.map((i) => `${i.count} ${content.items.get(i.itemId).name}`).join(', ');
 
 export function costLabel(def: BuildableDef): string {
-  return itemList(def.cost);
+  return def.cost.length === 0 ? 'kostenlos' : itemList(def.cost);
+}
+
+function waterSubject(def: BuildableDef): string {
+  if (def.boat) return 'Das Ruderboot';
+  if (def.planter) return 'Das Schwimmbeet';
+  if (def.machine === 'drift-net') return 'Das Treibgut-Netz';
+  if (def.home?.animal === 'ducks') return 'Das Entenhaus';
+  return 'Der Steg';
 }
 
 /** Why `pieceId` cannot go on this tile right now, or null if it can. */
@@ -231,14 +245,18 @@ export function whyNotPlace(mapId: string, pieceId: string, x: number, y: number
   if (def.on === 'forest') return whyNotClear(mapId, x, y) ?? missingCostReason(def);
   if (getPieceAt(mapId, x, y)) return 'Hier steht schon etwas.';
   if (def.on === 'water') {
-    if (tile !== 'water') return 'Der Steg gehört aufs Wasser.';
+    if (tile !== 'water') return `${waterSubject(def)} gehört aufs Wasser.`;
     const anchored = [
       [1, 0],
       [-1, 0],
       [0, 1],
       [0, -1],
-    ].some(([dx, dy]) => isOpenGround(mapId, x + dx, y + dy) || getPieceAt(mapId, x + dx, y + dy)?.id === def.id);
-    if (!anchored) return 'Der Steg braucht Anschluss ans Ufer.';
+    ].some(([dx, dy]) => {
+      if (isOpenGround(mapId, x + dx, y + dy)) return true;
+      const adj = getPieceAt(mapId, x + dx, y + dy);
+      return adj !== undefined && content.buildables.find(adj.id)?.on === 'water';
+    });
+    if (!anchored) return `${waterSubject(def)} braucht Anschluss ans Ufer oder einen Steg.`;
   } else {
     if (TILES[tile].solid) return 'Hier ist kein freier Boden.';
     if (info.keepClear.has(key(x, y))) return 'Dieser Platz muss frei bleiben.';

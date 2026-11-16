@@ -90,7 +90,9 @@ export function isBedMature(bedId: string): boolean {
 export function getPlantableSpecies(bedId: string): string[] {
   const bedDef = findPlantingBed(bedId);
   if (!bedDef) return [];
-  const candidates = bedDef.plantId ? [bedDef.plantId] : ANY_BED_SPECIES_ORDER;
+  const candidates = bedDef.plantId
+    ? [bedDef.plantId, ...ANY_BED_SPECIES_ORDER.filter((id) => id !== bedDef.plantId)]
+    : ANY_BED_SPECIES_ORDER;
   return candidates.filter((id) => {
     const seedItemId = content.plants.get(id).seedItemId;
     return seedItemId !== undefined && gameState.getItemCount(seedItemId) > 0;
@@ -333,10 +335,9 @@ export interface UprootedPlant {
   harvests?: number;
 }
 
-/** Whether `plantId` may be planted in this bed (open beds take anything, the rest only their own species). */
-export function bedAccepts(bedId: string, plantId: string): boolean {
-  const bedDef = findPlantingBed(bedId);
-  return bedDef !== undefined && (bedDef.plantId === undefined || bedDef.plantId === plantId);
+/** Whether `plantId` may be planted in this bed (every valid bed accepts any crop). */
+export function bedAccepts(bedId: string, _plantId: string): boolean {
+  return findPlantingBed(bedId) !== undefined;
 }
 
 /** Digs a plant out of its bed without losing it. Returns what to carry, or undefined if the bed is empty. */

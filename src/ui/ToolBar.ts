@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { content } from '../content';
-import { AUTO_TOOL, DESELECT_TOOL, canUseAutoTool, describeTool, getCarriedPlant, getEquippedTool, getOwnedTools, getSowSeed, isAutoTool } from '../systems/tools';
+import { AUTO_TOOL, DESELECT_TOOL, canUseAutoTool, describeTool, getEquippedTool, getOwnedTools, getSowSeed, isAutoTool } from '../systems/tools';
 import { itemTextureKey } from '../world/textures';
 import { drawAutoIcon, drawDeselectIcon } from './HudButton';
 import { THEME } from './theme';
@@ -21,7 +21,6 @@ export class ToolBar {
   private readonly hint: Phaser.GameObjects.Text;
   private readonly slots: { id: string; frame: Phaser.GameObjects.Image; icon: Phaser.GameObjects.Image | Phaser.GameObjects.Graphics; x: number }[] = [];
   private readonly seedBadge: Phaser.GameObjects.Image;
-  private readonly carryBadge: Phaser.GameObjects.Image;
   /** Every tool, then the all-round hand, then the deselect slot. */
   private readonly ids = [...content.tools.all().map((t) => t.id), AUTO_TOOL, DESELECT_TOOL];
   /** Touch gets bigger slots and no text but the name: icons carry the rest. */
@@ -87,8 +86,7 @@ export class ToolBar {
       this.slots.push({ id, frame, icon, x });
     });
     this.seedBadge = scene.add.image(0, 0, itemTextureKey('tool-satchel')).setVisible(false);
-    this.carryBadge = scene.add.image(0, 0, itemTextureKey('tool-shovel')).setVisible(false);
-    parts.push(this.seedBadge, this.carryBadge);
+    parts.push(this.seedBadge);
     this.container = scene.add.container(0, 0, parts).setDepth(90_500).setVisible(false);
     this.refresh();
   }
@@ -151,20 +149,6 @@ export class ToolBar {
         .setVisible(true);
     } else {
       this.seedBadge.setVisible(false);
-    }
-    // The plant the spade carries, as a small icon on its slot: it stays there until it is set into a bed.
-    const spade = this.slots.find((sl) => sl.id === 'tool-shovel');
-    const carried = getCarriedPlant();
-    const carriedItem = carried ? content.plants.get(carried.plantId).seedItemId : undefined;
-    if (spade && carriedItem && owned.has(spade.id)) {
-      const size = this.slot * 0.42;
-      this.carryBadge
-        .setTexture(itemTextureKey(carriedItem))
-        .setPosition(spade.x + this.slot / 2 - size / 2 - 3, this.textH + PAD / 2 + this.slot / 2 - size / 2 - 3)
-        .setDisplaySize(size, size)
-        .setVisible(true);
-    } else {
-      this.carryBadge.setVisible(false);
     }
     const tool = shownPick ?? '';
     if (tool) {

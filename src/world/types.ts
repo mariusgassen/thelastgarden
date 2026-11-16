@@ -63,6 +63,8 @@ export interface PlantingBedDef {
   plantScale?: number;
   /** Set on a cell of a split bed: the whole bed's area (wards and prompts size themselves by it). */
   bounds?: TileRect;
+  /** True for water-built floating beds; protected from ground pests and blight. */
+  floating?: boolean;
 }
 
 /** A collectible resource or seed in the world (src/systems/resources.ts). */
@@ -212,12 +214,23 @@ export interface CraftInteractableSpec extends InteractableSpecBase {
   variants?: DialogueVariant[];
 }
 
+export interface BoatInteractableSpec extends InteractableSpecBase {
+  type: 'boat';
+  /** Optional flavor prompt when interacting with the moored boat. */
+  description?: string;
+  /** Water tile where the player starts rowing when boarding here. */
+  waterAt: TilePoint;
+  /** Optional river ferry destination (e.g. between river-farms pier and old-mill pier). */
+  ferry?: { mapId: string; spawn: string; label: string };
+}
+
 /** Built-in data-driven interactables. Add new variants here + a handler in systems/interaction.ts. */
 export type InteractableSpec =
   | DialogueInteractableSpec
   | DoorInteractableSpec
   | RepairInteractableSpec
-  | CraftInteractableSpec;
+  | CraftInteractableSpec
+  | BoatInteractableSpec;
 
 export interface MapDef {
   id: string;

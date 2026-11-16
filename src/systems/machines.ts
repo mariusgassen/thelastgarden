@@ -37,6 +37,10 @@ export const RACK_SEEDS = 2;
 export const MILL_GRIND_MS = 60_000;
 export const MILL_HARVEST_PER_FLOUR = 2;
 export const FLOUR_ITEM_ID = 'craft-flour';
+export const DRIFT_INTERVAL_MS = 90_000;
+export const DRIFT_MAX = 3;
+
+const DRIFT_LOOT = ['mat-wood', 'mat-scrap', 'resource-dew', 'resource-curio'] as const;
 
 const TICK_MS = 5000;
 /** A tab that slept for minutes must not hand out a windfall. */
@@ -51,6 +55,10 @@ interface Station {
   readyAt?: number;
   /** Compost heap: epoch ms until which it works. */
   activeUntil?: number;
+  /** Drift net: epoch ms since the last collection (or when the net was placed). */
+  startedAt?: number;
+  /** Drift net: cumulative catches so every 4th item is a curio. */
+  catchCount?: number;
 }
 
 interface MachinesExt {
@@ -181,6 +189,42 @@ function compostAction(key: string, station: Station | undefined, now: number): 
   };
 }
 
+function driftCatches(station: Station | undefined, now: number): { ready: number; startedAt: number; catchCount: number } {
+  const startedAt = station?.startedAt ?? now;
+  const ready = Math.min(DRIFT_MAX, Math.floor(Math.max(0, now - startedAt) / DRIFT_INTERVAL_MS));
+  return { ready, startedAt, catchCount: station?.catchCount ?? 0 };
+}
+
+function collectDrift(ready: number, catchCount: number): { itemId: string; count: number }[] {
+  const counts = new Map<string, number>();
+  for (let i = 0; i < ready; i++) {
+    const itemId = DRIFT_LOOT[(catchCount + i) % DRIFT_LOOT.length];
+    counts.set(itemId, (counts.get(itemId) ?? 0) + 1);
+  }
+  return [...counts.entries()].map(([itemId, count]) => ({ itemId, count }));
+}
+
+function driftAction(key: string, station: Station | undefined, now: number): MachineAction {
+  const { ready, startedAt, catchCount } = driftCatches(station, now);
+  if (ready === 0) {
+    return {
+      label: 'Prüfen',
+      act: () => `Im Treibgut-Netz hängt noch nichts, etwa ${seconds(startedAt + DRIFT_INTERVAL_MS - now)} bis zum nächsten Fang.`,
+    };
+  }
+  return {
+    label: 'Netz einholen',
+    act: () => {
+      const gained = collectDrift(ready, catchCount);
+      for (const g of gained) gameState.addItem(g.itemId, g.count);
+      writeStation(key, { startedAt: now, catchCount: catchCount + ready });
+      gameState.setFlag('collected-drift-net');
+      const list = gained.map((g) => `${g.count} ${content.items.get(g.itemId).name}`).join(', ');
+      return `+${list}`;
+    },
+  };
+}
+
 /** What the piece on this tile offers right now; null for pieces you just leave standing. */
 export function machineAction(mapId: string, x: number, y: number, now = Date.now()): MachineAction | null {
   const kind = kindAt(mapId, x, y);
@@ -193,6 +237,8 @@ export function machineAction(mapId: string, x: number, y: number, now = Date.no
       return millAction(key, station, now);
     case 'compost':
       return compostAction(key, station, now);
+    case 'drift-net':
+      return driftAction(key, station, now);
     default:
       return null;
   }
@@ -245,13 +291,24 @@ function refund(station: Station, now: number): void {
   } else if (station.inputs) {
     if (done) gameState.addItem(FLOUR_ITEM_ID, 1);
     else for (const i of station.inputs) gameState.addItem(i.itemId, i.count);
+  } else if (station.startedAt !== undefined) {
+    const { ready, catchCount } = driftCatches(station, now);
+    if (ready > 0) for (const g of collectDrift(ready, catchCount)) gameState.addItem(g.itemId, g.count);
   }
 }
 
-bus.on('build-changed', ({ mapId }) => {
+function syncDriftNetsForMap(mapId: string): void {
   const state = readState();
   const now = Date.now();
   let dirty = false;
+  for (const piece of getPieces(mapId)) {
+    if (content.buildables.find(piece.id)?.machine !== 'drift-net') continue;
+    const key = stationKey(mapId, piece.x, piece.y);
+    if (!state.stations[key]) {
+      state.stations[key] = { startedAt: now, catchCount: 0 };
+      dirty = true;
+    }
+  }
   for (const [key, station] of Object.entries(state.stations)) {
     if (!key.startsWith(`${mapId}:`)) continue;
     const [, x, y] = key.split(':');
@@ -263,6 +320,12 @@ bus.on('build-changed', ({ mapId }) => {
   if (!dirty) return;
   gameState.setExt('machines', state);
   gameState.save();
+}
+
+bus.on('build-changed', ({ mapId }) => syncDriftNetsForMap(mapId));
+bus.on('save-loaded', () => {
+  const built = gameState.getExt<{ pieces: Record<string, { id: string; x: number; y: number }[]> }>('building', { pieces: {} }).pieces;
+  for (const mapId of Object.keys(built)) syncDriftNetsForMap(mapId);
 });
 
 let tickerStarted = false;

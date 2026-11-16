@@ -9,7 +9,7 @@ import { blightNightfall, getBlightTiles, refreshBlight, restUntilMorning } from
 import { getPieces, placePiece, removePiece, setBuildMode } from './systems/building';
 import { bus } from './systems/events';
 import { getDayTime, setDayTimeHour } from './systems/dayClock';
-import { equipTool, getCarriedPlant, setToolMode, useTool } from './systems/tools';
+import { equipTool, setToolMode, useTool } from './systems/tools';
 import { stopNightScheduler, triggerNightEvent } from './systems/nightEvents';
 import { getObstacles, isBlocked, unblockPath } from './systems/obstacles';
 import {
@@ -129,7 +129,6 @@ if (import.meta.env.DEV) {
       equipTool,
       setToolMode,
       useTool,
-      getCarriedPlant,
       resetSave: () => {
         gameState.reset();
         location.reload();

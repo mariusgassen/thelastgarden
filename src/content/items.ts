@@ -334,7 +334,7 @@ export const ITEMS: ItemDef[] = [
   {
     id: 'tool-shovel',
     name: 'Spaten',
-    description: 'Mit ihm hebst du eine Pflanze samt Erde aus und setzt sie woanders wieder ein, ohne dass sie Wuchs verliert.',
+    description: 'Mit ihm hebst du eine Pflanze aus dem Beet und steckst ihren Samen zurück in den Beutel.',
     category: 'tool',
     stackable: false,
     color: 0x8a8f96,

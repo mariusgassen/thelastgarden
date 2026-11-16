@@ -140,19 +140,28 @@ export const WIKI_TOPICS: WikiTopicDef[] = [
   {
     id: 'animals',
     title: 'Helfende Tiere',
-    requiresAnyFlag: ['built:beehive', 'built:henhouse', 'built:goatpen', 'built:stable'],
+    requiresAnyFlag: ['built:beehive', 'built:henhouse', 'built:goatpen', 'built:stable', 'built:duckhouse'],
     lines: [
       'Tiere ziehen von selbst in ein Zuhause, das du baust. Du musst sie nicht füttern, und nichts geht verloren, wenn du sie alleinlässt.',
-      'Bienen beschleunigen Beete in der Nähe und füllen den Stock mit Honig. Hühner halten Schnecken von Beeten fern und legen Eier. Die Ziege frisst jede Nacht Welke weg und öffnet Dornengestrüpp. Ein Stall hält Mohn ausgeruht und schneller.',
+      'Bienen beschleunigen Beete in der Nähe und füllen den Stock mit Honig. Hühner und Enten halten Schnecken von Beeten fern; Hühner legen Eier, Enten sammeln Tau. Die Ziege frisst jede Nacht Welke weg und öffnet Dornengestrüpp. Ein Stall hält Mohn ausgeruht und schneller.',
     ],
   },
   {
     id: 'machines',
     title: 'Arbeitende Bauten',
-    requiresAnyFlag: ['built:rain-barrel', 'built:compost', 'built:drying-rack', 'built:windmill'],
+    requiresAnyFlag: ['built:rain-barrel', 'built:compost', 'built:drying-rack', 'built:windmill', 'built:drift-net'],
     lines: [
-      'Regentonne und Komposthaufen lassen Beete in der Nähe schneller wachsen. Das Trockengestell macht aus einer Ernte Samen, die Windmühle aus Ernte Blütenmehl.',
+      'Regentonne und Komposthaufen lassen Beete in der Nähe schneller wachsen. Das Trockengestell macht aus einer Ernte Samen, die Windmühle aus Ernte Blütenmehl, und das Treibgut-Netz fängt Holz, Schrott, Tau und Fundstücke aus dem Wasser.',
       'Tippe auf die Anlage, um sie zu füllen oder etwas abzuholen. Sie arbeiten auch weiter, während du woanders bist.',
+    ],
+  },
+  {
+    id: 'water-boating',
+    title: 'Wasser und Boote',
+    requiresAnyFlag: ['built:bridge', 'built:reed-bridge', 'built:boat-dock', 'built:floating-bed', 'boated-once'],
+    lines: [
+      'Am Steg der Drei Höfe, der Alten Mühle oder an einem eigenen Ruderboot kannst du ins Boot steigen und frei über Teich, Kanal und Fluss rudern. Am Ufer oder an einem Steg legst du wieder an.',
+      'Auf dem Wasser wachsen Schwimmbeete sicher vor Schnecken, Wühlmäusen und Welke. Treibgut-Netze und Entenhäuser machen Flüsse und Teiche zusätzlich lebendig.',
     ],
   },
   {

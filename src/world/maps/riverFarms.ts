@@ -8,7 +8,7 @@ import type { MapDef } from '../types';
 export const RIVER_FARMS_MAP: MapDef = {
   id: 'river-farms',
   name: 'Die drei Höfe am Fluss',
-  width: 40,
+  width: 45,
   height: 26,
   baseTile: 'forest',
   backgroundColor: 0x1c291e,
@@ -32,10 +32,14 @@ export const RIVER_FARMS_MAP: MapDef = {
     { op: 'rect', tile: 'soil', rect: { x: 27, y: 11, w: 4, h: 2 } },
     { op: 'rect', tile: 'water', rect: { x: 35, y: 0, w: 5, h: 26 } },
     { op: 'rect', tile: 'floor', rect: { x: 33, y: 15, w: 4, h: 2 } },
+
+    // Secluded eastern river island reachable by boat (or bridge)
+    { op: 'rect', tile: 'orchardGrass', rect: { x: 40, y: 6, w: 4, h: 13 } },
   ],
   zones: [
     { id: 'river-farms-yard', name: 'Die drei Höfe · Dorfplatz', rect: { x: 0, y: 0, w: 22, h: 26 } },
-    { id: 'river-farms-garden', name: 'Die drei Höfe · Flussgarten', rect: { x: 22, y: 0, w: 18, h: 26 } },
+    { id: 'river-farms-garden', name: 'Die drei Höfe · Flussgarten', rect: { x: 22, y: 0, w: 17, h: 26 } },
+    { id: 'river-farms-island', name: 'Ostufer · Schilfinsel', rect: { x: 39, y: 0, w: 6, h: 26 } },
   ],
   obstacles: [
     {
@@ -80,11 +84,13 @@ export const RIVER_FARMS_MAP: MapDef = {
     },
     {
       id: 'farms-boat',
-      type: 'dialogue',
+      type: 'boat',
       at: { x: 36.2, y: 16.0 },
-      label: 'Ansehen',
-      dialogueId: 'farms-boat',
+      label: 'Boot',
+      description: 'Ein alter, verwitterter Holzkahn liegt am Steg vertäut. Auf der Planke liegen die Ruder bereit.',
+      waterAt: { x: 37.5, y: 17.5 },
       radius: 72,
+      ferry: { mapId: 'old-mill', spawn: 'pier', label: 'Zur Alten Mühle rudern' },
     },
     {
       id: 'village-farm-shop',
@@ -114,10 +120,18 @@ export const RIVER_FARMS_MAP: MapDef = {
     { id: 'farms-seed-hollyhock', itemId: 'seed-hollyhock', at: { x: 9.0, y: 14.5 }, label: 'Samen einsammeln' },
     { id: 'sun-farms-1', itemId: 'resource-sunlight', at: { x: 15.0, y: 16.5 }, label: 'Sonnenlicht sammeln', respawnMs: 45_000 },
     { id: 'dew-farms-1', itemId: 'resource-dew', at: { x: 32.0, y: 17.5 }, label: 'Tau sammeln', respawnMs: 45_000 },
+    { id: 'dew-farms-island', itemId: 'resource-dew', at: { x: 41.0, y: 15.5 }, label: 'Tau sammeln', respawnMs: 45_000 },
     { id: 'curio-farms-1', itemId: 'resource-curio', at: { x: 26.5, y: 18.0 }, label: 'Aufheben' },
+    { id: 'curio-farms-island', itemId: 'resource-curio', at: { x: 42.0, y: 9.5 }, label: 'Aufheben' },
+    { id: 'wood-farms-1', itemId: 'mat-wood', at: { x: 31.5, y: 18.0 }, label: 'Holz hacken', respawnMs: 60_000, texture: 'node-wood', count: 2 },
+  ],
+  clearable: [
+    { x: 24, y: 20, w: 10, h: 5 },
+    { x: 40, y: 19, w: 4, h: 5 },
   ],
   spawns: {
     default: { x: 12.5, y: 10.2 },
     north: { x: 12.5, y: 10.2 },
+    pier: { x: 35.5, y: 16.0 },
   },
 };

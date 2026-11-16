@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
   COMPOST_MS,
+  DRIFT_INTERVAL_MS,
+  DRIFT_MAX,
   FLOUR_ITEM_ID,
   MILL_GRIND_MS,
   RACK_SEEDS,
@@ -23,7 +25,7 @@ const NEXT = { x: 23, y: 37 };
 
 /** Builds a planter on SPOT and plants a lavender in it. */
 function plantedPlanter(): string {
-  give({ 'mat-wood': 2, 'mat-stone': 1, 'seed-lavender': 1 });
+  give({ 'seed-lavender': 1 });
   expect(placePiece('garden', 'planter', SPOT.x, SPOT.y)).toBeNull();
   const bedId = `planter:garden:${SPOT.x}:${SPOT.y}`;
   expect(plantSeed(bedId)).toBe(true);
@@ -36,9 +38,9 @@ describe('working buildings', () => {
     gameState.reset();
   });
 
-  it('defines the four machines with costs that exist as items', () => {
+  it('defines the five machines with costs that exist as items', () => {
     const machines = content.buildables.all().filter((b) => b.machine);
-    expect(machines.map((b) => b.machine).sort()).toEqual(['compost', 'drying-rack', 'rain-barrel', 'windmill']);
+    expect(machines.map((b) => b.machine).sort()).toEqual(['compost', 'drift-net', 'drying-rack', 'rain-barrel', 'windmill']);
     for (const m of machines) for (const c of m.cost) expect(content.items.has(c.itemId)).toBe(true);
   });
 
@@ -134,6 +136,42 @@ describe('working buildings', () => {
     expect(mill().label).toBe('Mehl holen');
     expect(mill().act()).toBe('+1 Blütenmehl');
     expect(gameState.getItemCount(FLOUR_ITEM_ID)).toBe(1);
+  });
+
+  it('a drift net catches flotsam over time, awards a curio on every 4th catch, and returns catches on dismantle', () => {
+    give({ 'mat-wood': 4, 'mat-scrap': 2 });
+    // Water tile on the pond bank (x=38, y=36)
+    expect(placePiece('garden', 'drift-net', 38, 36)).toBeNull();
+    const net = (now = Date.now()): NonNullable<ReturnType<typeof machineAction>> =>
+      machineAction('garden', 38, 36, now) as NonNullable<ReturnType<typeof machineAction>>;
+
+    const start = Date.now();
+    expect(net(start).label).toBe('Prüfen');
+    expect(net(start).act()).toMatch(/hängt noch nichts/);
+
+    // Wind past DRIFT_MAX intervals -> 3 catches: mat-wood, mat-scrap, resource-dew
+    const firstCheck = start + DRIFT_INTERVAL_MS * (DRIFT_MAX + 2);
+    expect(net(firstCheck).label).toBe('Netz einholen');
+    net(firstCheck).act();
+    expect(gameState.getItemCount('mat-wood')).toBe(3); // 4 - 2 cost + 1 catch
+    expect(gameState.getItemCount('mat-scrap')).toBe(2); // 2 - 1 cost + 1 catch
+    expect(gameState.getItemCount('resource-dew')).toBe(1);
+    expect(gameState.getItemCount('resource-curio')).toBe(0);
+    expect(gameState.hasFlag('collected-drift-net')).toBe(true);
+
+    // Next 1 catch (the 4th cumulative) yields resource-curio!
+    const afterCollect = gameState.getExt<{ stations: Record<string, { startedAt: number }> }>('machines', { stations: {} }).stations[
+      'garden:38:36'
+    ].startedAt;
+    const fourthCheck = afterCollect + DRIFT_INTERVAL_MS + 100;
+    expect(net(fourthCheck).label).toBe('Netz einholen');
+    net(fourthCheck).act();
+    expect(gameState.getItemCount('resource-curio')).toBe(1);
+
+    // Removing the net refunds build cost (+ any pending timed catch cleanly removed)
+    expect(removePiece('garden', 38, 36)).toBeNull();
+    expect(gameState.getItemCount('mat-wood')).toBe(5);
+    expect(gameState.getItemCount('mat-scrap')).toBe(3);
   });
 
   it('the barrel offers no action, and old saves without machines load fine', () => {

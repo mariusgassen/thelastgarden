@@ -18,9 +18,9 @@
  */
 import Phaser from 'phaser';
 import { content } from '../content';
-import { allPlantingBeds } from '../world';
+import { allPlantingBeds, findPlantingBed } from '../world';
 import { TILE_SIZE } from '../world/tiles';
-import { isCoveredByHens } from './animals';
+import { isCoveredByDucks, isCoveredByHens } from './animals';
 import { bus, type NightEventKind, type NightOutcome } from './events';
 import { inputState } from './input';
 import type { WorldApi } from './interaction';
@@ -70,6 +70,7 @@ function bedsOnMap(mapId: string): BedPx[] {
 }
 
 const tenderBeds = (mapId: string): BedPx[] => bedsOnMap(mapId).filter((b) => isBedPlanted(b.id) && !isBedMature(b.id));
+const pestVulnerableBeds = (mapId: string): BedPx[] => tenderBeds(mapId).filter((b) => !findPlantingBed(b.id)?.floating);
 
 function matureBedsWithAbility(mapId: string, abilityId: string): BedPx[] {
   return bedsOnMap(mapId).filter((b) => {
@@ -94,12 +95,15 @@ type Resolver = (mapId: string) => NightOutcome | null;
 
 const resolvers: Record<NightEventKind, Resolver> = {
   snails: (mapId) => {
-    const tender = tenderBeds(mapId);
+    const tender = pestVulnerableBeds(mapId);
     if (tender.length === 0) return null;
-    const harmed = tender.filter((b) => !protectedByLavender(b) && !isCoveredByHens(mapId, b.x, b.y));
+    const harmed = tender.filter((b) => !protectedByLavender(b) && !isCoveredByHens(mapId, b.x, b.y) && !isCoveredByDucks(mapId, b.x, b.y));
     if (harmed.length === 0) {
-      if (tender.some((b) => !protectedByLavender(b))) {
+      if (tender.some((b) => !protectedByLavender(b) && isCoveredByHens(mapId, b.x, b.y))) {
         return { kind: 'snails', dialogueId: 'night-snails-hens', affectedBedIds: [], remnants: [], protectedBy: 'hens' };
+      }
+      if (tender.some((b) => !protectedByLavender(b) && isCoveredByDucks(mapId, b.x, b.y))) {
+        return { kind: 'snails', dialogueId: 'night-snails-ducks', affectedBedIds: [], remnants: [], protectedBy: 'ducks' };
       }
       return { kind: 'snails', dialogueId: 'night-snails-safe', affectedBedIds: [], remnants: [], protectedBy: 'lavender' };
     }
@@ -119,7 +123,7 @@ const resolvers: Record<NightEventKind, Resolver> = {
     };
   },
   voles: (mapId) => {
-    const tender = tenderBeds(mapId);
+    const tender = pestVulnerableBeds(mapId);
     if (tender.length === 0) return null;
     const harmed = tender.filter((b) => !protectedByLight(b));
     if (harmed.length === 0) {

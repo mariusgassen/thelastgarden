@@ -34,6 +34,8 @@ export const OLD_MILL_MAP: MapDef = {
     // Optional northern riverside pier behind a fallen tree
     { op: 'rect', tile: 'overgrownPath', rect: { x: 25, y: 5, w: 3, h: 3 } },
     { op: 'rect', tile: 'floor', rect: { x: 23, y: 2, w: 7, h: 3 } },
+    // Secluded west-bank north pocket reachable only by boat across the river
+    { op: 'rect', tile: 'wildGrass', rect: { x: 7, y: 2, w: 12, h: 4 } },
 
     // South path down to the Three River Farms
     { op: 'rect', tile: 'overgrownPath', rect: { x: 31, y: 22, w: 3, h: 8 } },
@@ -59,6 +61,7 @@ export const OLD_MILL_MAP: MapDef = {
     { texture: 'mill-wheel-turning', at: { x: 19.2, y: 11.4 }, showWhenFlag: 'mill-wheel-repaired' },
     { texture: 'flour-barrels', at: { x: 11.2, y: 11.8 }, solid: { x: 10.4, y: 11.0, w: 1.6, h: 0.8 } },
     { texture: 'bench', at: { x: 8.5, y: 12.4 }, solid: { x: 7.4, y: 11.6, w: 2.2, h: 0.8 } },
+    { texture: 'river-boat', at: { x: 22.0, y: 4.5 }, scale: 0.72 },
     {
       texture: 'apple-rootstock',
       at: { x: 30, y: 14.5 },
@@ -131,6 +134,16 @@ export const OLD_MILL_MAP: MapDef = {
       dialogueId: 'mill-sign-farms',
     },
     {
+      id: 'mill-boat',
+      type: 'boat',
+      at: { x: 23.0, y: 3.6 },
+      label: 'Boot',
+      description: 'Ein schmaler Flusskahn schaukelt sacht am alten Mühlsteg.',
+      waterAt: { x: 21.5, y: 4.5 },
+      radius: 72,
+      ferry: { mapId: 'river-farms', spawn: 'pier', label: 'Zu den drei Höfen rudern' },
+    },
+    {
       id: 'mill-to-farms',
       type: 'door',
       at: { x: 32.5, y: 28.6 },
@@ -150,8 +163,10 @@ export const OLD_MILL_MAP: MapDef = {
     { id: 'sun-mill-2', itemId: 'resource-sunlight', at: { x: 38, y: 16 }, label: 'Sonnenlicht sammeln', respawnMs: 45_000 },
     { id: 'dew-mill-1', itemId: 'resource-dew', at: { x: 17.5, y: 19 }, label: 'Tau sammeln', respawnMs: 45_000 },
     { id: 'dew-mill-2', itemId: 'resource-dew', at: { x: 25, y: 19 }, label: 'Tau sammeln', respawnMs: 45_000 },
+    { id: 'dew-mill-cove', itemId: 'resource-dew', at: { x: 15.5, y: 4.2 }, label: 'Tau sammeln', respawnMs: 45_000 },
     { id: 'curio-mill-yard', itemId: 'resource-curio', at: { x: 39, y: 11 }, label: 'Aufheben' },
     { id: 'curio-mill-pier', itemId: 'resource-curio', at: { x: 26.5, y: 3.2 }, label: 'Aufheben' },
+    { id: 'curio-mill-cove', itemId: 'resource-curio', at: { x: 10.5, y: 3.8 }, label: 'Aufheben' },
     // Piles to chop, dig and salvage: raw material for build mode (systems/building.ts).
     { id: 'wood-mill-1', itemId: 'mat-wood', at: { x: 38, y: 20 }, label: 'Holz hacken', respawnMs: 60_000, texture: 'node-wood', count: 2 },
     { id: 'stone-mill-1', itemId: 'mat-stone', at: { x: 27, y: 10 }, label: 'Steine ausgraben', respawnMs: 60_000, texture: 'node-stone' },
@@ -161,10 +176,15 @@ export const OLD_MILL_MAP: MapDef = {
   blightHearts: [
     { id: 'heart-mill-meadow', at: { x: 40, y: 9 }, reach: 6 },
   ],
+  clearable: [
+    { x: 23, y: 22, w: 8, h: 6 },
+    { x: 7, y: 1, w: 11, h: 1 },
+  ],
   spawns: {
     default: { x: 2.5, y: 13.5 },
     west: { x: 2.5, y: 13.5 },
     mill: { x: 14.5, y: 13.4 },
+    pier: { x: 24.5, y: 3.6 },
     south: { x: 32.5, y: 27.2 },
   },
 };

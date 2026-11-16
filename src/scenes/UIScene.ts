@@ -3,6 +3,7 @@ import { content, type DialogueChoice } from '../content';
 import { getBuildMode, isBuildUnlocked, selectBuildPiece, setBuildMode } from '../systems/building';
 import { craftWithToast, getUnlockedRecipes, hasPocketWorkbench } from '../systems/crafting';
 import { bus } from '../systems/events';
+import { disembarkBoat, isBoatingHere } from '../systems/boat';
 import { canRideHere, hasHorse, isRiding, toggleRiding } from '../systems/horse';
 import { inputState } from '../systems/input';
 import { eatMeal } from '../systems/meals';
@@ -549,7 +550,13 @@ export class UIScene extends Phaser.Scene {
   }
 
   private toggleRide(): void {
-    if (!inputState.modal) toggleRiding();
+    if (inputState.modal) return;
+    if (isBoatingHere()) {
+      const p = gameState.data.player;
+      disembarkBoat(p.mapId, p.x, p.y);
+      return;
+    }
+    toggleRiding();
   }
 
   /** The pocket workbench: the same crafting panel a workbench opens, from anywhere. */

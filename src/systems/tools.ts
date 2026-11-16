@@ -5,15 +5,14 @@
  * Tools are ordinary `category: 'tool'` items (content/items.ts) made at a workbench, plus a
  * `ToolDef` (content/tools.ts). They are never used up and nothing can be sold.
  *
- * State: `ext.tools = { equipped?, seed?, carried? }` — which tool is in hand, which seed the
- * satchel sows, and the plant the shovel is carrying (it keeps its growth). Tool mode
- * (the tool bar is open, E / a tap uses the tool) is runtime only.
+ * State: `ext.tools = { equipped?, seed? }` — which tool is in hand and which seed the
+ * satchel sows. Tool mode (the tool bar is open, E / a tap uses the tool) is runtime only.
  *
  *   getOwnedTools() / getEquippedTool() / equipTool(id)
  *   getToolMode() / setToolMode(open) / isToolActing()   emits `tool-changed`
- *   useTool(mapId, at)         work the beds around a point; returns what to tell the player
+ *   useTool(mapId, at, from?)  work the beds near `from`, closest to `at` first
  *   getCarriedLight()          the equipped lantern's light, or null
- *   getSowSeed() / cycleSeed() / getCarriedPlant() / describeTool(id)
+ *   getSowSeed() / cycleSeed() / describeTool(id)
  */
 import { content } from '../content';
 import type { ToolDef, ToolKind } from '../content/types';
@@ -28,7 +27,6 @@ import {
   isBedPlanted,
   isProduceReady,
   plantSeed,
-  transplantInto,
   uprootBed,
   type UprootedPlant,
 } from './plants';
@@ -39,6 +37,7 @@ interface ToolsExt {
   equipped?: string;
   /** Plant id of the seed the satchel sows. */
   seed?: string;
+  /** Legacy field from older saves where shovel held a plant instead of returning its seed. */
   carried?: UprootedPlant;
 }
 
@@ -57,6 +56,17 @@ function readState(): ToolsExt {
 
 function writeState(state: ToolsExt): void {
   gameState.setExt('tools', state);
+}
+
+/** Migrates any leftover carried plant from older saves straight into the player's bag as a seed. */
+function refundLegacyCarried(): void {
+  const state = readState();
+  if (!state.carried) return;
+  const seedItemId = content.plants.find(state.carried.plantId)?.seedItemId;
+  if (seedItemId) gameState.addItem(seedItemId, 1);
+  delete state.carried;
+  writeState(state);
+  gameState.save();
 }
 
 const itemName = (itemId: string): string => content.items.get(itemId).name;
@@ -139,6 +149,7 @@ bus.on('build-mode-changed', ({ active }) => {
 });
 bus.on('save-loaded', () => {
   mode.open = false;
+  refundLegacyCarried();
 });
 bus.on('inventory-changed', () => {
   const state = readState();
@@ -156,7 +167,7 @@ bus.on('item-crafted', ({ recipeId }) => {
   if (made && !getEquippedTool()) equipTool(made.itemId);
 });
 
-// ── Seeds and the carried plant ──────────────────────────────
+// ── Seeds ────────────────────────────────────────────────────
 
 /** Species the satchel could sow right now: every kind of seed in the pocket. */
 export function getSowableSpecies(): string[] {
@@ -185,16 +196,12 @@ export function cycleSeed(): string | undefined {
   return next;
 }
 
-export function getCarriedPlant(): UprootedPlant | undefined {
-  return readState().carried;
-}
-
 export function describeTool(toolId: string): { title: string; hint: string } {
   if (toolId === DESELECT_TOOL) {
     return { title: 'Ablegen', hint: 'Legt das Werkzeug weg, damit E und der Knopf wieder normal wirken.' };
   }
   if (toolId === AUTO_TOOL) {
-    return { title: 'Gärtnerhand', hint: 'Wählt selbst: Reifes und Funde einsammeln, freie Beete säen, eine getragene Pflanze einsetzen. Ausgraben geht nur mit dem Spaten.' };
+    return { title: 'Gärtnerhand', hint: 'Wählt selbst: Reifes und Funde einsammeln oder freie Beete säen. Ausgraben geht nur mit dem Spaten.' };
   }
   const tool = content.tools.get(toolId);
   const name = itemName(tool.id);
@@ -206,13 +213,6 @@ export function describeTool(toolId: string): { title: string; hint: string } {
     return {
       title: `${name} · ${def.name} (${gameState.getItemCount(def.seedItemId as string)})`,
       hint: tool.hint + more,
-    };
-  }
-  if (tool.kind === 'shovel') {
-    const carried = getCarriedPlant();
-    return {
-      title: carried ? `${name} · trägt ${content.plants.get(carried.plantId).name}` : name,
-      hint: carried ? 'Du trägst eine Pflanze. Geh zu einem freien Beet und benutze den Spaten, um sie einzusetzen.' : tool.hint,
     };
   }
   return { title: name, hint: tool.hint };
@@ -227,17 +227,28 @@ interface BedSpot {
   dist: number;
 }
 
-/** Beds of a map within `reachTiles` of a point (px), nearest first. A bed's spot is where its plant stands. */
-function bedsNear(mapId: string, at: { x: number; y: number }, reachTiles: number): BedSpot[] {
+/**
+ * Beds of a map within `reachTiles` of the player (`from`, in px), ordered closest to `at` (tapped/targeted px) first.
+ * A bed's spot is where its plant stands.
+ */
+function bedsNear(
+  mapId: string,
+  at: { x: number; y: number },
+  reachTiles: number,
+  from: { x: number; y: number } = at,
+): BedSpot[] {
   return allPlantingBeds()
     .filter((b) => b.mapId === mapId)
     .map((b) => {
       const x = (b.rect.x + b.rect.w / 2) * TILE_SIZE;
       const y = (b.rect.y + b.rect.h) * TILE_SIZE;
-      return { bedId: b.id, x, y, dist: Math.hypot(x - at.x, y - 16 - at.y) / TILE_SIZE };
+      const reachDist = Math.hypot(x - from.x, y - 16 - from.y) / TILE_SIZE;
+      const targetDist = Math.hypot(x - at.x, y - 16 - at.y) / TILE_SIZE;
+      return { bedId: b.id, x, y, reachDist, dist: targetDist };
     })
-    .filter((b) => b.dist <= reachTiles)
-    .sort((a, b) => a.dist - b.dist);
+    .filter((b) => b.reachDist <= reachTiles)
+    .sort((a, b) => a.dist - b.dist)
+    .map(({ bedId, x, y, dist }) => ({ bedId, x, y, dist }));
 }
 
 interface NodeSpot {
@@ -267,10 +278,10 @@ interface HomeSpot {
   dist: number;
 }
 
-/** Animal homes with produce (hens, bees) within `reachTiles` of a point (px), nearest first. */
+/** Animal homes with produce (hens, bees, ducks) within `reachTiles` of a point (px), nearest first. */
 function homesNear(mapId: string, at: { x: number; y: number }, reachTiles: number): HomeSpot[] {
   return getHomes()
-    .filter((h) => h.mapId === mapId && (h.animal === 'hens' || h.animal === 'bees'))
+    .filter((h) => h.mapId === mapId && (h.animal === 'hens' || h.animal === 'bees' || h.animal === 'ducks'))
     .map((home) => {
       const x = (home.x + 0.5) * TILE_SIZE;
       const y = (home.y + 1) * TILE_SIZE - 14;
@@ -282,9 +293,9 @@ function homesNear(mapId: string, at: { x: number; y: number }, reachTiles: numb
 
 const fail = (text: string): ToolResult => ({ ok: false, text, spots: [] });
 
-function useSickle(tool: ToolDef, mapId: string, at: { x: number; y: number }): ToolResult {
+function useSickle(tool: ToolDef, mapId: string, at: { x: number; y: number }, from: { x: number; y: number } = at): ToolResult {
   const reach = tool.reachTiles as number;
-  const beds = bedsNear(mapId, at, reach);
+  const beds = bedsNear(mapId, at, reach, from);
   const gained = new Map<string, number>();
   const spots: ToolResult['spots'] = [];
   for (const bed of beds) {
@@ -293,12 +304,12 @@ function useSickle(tool: ToolDef, mapId: string, at: { x: number; y: number }): 
     spots.push({ x: bed.x, y: bed.y });
     for (const id of [got.itemId, got.seedItemId]) if (id) gained.set(id, (gained.get(id) ?? 0) + 1);
   }
-  for (const entry of nodesNear(mapId, at, reach)) {
+  for (const entry of nodesNear(mapId, from, reach)) {
     if (!collectNode(entry.node.id)) continue;
     spots.push({ x: entry.x, y: entry.y });
     gained.set(entry.node.itemId, (gained.get(entry.node.itemId) ?? 0) + (entry.node.count ?? 1));
   }
-  for (const entry of homesNear(mapId, at, reach)) {
+  for (const entry of homesNear(mapId, from, reach)) {
     const got = collectProduce(entry.home);
     if (!got) continue;
     spots.push({ x: entry.x, y: entry.y });
@@ -311,40 +322,36 @@ function useSickle(tool: ToolDef, mapId: string, at: { x: number; y: number }): 
   return { ok: true, used: 'sickle', text: `+${[...gained].map(([id, n]) => `${n} ${itemName(id)}`).join(', ')}`, spots };
 }
 
-function useShovel(tool: ToolDef, mapId: string, at: { x: number; y: number }): ToolResult {
-  const beds = bedsNear(mapId, at, tool.reachTiles as number);
-  const carried = getCarriedPlant();
-  if (!carried) {
-    const bed = beds.find((b) => isBedPlanted(b.bedId));
-    if (!bed) return fail('Hier gibt es nichts zum Umsetzen.');
-    const plant = uprootBed(bed.bedId) as UprootedPlant;
-    const state = readState();
-    state.carried = plant;
-    writeState(state);
-    gameState.setFlag('used-tool:shovel');
-    announce();
-    return { ok: true, used: 'shovel', text: `${content.plants.get(plant.plantId).name} ausgegraben. Setze sie in ein freies Beet.`, spots: [bed] };
+function useShovel(tool: ToolDef, mapId: string, at: { x: number; y: number }, from: { x: number; y: number }): ToolResult {
+  refundLegacyCarried();
+  const beds = bedsNear(mapId, at, tool.reachTiles as number, from);
+  const bed = beds.find((b) => isBedPlanted(b.bedId));
+  if (!bed) return fail('Hier gibt es nichts auszugraben.');
+  const produceReady = isProduceReady(bed.bedId);
+  const plant = uprootBed(bed.bedId);
+  if (!plant) return fail('Hier gibt es nichts auszugraben.');
+  const def = content.plants.get(plant.plantId);
+  const gained: string[] = [];
+  if (produceReady && def.produceItemId) {
+    gameState.addItem(def.produceItemId, 1);
+    gained.push(`1 ${itemName(def.produceItemId)}`);
   }
-  const name = content.plants.get(carried.plantId).name;
-  const open = beds.filter((b) => !isBedPlanted(b.bedId));
-  if (open.length === 0) return fail(`Hier ist kein freies Beet für ${name}.`);
-  const bed = open.find((b) => bedAccepts(b.bedId, carried.plantId));
-  if (!bed) return fail(`${name} wächst in diesem Beet nicht. Es nimmt nur eine andere Sorte.`);
-  transplantInto(bed.bedId, carried);
-  const state = readState();
-  delete state.carried;
-  writeState(state);
+  if (def.seedItemId) {
+    gameState.addItem(def.seedItemId, 1);
+    gained.push(`1 ${itemName(def.seedItemId)}`);
+  }
   gameState.setFlag('used-tool:shovel');
   gameState.save();
   announce();
-  return { ok: true, used: 'shovel', text: `${name} eingesetzt. Sie wächst dort weiter.`, spots: [bed] };
+  const text = gained.length > 0 ? `${def.name} ausgegraben: +${gained.join(', ')}` : `${def.name} ausgegraben.`;
+  return { ok: true, used: 'shovel', text, spots: [bed] };
 }
 
-function useSatchel(tool: ToolDef, mapId: string, at: { x: number; y: number }): ToolResult {
+function useSatchel(tool: ToolDef, mapId: string, at: { x: number; y: number }, from: { x: number; y: number }): ToolResult {
   const seed = getSowSeed();
   if (!seed) return fail('Der Saatbeutel ist leer. Du brauchst Samen.');
   const name = content.plants.get(seed).name;
-  const open = bedsNear(mapId, at, tool.reachTiles as number).filter((b) => !isBedPlanted(b.bedId));
+  const open = bedsNear(mapId, at, tool.reachTiles as number, from).filter((b) => !isBedPlanted(b.bedId));
   if (open.length === 0) return fail('Hier ist kein freies Beet.');
   const fitting = open.filter((b) => bedAccepts(b.bedId, seed));
   if (fitting.length === 0) return fail(`${name} passt in diese Beete nicht.`);
@@ -359,43 +366,30 @@ function useSatchel(tool: ToolDef, mapId: string, at: { x: number; y: number }):
   return { ok: true, used: 'satchel', text: `${name} gesät: ${spots.length} ${spots.length === 1 ? 'Beet' : 'Beete'}.`, spots };
 }
 
-/** The all-round hand: sets down a carried plant if a bed in reach takes it, else harvests what is ripe, else sows. */
-function useAuto(mapId: string, at: { x: number; y: number }): ToolResult {
+/** The all-round hand: harvests what is ripe or loose, else sows. */
+function useAuto(mapId: string, at: { x: number; y: number }, from: { x: number; y: number }): ToolResult {
   const owned = getOwnedTools();
   const find = (kind: ToolKind) => owned.find((t) => t.kind === kind);
-  const shovel = find('shovel');
-  const carried = getCarriedPlant();
-  if (shovel && carried && canPlace(shovel, mapId, at)) return useShovel(shovel, mapId, at);
   const sickle = find('sickle');
   if (sickle) {
-    const done = useSickle(sickle, mapId, at);
+    const done = useSickle(sickle, mapId, at, from);
     if (done.ok) return done;
   }
   const satchel = find('satchel');
   if (satchel && getSowSeed()) {
-    const done = useSatchel(satchel, mapId, at);
+    const done = useSatchel(satchel, mapId, at, from);
     if (done.ok) return done;
   }
-  if (carried) return fail(`Du trägst ${content.plants.get(carried.plantId).name}. Gehe zu einem freien Beet und setze sie dort ein.`);
   return fail('Hier gibt es gerade nichts zu tun.');
 }
 
 const reachOf = (tool: ToolDef): number => tool.reachTiles as number;
 
-/** Whether the carried plant has a free bed in reach that takes it. */
-function canPlace(shovel: ToolDef, mapId: string, at: { x: number; y: number }): boolean {
-  const carried = getCarriedPlant();
-  return (
-    carried !== undefined &&
-    bedsNear(mapId, at, reachOf(shovel)).some((b) => !isBedPlanted(b.bedId) && bedAccepts(b.bedId, carried.plantId))
-  );
-}
-
 /**
  * What a press would do right now, without doing it: the tool that would work (the one in hand,
  * or for the all-round hand the one it would pick), or null when nothing would happen.
  */
-export function peekTool(mapId: string, at: { x: number; y: number }): ToolKind | null {
+export function peekTool(mapId: string, at: { x: number; y: number }, from: { x: number; y: number } = at): ToolKind | null {
   const owned = getOwnedTools();
   const find = (kind: ToolKind) => owned.find((t) => t.kind === kind);
   const auto = isAutoTool();
@@ -404,16 +398,15 @@ export function peekTool(mapId: string, at: { x: number; y: number }): ToolKind 
   const shovel = find('shovel');
   const sickle = find('sickle');
   const satchel = find('satchel');
-  const carried = getCarriedPlant();
-  if (shovel && may('shovel')) {
-    if (carried ? canPlace(shovel, mapId, at) : !auto && bedsNear(mapId, at, reachOf(shovel)).some((b) => isBedPlanted(b.bedId))) return 'shovel';
+  if (shovel && may('shovel') && !auto && bedsNear(mapId, at, reachOf(shovel), from).some((b) => isBedPlanted(b.bedId))) {
+    return 'shovel';
   }
   if (
     sickle &&
     may('sickle') &&
-    (bedsNear(mapId, at, reachOf(sickle)).some((b) => isProduceReady(b.bedId)) ||
-      nodesNear(mapId, at, reachOf(sickle)).length > 0 ||
-      homesNear(mapId, at, reachOf(sickle)).some((h) => (readyProduce(h.home)?.count ?? 0) > 0))
+    (bedsNear(mapId, at, reachOf(sickle), from).some((b) => isProduceReady(b.bedId)) ||
+      nodesNear(mapId, from, reachOf(sickle)).length > 0 ||
+      homesNear(mapId, from, reachOf(sickle)).some((h) => (readyProduce(h.home)?.count ?? 0) > 0))
   ) {
     return 'sickle';
   }
@@ -422,25 +415,25 @@ export function peekTool(mapId: string, at: { x: number; y: number }): ToolKind 
     satchel &&
     seed &&
     may('satchel') &&
-    bedsNear(mapId, at, reachOf(satchel)).some((b) => !isBedPlanted(b.bedId) && bedAccepts(b.bedId, seed))
+    bedsNear(mapId, at, reachOf(satchel), from).some((b) => !isBedPlanted(b.bedId) && bedAccepts(b.bedId, seed))
   ) {
     return 'satchel';
   }
   return null;
 }
 
-/** Works the beds around `at` (px) with the tool in hand. Never costs the tool anything. */
-export function useTool(mapId: string, at: { x: number; y: number }): ToolResult {
-  if (isAutoTool()) return useAuto(mapId, at);
+/** Works the beds around `from` (px), prioritizing `at` (tapped px), with the tool in hand. Never costs the tool anything. */
+export function useTool(mapId: string, at: { x: number; y: number }, from: { x: number; y: number } = at): ToolResult {
+  if (isAutoTool()) return useAuto(mapId, at, from);
   const tool = getEquippedTool();
   if (!tool) return fail('Du hast kein Werkzeug in der Hand.');
   switch (tool.kind) {
     case 'sickle':
-      return useSickle(tool, mapId, at);
+      return useSickle(tool, mapId, at, from);
     case 'shovel':
-      return useShovel(tool, mapId, at);
+      return useShovel(tool, mapId, at, from);
     case 'satchel':
-      return useSatchel(tool, mapId, at);
+      return useSatchel(tool, mapId, at, from);
     default:
       return fail(`${itemName(tool.id)} leuchtet von allein. Du musst sie nur tragen.`);
   }

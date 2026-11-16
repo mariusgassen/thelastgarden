@@ -5,7 +5,7 @@ import { buildTextureKey } from '../systems/buildLayer';
 import { THEME } from './theme';
 import type { SafeArea } from './viewport';
 
-const SLOT = 50;
+const SLOT = 44;
 const GAP = 6;
 const PAD = 10;
 const TEXT_H = 40;

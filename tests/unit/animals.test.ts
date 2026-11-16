@@ -2,11 +2,14 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 import { content } from '../../src/content';
 import {
   collectProduce,
+  DUCK_INTERVAL_MS,
+  DUCK_MAX,
   EGG_INTERVAL_MS,
   feedHorse,
   getHomes,
   GOAT_BITES_PER_NIGHT,
   HONEY_INTERVAL_MS,
+  isCoveredByDucks,
   isCoveredByHens,
   isHorseRested,
   isPollinated,
@@ -15,8 +18,10 @@ import {
   tickBees,
 } from '../../src/systems/animals';
 import { BLIGHT_FLAG, blightNightfall, getBlightTiles, restUntilMorning } from '../../src/systems/blight';
+import { bus, type NightOutcome } from '../../src/systems/events';
 import { getPieces, placePiece, planterBedId, removePiece, whyNotPlace } from '../../src/systems/building';
 import { HORSE_FLAG } from '../../src/systems/horse';
+import { triggerNightEvent } from '../../src/systems/nightEvents';
 import { isBlocked } from '../../src/systems/obstacles';
 import { currentStage, getBedState, plantSeed } from '../../src/systems/plants';
 import { parseSave } from '../../src/systems/save';
@@ -44,13 +49,20 @@ describe('helper animals', () => {
   beforeEach(() => {
     localStorage.clear();
     gameState.reset();
-    give({ 'mat-wood': 40, 'mat-stone': 20, 'mat-scrap': 10, 'produce-tendril': 5, 'produce-light-pollen': 5 });
+    give({
+      'mat-wood': 40,
+      'mat-stone': 20,
+      'mat-scrap': 10,
+      'produce-tendril': 5,
+      'produce-light-pollen': 5,
+      'produce-reed-bundle': 10,
+    });
   });
   afterEach(() => vi.useRealTimers());
 
   it('gives every home a piece of its own, with items for the cost', () => {
     const homes = content.buildables.all().filter((b) => b.home);
-    expect(homes.map((b) => b.home!.animal).sort()).toEqual(['bees', 'goat', 'hens', 'horse']);
+    expect(homes.map((b) => b.home!.animal).sort()).toEqual(['bees', 'ducks', 'goat', 'hens', 'horse']);
     expect(content.items.has('produce-egg') && content.items.has('produce-honey')).toBe(true);
   });
 
@@ -78,6 +90,43 @@ describe('helper animals', () => {
     removePiece('garden', SPOT.x, SPOT.y);
     expect(getHomes()).toEqual([]);
     expect(isCoveredByHens('garden', SPOT.x * TILE_SIZE, SPOT.y * TILE_SIZE)).toBe(false);
+  });
+
+  it('lets ducks settle on water, collect dew over time, and shield nearby beds from snails', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(3_000_000);
+    // Pond water tile next to east bank (x: 38, y: 36)
+    expect(placePiece('garden', 'duckhouse', 38, 36)).toBeNull();
+    const [ducks] = getHomes('ducks');
+    expect(ducks).toBeDefined();
+    expect(readyProduce(ducks)?.itemId).toBe('resource-dew');
+    expect(readyProduce(ducks)?.count).toBe(0);
+
+    vi.setSystemTime(3_000_000 + DUCK_INTERVAL_MS * (DUCK_MAX + 2));
+    expect(readyProduce(ducks)?.count).toBe(DUCK_MAX);
+    expect(collectProduce(ducks)?.count).toBe(DUCK_MAX);
+    expect(gameState.getItemCount('resource-dew')).toBe(DUCK_MAX);
+
+    // Covers nearby shore beds (bed-lily sits at x=30..34, y=29..31 -> within 9 tiles of (38, 36)?)
+    // Place a planter on the pond shore (36, 36) so it is within DUCK_RADIUS_TILES (9).
+    expect(isCoveredByDucks('garden', 36.5 * TILE_SIZE, 36.5 * TILE_SIZE)).toBe(true);
+    expect(isCoveredByDucks('garden', 10 * TILE_SIZE, 10 * TILE_SIZE)).toBe(false);
+
+    placePiece('garden', 'planter', 36, 36);
+    give({ 'seed-lavender': 1 });
+    expect(plantSeed(planterBedId('garden', 36, 36))).toBe(true);
+    let outcome: NightOutcome | undefined;
+    const onResolved = (p: { outcome: NightOutcome }) => {
+      outcome = p.outcome;
+    };
+    bus.on('night-resolved', onResolved);
+    expect(triggerNightEvent('snails')).toBe(true);
+    vi.advanceTimersByTime(3100);
+    bus.off('night-resolved', onResolved);
+    expect(outcome?.dialogueId).toBe('night-snails-ducks');
+    expect(outcome?.protectedBy).toBe('ducks');
+    expect(outcome?.affectedBedIds).toEqual([]);
+    expect(getBedState(planterBedId('garden', 36, 36))).toBeDefined();
   });
 
   it('makes bees speed up growth and fill the hive only while something blooms nearby', () => {

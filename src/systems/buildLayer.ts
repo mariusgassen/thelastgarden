@@ -16,6 +16,7 @@ import {
   type PlacedPiece,
 } from './building';
 import { prefersReducedMotion } from '../ui/viewport';
+import { boardBoat, isBoatingHere } from './boat';
 import { bus } from './events';
 import type { InteractionSystem } from './interaction';
 import { machineAction } from './machines';
@@ -118,7 +119,7 @@ export class BuildLayer {
     else {
       this.puff((x + 0.5) * TILE_SIZE, (y + 0.8) * TILE_SIZE);
       const def = content.buildables.get(pieceId);
-      if (first && def.machine) bus.emit('toast', { text: def.description });
+      if (first && (def.machine || def.boat || def.home?.animal === 'ducks')) bus.emit('toast', { text: def.description });
     }
   }
 
@@ -173,8 +174,11 @@ export class BuildLayer {
 
   private spritePosition(pieceId: string, x: number, y: number): { x: number; y: number; originY: number; depth: number } {
     const cx = (x + 0.5) * TILE_SIZE;
-    // Bridges lie flat on the water; everything else stands on the tile's lower edge.
-    if (content.buildables.get(pieceId).on === 'water') return { x: cx, y: (y + 0.5) * TILE_SIZE, originY: 0.5, depth: -6 };
+    const def = content.buildables.get(pieceId);
+    // Flat walkable pieces (bridges, floating beds, soil planters) lie flat on the tile; solid structures stand upright.
+    if (!def.solid && (def.on === 'water' || def.planter)) {
+      return { x: cx, y: (y + 0.5) * TILE_SIZE, originY: 0.5, depth: -6 };
+    }
     return { x: cx, y: (y + 1) * TILE_SIZE, originY: 1, depth: (y + 0.7) * TILE_SIZE - 1 };
   }
 
@@ -203,7 +207,21 @@ export class BuildLayer {
       );
       this.solids.add(entry.body);
     }
-    if (def.on === 'water') this.ground.getTileAt(piece.x, piece.y)?.setCollision(false);
+    if (def.on === 'water' && !def.solid && !isBoatingHere(this.map.id)) {
+      this.ground.getTileAt(piece.x, piece.y)?.setCollision(false);
+    }
+    if (def.boat) {
+      const at = { x: (piece.x + 0.5) * TILE_SIZE, y: (piece.y + 0.6) * TILE_SIZE };
+      this.interaction.register({
+        id: `build:${pieceKey(piece)}`,
+        label: 'Ins Boot steigen',
+        radius: 62,
+        markerOffset: 44,
+        getPosition: () => at,
+        canInteract: () => !isBoatingHere(this.map.id),
+        onInteract: () => boardBoat(this.map.id, { x: piece.x, y: piece.y }),
+      });
+    }
     if (def.rest) {
       const at = { x: (piece.x + 0.5) * TILE_SIZE, y: (piece.y + 0.8) * TILE_SIZE };
       this.interaction.register({
@@ -224,7 +242,7 @@ export class BuildLayer {
     this.live.set(pieceKey(piece), entry);
   }
 
-  /** Rack, windmill and compost heap: one interactable whose label follows the machine's state. */
+  /** Rack, windmill, compost heap and drift-net: one interactable whose label follows the machine's state. */
   private registerMachine(piece: PlacedPiece): void {
     const at = { x: (piece.x + 0.5) * TILE_SIZE, y: (piece.y + 0.8) * TILE_SIZE };
     const mapId = this.map.id;
@@ -259,7 +277,8 @@ export class BuildLayer {
       entry.extra.destroy();
     }
     if (entry.body) this.solids.remove(entry.body, true, true);
-    if (content.buildables.get(entry.piece.id).on === 'water') {
+    const def = content.buildables.get(entry.piece.id);
+    if (def.on === 'water' && !def.solid && !isBoatingHere(this.map.id)) {
       this.ground.getTileAt(entry.piece.x, entry.piece.y)?.setCollision(true);
     }
     this.interaction.unregister(`build:${k}`);

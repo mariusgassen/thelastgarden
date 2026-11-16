@@ -49,14 +49,10 @@ export const BUILDABLES: BuildableDef[] = [
   {
     id: 'planter',
     name: 'Beet',
-    description: 'Ein Beet für vier Pflanzen, wo immer du es haben willst. Was darin ausgewachsen ist, hält die Welke weit auf Abstand.',
-    cost: [
-      { itemId: 'mat-wood', count: 2 },
-      { itemId: 'mat-stone', count: 1 },
-    ],
+    description: 'Lockere Gartenerde für eine Pflanze, wo immer du ein Beet anlegen willst. Kostet nichts und lässt sich einfach überqueren.',
+    cost: [],
     on: 'ground',
-    solid: { x: 0.08, y: 0.5, w: 0.84, h: 0.45 },
-    planter: { cols: 2, rows: 2 },
+    planter: { cols: 1, rows: 1 },
   },
   {
     id: 'bridge',
@@ -64,6 +60,54 @@ export const BUILDABLES: BuildableDef[] = [
     description: 'Planken über das Wasser. Stück für Stück kommst du ans andere Ufer.',
     cost: [{ itemId: 'mat-wood', count: 2 }],
     on: 'water',
+  },
+  {
+    id: 'floating-bed',
+    name: 'Schwimmbeet',
+    description: 'Ein Schilffloß mit Gartenerde auf dem Wasser. Schnecken, Wühlmäuse und Welke erreichen es nicht.',
+    cost: [
+      { itemId: 'produce-reed-bundle', count: 2 },
+      { itemId: 'mat-wood', count: 1 },
+    ],
+    on: 'water',
+    planter: { cols: 1, rows: 1 },
+  },
+  {
+    id: 'boat-dock',
+    name: 'Ruderboot',
+    description: 'Ein kleiner Holzkahn am Ufer. Steig ein und rudere frei über Teich, Kanal und Fluss.',
+    cost: [
+      { itemId: 'mat-wood', count: 4 },
+      { itemId: 'mat-scrap', count: 1 },
+    ],
+    on: 'water',
+    solid: { x: 0.1, y: 0.2, w: 0.8, h: 0.65 },
+    boat: true,
+  },
+  {
+    id: 'drift-net',
+    name: 'Treibgut-Netz',
+    description: 'Ein Weidennetz im Wasser. Es fängt mit der Zeit Treibholz, Schrott und manchmal ein Fundstück oder Tau.',
+    cost: [
+      { itemId: 'mat-wood', count: 2 },
+      { itemId: 'mat-scrap', count: 1 },
+    ],
+    on: 'water',
+    solid: { x: 0.1, y: 0.25, w: 0.8, h: 0.55 },
+    machine: 'drift-net',
+  },
+  {
+    id: 'duckhouse',
+    name: 'Entenhaus',
+    description: 'Zwei Enten schwimmen auf dem Wasser, halten Schnecken von Uferbeeten fern und sammeln Tau.',
+    cost: [
+      { itemId: 'mat-wood', count: 3 },
+      { itemId: 'produce-reed-bundle', count: 2 },
+    ],
+    on: 'water',
+    solid: { x: 0.1, y: 0.25, w: 0.8, h: 0.6 },
+    wardRadius: 3,
+    home: { animal: 'ducks' },
   },
   {
     id: 'shelter',
