@@ -12,6 +12,8 @@ export interface PlantDef {
   description: string;
   /** Item id of the seed that grows this plant. */
   seedItemId?: string;
+  /** Item id a mature plant regrows and yields on harvest (see systems/plants.ts harvestBed). */
+  produceItemId?: string;
   /** Number of growth stages until mature. */
   growthStages: number;
   /** Obstacle kinds this plant's ability can clear once mature (consumed by Wave 2). */
@@ -24,7 +26,7 @@ export interface PlantDef {
   lightRadius?: number;
 }
 
-export type ItemCategory = 'seed' | 'tool' | 'key' | 'material' | 'note' | 'resource';
+export type ItemCategory = 'seed' | 'tool' | 'key' | 'material' | 'note' | 'resource' | 'produce';
 
 export interface ItemDef {
   id: string;
@@ -69,6 +71,8 @@ export interface QuestDef {
 }
 
 export interface DialogueChoice {
+  /** Optional id; picking this choice emits `dialogue-choice` so a system can react (e.g. the seed picker). */
+  id?: string;
   label: string;
   /** Optional next DialogueDef id; omit to close after applying effects. */
   nextDialogueId?: string;

@@ -46,6 +46,12 @@ describe('quests, NPCs, journal, resources, and interaction', () => {
     gameState.setFlag('bed-restored:bed-lily');
     gameState.setFlag('bed-restored:bed-lavender');
     expect(getCompletedQuests().map((q) => q.id)).toEqual(['q-meet-crow', 'q-restore-beds']);
+    expect(getActiveQuests().map((q) => q.id)).toEqual(['q-first-harvest', 'q-journal-pages']);
+    expect(getTrackedObjective()?.quest.id).toBe('q-journal-pages');
+
+    // Optional harvest side quest: the first harvest completes it and pays one dew
+    gameState.setFlag('harvested-once');
+    expect(gameState.getItemCount('resource-dew')).toBe(1);
     expect(getActiveQuests().map((q) => q.id)).toEqual(['q-journal-pages']);
 
     // Read the 3 Episode 1 journal pages (and verify markPageRead is idempotent)

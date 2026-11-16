@@ -5,11 +5,26 @@ import { allPlantingBeds } from '../world';
 import { TILE_SIZE } from '../world/tiles';
 import { bus } from './events';
 import type { InteractionSystem } from './interaction';
-import { currentStage, getBedState, isBedMature, isBedPlanted, plantSeed } from './plants';
+import { gameState } from './state';
+import {
+  canWaterBed,
+  currentStage,
+  getBedState,
+  getPlantableSpecies,
+  harvestBed,
+  isBedMature,
+  isBedPlanted,
+  isProduceReady,
+  plantSeed,
+  waterBed,
+} from './plants';
+
+const SEED_PICKER_PREFIX = 'seed-picker:';
 
 function labelFor(bedId: string): string {
   if (!isBedPlanted(bedId)) return 'Pflanzen';
-  return isBedMature(bedId) ? 'Ansehen' : 'Wächst…';
+  if (isBedMature(bedId)) return isProduceReady(bedId) ? 'Ernten' : 'Ansehen';
+  return canWaterBed(bedId) ? 'Gießen' : 'Wächst…';
 }
 
 function textureFor(plantId: string, stage: 'sprout' | 'growing' | 'mature'): string {
@@ -23,6 +38,8 @@ interface LiveBed {
   glow?: Phaser.GameObjects.Image;
   fireflies?: Phaser.GameObjects.Particles.ParticleEmitter;
   scent?: Phaser.GameObjects.Particles.ParticleEmitter;
+  /** Bobbing marker shown while produce is ready to harvest. */
+  produce?: Phaser.GameObjects.Image;
   lastRenderedStage: number;
   plantId?: string;
 }
@@ -48,6 +65,13 @@ export class PlantLayer {
     }
     bus.onScene(scene, 'plant-planted', ({ bedId }) => this.render(bedId));
     bus.onScene(scene, 'plant-matured', ({ bedId }) => this.render(bedId));
+    bus.onScene(scene, 'plant-harvested', ({ bedId }) => this.render(bedId));
+    bus.onScene(scene, 'dialogue-choice', ({ dialogueId, choiceId }) => {
+      if (!dialogueId.startsWith(SEED_PICKER_PREFIX)) return;
+      const bedId = dialogueId.slice(SEED_PICKER_PREFIX.length);
+      if (plantSeed(bedId, choiceId)) bus.emit('toast', { text: `${content.plants.get(choiceId).name} gepflanzt.` });
+      this.render(bedId);
+    });
     scene.time.addEvent({ delay: 1000, loop: true, callback: () => this.pollAll() });
   }
 
@@ -60,6 +84,23 @@ export class PlantLayer {
       getPosition: () => ({ x: cx, y: cy }),
       onInteract: (ctx) => {
         if (!isBedPlanted(bedId)) {
+          const species = getPlantableSpecies(bedId);
+          if (species.length > 1) {
+            // Open bed and several kinds of seed in the pocket: let the player choose.
+            ctx.world.showLines(`${SEED_PICKER_PREFIX}${bedId}`, [
+              {
+                text: 'Die Erde ist locker und bereit. Was soll hier wachsen?',
+                choices: [
+                  ...species.map((id) => {
+                    const def = content.plants.get(id);
+                    return { id, label: `${def.name} (${gameState.getItemCount(def.seedItemId as string)})` };
+                  }),
+                  { label: 'Noch nichts' },
+                ],
+              },
+            ]);
+            return;
+          }
           if (plantSeed(bedId)) ctx.world.toast('Samen gepflanzt.');
           else ctx.world.toast('Dafür fehlen noch die passenden Samen.');
           this.render(bedId);
@@ -67,8 +108,19 @@ export class PlantLayer {
         }
         const bed = getBedState(bedId)!;
         const def = content.plants.get(bed.plantId);
-        if (isBedMature(bedId)) ctx.world.showLines(`bed:${bedId}`, [{ speaker: def.name, text: def.description }]);
-        else ctx.world.toast(`${def.name} wächst noch.`);
+        if (!isBedMature(bedId)) {
+          if (waterBed(bedId)) ctx.world.toast(`Der Tau perlt in die Erde. ${def.name} streckt sich.`);
+          else ctx.world.toast(`${def.name} wächst noch.`);
+          this.render(bedId);
+          return;
+        }
+        const harvest = harvestBed(bedId);
+        if (!harvest) {
+          ctx.world.showLines(`bed:${bedId}`, [{ speaker: def.name, text: def.description }]);
+          return;
+        }
+        ctx.world.toast(`+1 ${content.items.get(harvest.itemId).name}`);
+        if (harvest.seedItemId) ctx.world.toast(`+1 ${content.items.get(harvest.seedItemId).name}`);
       },
     });
   }
@@ -107,6 +159,23 @@ export class PlantLayer {
     }
 
     this.updateAmbient(entry, def, mature);
+    this.updateProduce(entry, bedId, def);
+  }
+
+  private updateProduce(entry: LiveBed, bedId: string, def: PlantDef): void {
+    if (!isProduceReady(bedId)) {
+      entry.produce?.destroy();
+      entry.produce = undefined;
+      return;
+    }
+    if (entry.produce) return;
+    const y = entry.cy - 44;
+    entry.produce = this.scene.add
+      .image(entry.cx + 16, y, 'pickup-orb')
+      .setTint(content.items.get(def.produceItemId as string).color)
+      .setScale(0.6)
+      .setDepth(entry.cy + 1);
+    this.scene.tweens.add({ targets: entry.produce, y: y - 4, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
   }
 
   private burst(x: number, y: number): void {

@@ -11,9 +11,11 @@ import {
   debugRewindGrowth,
   getAllPlantedBeds,
   getBedState,
+  harvestBed,
   hasAbility,
   isBedMature,
   plantSeed,
+  waterBed,
 } from './systems/plants';
 import { FEET_OFFSET_Y } from './systems/player';
 import { initPwa, isBooted, showBootError } from './systems/pwa';
@@ -84,6 +86,8 @@ if (import.meta.env.DEV) {
       hasAbility,
       getAllPlantedBeds,
       debugRewindGrowth,
+      harvestBed,
+      waterBed,
       getResourceNodes,
       collectNode,
       give: (itemId: string, n = 1) => gameState.addItem(itemId, n),

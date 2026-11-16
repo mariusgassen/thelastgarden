@@ -23,13 +23,16 @@ describe('content registries', () => {
     expect(reg.all()).toEqual([{ id: 'a' }]);
   });
 
-  it('links every plant seedItemId to a seed item', () => {
+  it('links every plant seedItemId to a seed item and produceItemId to a produce item', () => {
     for (const plant of content.plants.all()) {
       expect(plant.name.trim().length).toBeGreaterThan(0);
       expect(plant.growthStages).toBeGreaterThan(0);
       if (plant.seedItemId) {
         const item = content.items.get(plant.seedItemId);
         expect(item.category).toBe('seed');
+      }
+      if (plant.produceItemId) {
+        expect(content.items.get(plant.produceItemId).category).toBe('produce');
       }
     }
   });

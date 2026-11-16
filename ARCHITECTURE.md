@@ -273,6 +273,36 @@ __tlg.debugRewindGrowth(60_000);     // fast-forward growth
 __tlg.teleport(35, 16);              // walk up to the bramble obstacle, then press E
 ```
 
+## Harvest and seed loop
+
+Growing a plant is no longer only a key. A mature plant keeps giving, all in
+`systems/plants.ts` (logic) and `PlantLayer` (prompt, marker, picker):
+
+- **Produce.** `PlantDef.produceItemId` names an `ItemDef` with `category: 'produce'`
+  (bramble → `produce-tendril`, lily → `produce-light-pollen`, lavender →
+  `produce-scent-bundle`, night violet → `produce-nectar`, hollyhock → `produce-seed-pod`;
+  the moon fern has none). `isProduceReady(bedId)` is true once the bed is mature and
+  `HARVEST_REGROW_MS` (60 s) have passed since the last harvest. `harvestBed(bedId)` adds one
+  produce item, keeps the plant, sets `harvested-once` and emits `plant-harvested`.
+- **Seeds.** The 1st, 4th, 7th … harvest of a bed (`SEED_DROP_EVERY`) also yields one seed of
+  its species, so seeds are renewable and open beds can always be filled. The one-time seed
+  pickups on the maps stay as the starting supply.
+- **Dew.** `waterBed(bedId)` spends one `resource-dew` to skip `DEW_BOOST_MS` (one stage) of a
+  growing bed, at most once per stage. It is optional: every plant matures without it.
+- **Seed picker.** `getPlantableSpecies(bedId)` lists what an open bed could take. With more
+  than one, `PlantLayer` shows an ad-hoc dialogue `seed-picker:<bedId>` whose choices carry
+  `DialogueChoice.id`; the UI emits `dialogue-choice { dialogueId, choiceId }` for any choice
+  with an id, and `PlantLayer` calls `plantSeed(bedId, plantId)`.
+- **Bed prompt.** `Pflanzen` → `Gießen` (growing, dew in the pocket, stage not yet watered) or
+  `Wächst…` → `Ernten` (produce ready) or `Ansehen`.
+- **HUD.** `ResourceBar` has a fifth counter: the sum of all `produce` items.
+- **Save.** Only optional fields on `ext.plants.beds[bedId]`: `harvestedAt`, `harvests`,
+  `wateredStage`. Old saves need no migration; their mature beds are simply ready to harvest.
+- **Debug.** `__tlg.harvestBed(bedId)`, `__tlg.waterBed(bedId)`; `debugRewindGrowth(ms)` also
+  fast-forwards regrowth.
+
+Produce has no consumer yet; the workbench recipes are the next step.
+
 ## Wave boundaries
 
 - **Wave 2 (plant abilities):** done — see "Plant Abilities" above.

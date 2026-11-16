@@ -1,18 +1,20 @@
 import Phaser from 'phaser';
 import { content } from '../content';
+import type { ItemCategory } from '../content/types';
 import { gameState } from '../systems/state';
 import { THEME } from './theme';
 
 const SEED_COLOR = 0xc49a6c;
+const PRODUCE_COLOR = 0x9ccf6a;
 const ROW_GAP = 48;
 
 interface Row {
-  itemId: string | '__seeds__';
+  itemId: string | '__seeds__' | '__produce__';
   dot: Phaser.GameObjects.Arc;
   text: Phaser.GameObjects.Text;
 }
 
-/** Compact, always-visible resource/seed counts. Top-left, never intercepts touches (no hit area). */
+/** Compact, always-visible resource/seed/harvest counts. Top-left, never intercepts touches (no hit area). */
 export class ResourceBar {
   private readonly container: Phaser.GameObjects.Container;
   private readonly bg: Phaser.GameObjects.Graphics;
@@ -26,6 +28,7 @@ export class ResourceBar {
       { itemId: 'resource-dew', color: content.items.get('resource-dew').color },
       { itemId: 'resource-curio', color: content.items.get('resource-curio').color },
       { itemId: '__seeds__', color: SEED_COLOR },
+      { itemId: '__produce__', color: PRODUCE_COLOR },
     ];
     this.rows = specs.map((spec, i) => ({
       itemId: spec.itemId,
@@ -54,12 +57,18 @@ export class ResourceBar {
   }
 
   refresh(): void {
-    const seedTotal = content.items
-      .all()
-      .filter((i) => i.category === 'seed')
-      .reduce((sum, i) => sum + gameState.getItemCount(i.id), 0);
+    const totalOf = (category: ItemCategory): number =>
+      content.items
+        .all()
+        .filter((i) => i.category === category)
+        .reduce((sum, i) => sum + gameState.getItemCount(i.id), 0);
     for (const row of this.rows) {
-      const count = row.itemId === '__seeds__' ? seedTotal : gameState.getItemCount(row.itemId);
+      const count =
+        row.itemId === '__seeds__'
+          ? totalOf('seed')
+          : row.itemId === '__produce__'
+            ? totalOf('produce')
+            : gameState.getItemCount(row.itemId);
       row.text.setText(String(count));
     }
     this.pillW = (this.rows.length - 1) * ROW_GAP + 54;

@@ -47,6 +47,22 @@ export const QUESTS: QuestDef[] = [
       },
     ],
   },
+  // Optional side quest placed before q-journal-pages so the HUD tracker highlights the main journey first.
+  {
+    id: 'q-first-harvest',
+    title: 'Was der Garten zurückgibt',
+    summary: 'Ausgewachsene Pflanzen tragen immer wieder: Triebe, Pollen, Duft — und manchmal neue Samen.',
+    startsWhen: ['bed-restored:bed-bramble', 'bed-restored:bed-lily', 'bed-restored:bed-lavender'],
+    objectives: [
+      {
+        type: 'flag',
+        flag: 'harvested-once',
+        description: 'Ernte eine ausgewachsene Pflanze in einem deiner Beete.',
+        markers: ['bed:bed-bramble', 'bed:bed-lily', 'bed:bed-lavender'],
+      },
+    ],
+    rewardItems: [{ itemId: 'resource-dew', count: 1 }],
+  },
   {
     id: 'q-journal-pages',
     title: 'Seiten eines Tagebuchs',
