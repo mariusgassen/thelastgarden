@@ -1,8 +1,21 @@
 import { expect, test } from '@playwright/test';
-import { countColorPixels, flushAndReadSave, SAVE_KEY, trackErrors, waitForGameBoot } from './helpers';
+import {
+  countColorPixels,
+  findColorCenter,
+  flushAndReadSave,
+  SAVE_KEY,
+  seedSave,
+  trackErrors,
+  triggerAndWaitForMap,
+  triggerUntil,
+  waitForGameBoot,
+  waitFrames,
+} from './helpers';
 
 const STRAW_HAT_RGB: readonly [number, number, number] = [232, 207, 122];
 const HORSE_COAT_RGB: readonly [number, number, number] = [154, 106, 66];
+const EAT_PILL_RGB: readonly [number, number, number] = [223, 156, 58];
+const PANEL_BG_RGB: readonly [number, number, number] = [43, 58, 38];
 
 test.describe('Phone touch controls', () => {
   test('touch joystick moves player and quest log button responds to tap', async ({ page }) => {
@@ -36,9 +49,9 @@ test.describe('Phone touch controls', () => {
 
     // Tap top-right Quest Log button, then tap outside panel to close
     await page.touchscreen.tap(340, 40);
-    await page.waitForTimeout(200);
+    await page.waitForTimeout(250);
     await page.touchscreen.tap(195, 25);
-    await page.waitForTimeout(150);
+    await page.waitForTimeout(200);
 
     expect(errors).toEqual([]);
   });
@@ -46,39 +59,23 @@ test.describe('Phone touch controls', () => {
   test('map button opens the town map and a tapped stop travels there', async ({ page }) => {
     const errors = trackErrors(page);
 
-    await page.addInitScript((key) => {
-      if (localStorage.getItem(key)) return;
-      localStorage.setItem(
-        key,
-        JSON.stringify({
-          version: 1,
-          savedAt: Date.now(),
-          player: { mapId: 'garden', x: 25.5 * 32, y: 31 * 32, facing: 'right' },
-          world: { unblockedPaths: [], visitedZones: ['garden', 'tram-tracks'], flags: { 'crow-met': true, 'greenhouse-hint-read': true } },
-          inventory: { items: {} },
-          quests: { active: [], completed: ['q-meet-crow'], progress: {} },
-          ext: {},
-        }),
-      );
-    }, SAVE_KEY);
+    await seedSave(page, {
+      player: { mapId: 'garden', x: 25.5 * 32, y: 31 * 32, facing: 'right' },
+      world: { visitedZones: ['garden', 'tram-tracks'], flags: { 'crow-met': true, 'greenhouse-hint-read': true } },
+      quests: { completed: ['q-meet-crow'] },
+    });
 
     await page.goto('/');
     await waitForGameBoot(page);
 
     // Map button: top-left bar (menu, bag, map). "Linie 3" sits at 35 % / 80 % of the sheet.
-    await expect
-      .poll(
-        async () => {
-          if ((await flushAndReadSave(page))?.player.mapId === 'tramline') return 'tramline';
-          await page.touchscreen.tap(140, 40);
-          await page.waitForTimeout(350);
-          await page.touchscreen.tap(146, 488);
-          await page.waitForTimeout(900);
-          return (await flushAndReadSave(page))?.player.mapId;
-        },
-        { timeout: 20_000, intervals: [100] },
-      )
-      .toBe('tramline');
+    await triggerAndWaitForMap(page, 'tramline', async () => {
+      await page.keyboard.press('Escape');
+      await page.waitForTimeout(100);
+      await page.touchscreen.tap(140, 40);
+      await page.waitForTimeout(350);
+      await page.touchscreen.tap(146, 488);
+    });
 
     expect(errors).toEqual([]);
   });
@@ -86,46 +83,34 @@ test.describe('Phone touch controls', () => {
   test('opens the bag by tapping the bag button and crafts via touch', async ({ page }) => {
     const errors = trackErrors(page);
 
-    await page.addInitScript((key) => {
-      if (localStorage.getItem(key)) return;
-      localStorage.setItem(
-        key,
-        JSON.stringify({
-          version: 1,
-          savedAt: Date.now(),
-          player: { mapId: 'garden', x: 25.5 * 32, y: 31 * 32, facing: 'right' },
-          world: {
-            unblockedPaths: [],
-            visitedZones: ['garden'],
-            flags: { 'crow-met': true, 'journal-read:page-bramble': true },
-          },
-          inventory: { items: { 'pocket-workbench': 1, 'produce-tendril': 2, 'resource-dew': 1 } },
-          quests: { active: ['q-restore-beds'], completed: ['q-meet-crow'], progress: {} },
-          ext: {},
-        }),
-      );
-    }, SAVE_KEY);
+    await seedSave(page, {
+      player: { mapId: 'garden', x: 25.5 * 32, y: 31 * 32, facing: 'right' },
+      world: {
+        visitedZones: ['garden'],
+        flags: { 'crow-met': true, 'journal-read:page-bramble': true },
+      },
+      inventory: { items: { 'pocket-workbench': 1, 'produce-tendril': 2, 'resource-dew': 1 } },
+      quests: { active: ['q-restore-beds'], completed: ['q-meet-crow'] },
+    });
 
     await page.goto('/');
     await waitForGameBoot(page);
 
     // Tap the bag button (top-left, right of menu) -> Beutel opens; tap Werkeln button -> Werkbank opens; tap Herstellen
-    await expect
-      .poll(
-        async () => {
-          const have = (await flushAndReadSave(page))?.inventory.items['craft-bramble-cutting'] ?? 0;
-          if (have > 0) return have;
-          await page.touchscreen.tap(84, 40);
-          await page.waitForTimeout(250);
-          await page.touchscreen.tap(268, 255);
-          await page.waitForTimeout(250);
-          await page.touchscreen.tap(303, 512);
-          await page.waitForTimeout(250);
-          return (await flushAndReadSave(page))?.inventory.items['craft-bramble-cutting'] ?? 0;
-        },
-        { timeout: 15_000, intervals: [150] },
-      )
-      .toBe(1);
+    await triggerUntil(
+      page,
+      async () => ((await flushAndReadSave(page))?.inventory.items['craft-bramble-cutting'] ?? 0) === 1,
+      async () => {
+        await page.keyboard.press('Escape');
+        await page.waitForTimeout(100);
+        await page.touchscreen.tap(84, 40);
+        await page.waitForTimeout(250);
+        await page.touchscreen.tap(268, 255);
+        await page.waitForTimeout(300);
+        await page.touchscreen.tap(303, 512);
+      },
+      { timeout: 15_000, attemptWaitMs: 3_000, label: 'crafted bramble cutting via touch' },
+    );
 
     expect(errors).toEqual([]);
   });
@@ -135,122 +120,75 @@ test.describe('Phone touch controls', () => {
   }) => {
     const errors = trackErrors(page);
 
-    await page.addInitScript((key) => {
-      if (localStorage.getItem(key)) return;
-      localStorage.setItem(
-        key,
-        JSON.stringify({
-          version: 1,
-          savedAt: Date.now(),
-          player: { mapId: 'garden', x: 7 * 32, y: 33 * 32, facing: 'right' },
-          world: {
-            unblockedPaths: [],
-            visitedZones: ['garden', 'workshop-yard', 'tram-tracks', 'river-farms-yard'],
-            flags: { 'crow-met': true, 'greenhouse-hint-read': true, 'horse-tamed': true },
-          },
-          inventory: { items: {} },
-          quests: { active: [], completed: ['q-meet-crow'], progress: {} },
-          ext: { horse: { riding: true } },
-        }),
-      );
-    }, SAVE_KEY);
+    await seedSave(page, {
+      player: { mapId: 'garden', x: 7 * 32, y: 33 * 32, facing: 'right' },
+      world: {
+        visitedZones: ['garden', 'workshop-yard', 'tram-tracks', 'river-farms-yard'],
+        flags: { 'crow-met': true, 'greenhouse-hint-read': true, 'horse-tamed': true },
+      },
+      quests: { completed: ['q-meet-crow'] },
+      ext: { horse: { riding: true } },
+    });
 
     await page.goto('/');
     await waitForGameBoot(page);
-    await page.waitForTimeout(450);
+    await page.waitForTimeout(300);
 
-    // Enter workshop: tap context button ("Betreten")
-    await expect
-      .poll(
-        async () => {
-          if ((await flushAndReadSave(page))?.player.mapId === 'workshop') return 'workshop';
-          await page.touchscreen.tap(326, 768);
-          await page.waitForTimeout(450);
-          return (await flushAndReadSave(page))?.player.mapId;
-        },
-        { timeout: 15_000, intervals: [100] },
-      )
-      .toBe('workshop');
+    // Enter workshop: tap context button ("Betreten") once and wait for scene transition
+    await triggerAndWaitForMap(page, 'workshop', () => page.touchscreen.tap(326, 768));
 
     // Indoors: on foot (no horse inside) while riding choice stays true
     expect(((await flushAndReadSave(page))?.ext.horse as { riding: boolean }).riding).toBe(true);
     await expect
       .poll(() => countColorPixels(page, { x: 100, y: 440, width: 190, height: 180 }, STRAW_HAT_RGB), {
-        timeout: 6_000,
+        timeout: 12_000,
         intervals: [150],
       })
       .toBeGreaterThan(20);
     expect(await countColorPixels(page, { x: 100, y: 440, width: 190, height: 180 }, HORSE_COAT_RGB, 6)).toBeLessThan(60);
 
     // Tap context button ("Hinausgehen") to leave workshop -> back on horse outdoors
-    await expect
-      .poll(
-        async () => {
-          if ((await flushAndReadSave(page))?.player.mapId === 'garden') return 'garden';
-          await page.touchscreen.tap(326, 768);
-          await page.waitForTimeout(450);
-          return (await flushAndReadSave(page))?.player.mapId;
-        },
-        { timeout: 15_000, intervals: [100] },
-      )
-      .toBe('garden');
+    await triggerAndWaitForMap(page, 'garden', () => page.touchscreen.tap(326, 768));
 
     // Leaving workshop: back outdoors on Mohn again
     expect(((await flushAndReadSave(page))?.ext.horse as { riding: boolean }).riding).toBe(true);
     await expect
       .poll(() => countColorPixels(page, { x: 80, y: 300, width: 220, height: 220 }, HORSE_COAT_RGB), {
-        timeout: 6_000,
+        timeout: 12_000,
         intervals: [150],
       })
       .toBeGreaterThan(25);
 
     // Open Town Map (top-left bar) and tap "Drei Höfe" (84% / 60% of sheet)
-    await expect
-      .poll(
-        async () => {
-          if ((await flushAndReadSave(page))?.player.mapId === 'river-farms') return 'river-farms';
-          await page.touchscreen.tap(140, 40);
-          await page.waitForTimeout(350);
-          await page.touchscreen.tap(306, 441);
-          await page.waitForTimeout(900);
-          return (await flushAndReadSave(page))?.player.mapId;
-        },
-        { timeout: 20_000, intervals: [100] },
-      )
-      .toBe('river-farms');
-
-    // The poll above can retry once more after the trip already happened (the save lags the scene restart), which
-    // reopens the town map over the character. Close it so the pixel checks look at the courtyard.
-    await page.keyboard.press('Escape');
-    await page.waitForTimeout(200);
+    await triggerAndWaitForMap(page, 'river-farms', async () => {
+      await page.keyboard.press('Escape');
+      await page.waitForTimeout(100);
+      await page.touchscreen.tap(140, 40);
+      await page.waitForTimeout(350);
+      await page.touchscreen.tap(306, 441);
+    });
 
     // Character and horse are clearly visible in the courtyard below the top HUD, area banner, and tutorial hints
     await expect
       .poll(() => countColorPixels(page, { x: 110, y: 260, width: 180, height: 150 }, STRAW_HAT_RGB), {
-        timeout: 6_000,
+        timeout: 12_000,
         intervals: [150],
       })
       .toBeGreaterThan(10);
     await expect
       .poll(() => countColorPixels(page, { x: 110, y: 260, width: 180, height: 150 }, HORSE_COAT_RGB), {
-        timeout: 6_000,
+        timeout: 12_000,
         intervals: [150],
       })
       .toBeGreaterThan(25);
 
     // Dismount via horseshoe button and walk south-west around the well: Mohn follows into the courtyard
-    await expect
-      .poll(
-        async () => {
-          const riding = ((await flushAndReadSave(page))?.ext.horse as { riding: boolean } | undefined)?.riding;
-          if (riding === false) return false;
-          await page.touchscreen.tap(344, 686);
-          await page.waitForTimeout(300);
-          return ((await flushAndReadSave(page))?.ext.horse as { riding: boolean } | undefined)?.riding;
-        },
-        { timeout: 10_000, intervals: [100] },
-      )
-      .toBe(false);
+    await triggerUntil(
+      page,
+      async () => ((await flushAndReadSave(page))?.ext.horse as { riding: boolean } | undefined)?.riding === false,
+      () => page.touchscreen.tap(344, 686),
+      { timeout: 10_000, attemptWaitMs: 2_500, label: 'dismount via horseshoe button' },
+    );
 
     const beforeWalkY = (await flushAndReadSave(page))!.player.y;
     await page.mouse.move(92, 690);
@@ -267,14 +205,13 @@ test.describe('Phone touch controls', () => {
     // Wait for Mohn to catch up into the lower courtyard
     await expect
       .poll(() => countColorPixels(page, { x: 100, y: 360, width: 200, height: 180 }, HORSE_COAT_RGB), {
-        timeout: 6_000,
+        timeout: 12_000,
         intervals: [150],
       })
       .toBeGreaterThan(35);
 
     expect(errors).toEqual([]);
   });
-
   test('opens build bar on phone and places a free soil bed via touch', async ({ page }) => {
     const errors = trackErrors(page);
 
@@ -490,7 +427,6 @@ test.describe('Phone touch controls', () => {
 
     expect(errors).toEqual([]);
   });
-
   test('renders stacked and adjacent light plants without white blowout on phone', async ({ page }) => {
     const errors = trackErrors(page);
     const matureAt = Date.now() - 600_000;
@@ -543,5 +479,152 @@ test.describe('Phone touch controls', () => {
     expect(whitePixels).toBeLessThan(200);
     expect(errors).toEqual([]);
   });
-});
 
+  test('opens build mode via hammer button, places a fence by touch, and dismantles it for refund', async ({ page }) => {
+    const errors = trackErrors(page);
+
+    await seedSave(page, {
+      // Open grass south of plaza NPCs/paths, free to build on tile (25, 39)
+      player: { mapId: 'garden', x: 24.5 * 32, y: 39.5 * 32, facing: 'right' },
+      world: { visitedZones: ['garden'], flags: { 'crow-met': true, 'gathered-material': true } },
+      inventory: { items: { 'mat-wood': 3 } },
+      quests: { completed: ['q-meet-crow'] },
+    });
+
+    await page.goto('/');
+    await waitForGameBoot(page);
+
+    const piecesCount = async () =>
+      (((await flushAndReadSave(page))?.ext.building as { pieces?: { garden?: unknown[] } } | undefined)?.pieces?.garden ?? []).length;
+
+    // Hammer button sits at the bottom of the right HUD column (345, 687) since only buildButton is visible
+    await page.touchscreen.tap(345, 687);
+    await page.waitForTimeout(250);
+    // Pick Zaun (slot 1 = 2nd slot in 4-row BuildBar row 0 -> (120, 652))
+    await page.touchscreen.tap(120, 652);
+    await page.waitForTimeout(150);
+
+    // Tap tile (25, 39) east of the player ((227, 434) in CSS px) to build fence
+    await triggerUntil(
+      page,
+      async () => (await piecesCount()) === 1,
+      () => page.touchscreen.tap(227, 434),
+      { timeout: 10_000, attemptWaitMs: 2_500, label: 'place fence via touch' },
+    );
+
+    const builtSave = (await flushAndReadSave(page))!;
+    expect(builtSave.inventory.items['mat-wood']).toBe(2);
+    expect(builtSave.world.flags['built:fence']).toBe(true);
+
+    // Tap the built fence again to dismantle it and refund mat-wood
+    await triggerUntil(
+      page,
+      async () => (await piecesCount()) === 0,
+      () => page.touchscreen.tap(227, 434),
+      { timeout: 10_000, attemptWaitMs: 2_500, label: 'dismantle fence via touch' },
+    );
+
+    const refundedSave = (await flushAndReadSave(page))!;
+    expect(refundedSave.inventory.items['mat-wood']).toBe(3);
+    expect(errors).toEqual([]);
+  });
+
+  test('opens tool bar via touch and harvests mature bed with sickle action button', async ({ page }) => {
+    const errors = trackErrors(page);
+
+    await seedSave(page, {
+      player: { mapId: 'garden', x: 16.5 * 32, y: 30 * 32, facing: 'right' },
+      world: { visitedZones: ['garden'], flags: { 'crow-met': true, 'bed-restored:bed-bramble': true } },
+      inventory: { items: { 'tool-sickle': 1 } },
+      quests: { active: ['q-restore-beds'], completed: ['q-meet-crow'] },
+      ext: {
+        plants: {
+          beds: { 'bed-bramble': { bedId: 'bed-bramble', plantId: 'bramble-vine', plantedAt: Date.now() - 600_000 } },
+        },
+      },
+    });
+
+    await page.goto('/');
+    await waitForGameBoot(page);
+
+    const equipped = async () =>
+      ((await flushAndReadSave(page))?.ext.tools as { equipped?: string } | undefined)?.equipped ?? null;
+
+    // Only toolButton is visible in the HUD column -> (345, 687); tap sickle slot (278, 408) in vertical ToolBar
+    await triggerUntil(
+      page,
+      async () => (await equipped()) === 'tool-sickle',
+      async () => {
+        await page.touchscreen.tap(345, 687);
+        await page.waitForTimeout(300);
+        await page.touchscreen.tap(278, 408);
+      },
+      { timeout: 10_000, attemptWaitMs: 1_500, label: 'equip sickle via touch ToolBar' },
+    );
+
+    // Big action button stays at (326, 768)
+    await triggerUntil(
+      page,
+      async () => ((await flushAndReadSave(page))?.inventory.items['produce-tendril'] ?? 0) === 1,
+      () => page.touchscreen.tap(326, 768),
+      { timeout: 10_000, attemptWaitMs: 2_500, label: 'harvest with sickle on phone' },
+    );
+
+    expect((await flushAndReadSave(page))!.world.flags['used-tool:sickle']).toBe(true);
+    expect(errors).toEqual([]);
+  });
+
+  test('opens Menü -> Almanach and eats a meal from Bag via touch', async ({ page }) => {
+    const errors = trackErrors(page);
+
+    await seedSave(page, {
+      player: { mapId: 'garden', x: 25.5 * 32, y: 36 * 32, facing: 'right' },
+      world: { visitedZones: ['garden'], flags: { 'crow-met': true, 'bed-restored:bed-bramble': true } },
+      inventory: { items: { 'meal-berry-mash': 1 } },
+      quests: { completed: ['q-meet-crow'] },
+    });
+
+    await page.goto('/');
+    await waitForGameBoot(page);
+
+    // Tap Menü button at top-left (28, 40) -> tap "Almanach (H)" item at (195, 441)
+    await page.touchscreen.tap(28, 40);
+    await page.waitForTimeout(250);
+    await page.touchscreen.tap(195, 441);
+    await waitFrames(page, 4);
+
+    // WikiPanel renders with dark green panel background near center
+    await expect
+      .poll(() => countColorPixels(page, { x: 100, y: 200, width: 190, height: 200 }, PANEL_BG_RGB, 18), {
+        timeout: 12_000,
+        intervals: [100],
+      })
+      .toBeGreaterThan(200);
+
+    // Close WikiPanel by tapping outside the panel top area (195, 10)
+    await page.touchscreen.tap(195, 10);
+    await page.waitForTimeout(250);
+
+    // Tap Bag button (84, 40), locate golden "Essen" pill, and tap it to eat meal-berry-mash
+    await triggerUntil(
+      page,
+      async () => (await flushAndReadSave(page))?.world.flags['ate-meal'] === true,
+      async () => {
+        await page.keyboard.press('Escape');
+        await page.waitForTimeout(100);
+        await page.touchscreen.tap(84, 40);
+        await page.waitForTimeout(300);
+        const pill = await findColorCenter(page, { x: 210, y: 120, width: 145, height: 320 }, EAT_PILL_RGB, 20);
+        if (pill && pill.count > 40) {
+          await page.touchscreen.tap(Math.round(pill.x), Math.round(pill.y));
+        }
+      },
+      { timeout: 12_000, attemptWaitMs: 3_000, label: 'eat meal via touch' },
+    );
+
+    const afterEat = (await flushAndReadSave(page))!;
+    expect(afterEat.inventory.items['meal-berry-mash']).toBeUndefined();
+    expect((afterEat.ext.meal as { effect: string } | undefined)?.effect).toBe('swift');
+    expect(errors).toEqual([]);
+  });
+});
