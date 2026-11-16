@@ -224,6 +224,8 @@ export const GARDEN_MAP: MapDef = {
     { id: 'seed-lily-2', itemId: 'seed-glow-lily', at: { x: 39, y: 42 }, label: 'Samen einsammeln' },
     { id: 'seed-lavender-1', itemId: 'seed-lavender', at: { x: 9, y: 33 }, label: 'Samen einsammeln' },
     { id: 'seed-lavender-2', itemId: 'seed-lavender', at: { x: 3, y: 36 }, label: 'Samen einsammeln' },
+    // The crow's night gift: lies by the hut door once a night with crows has left it (systems/nightEvents.ts).
+    { id: 'crow-gift-hut', itemId: 'resource-curio', at: { x: 8.4, y: 33.6 }, label: 'Glänzendes aufheben', giftFlag: 'crow-gift-waiting' },
     // Piles to chop, dig and salvage: raw material for build mode (systems/building.ts).
     { id: 'wood-garden-1', itemId: 'mat-wood', at: { x: 34.5, y: 28.5 }, label: 'Holz hacken', respawnMs: 60_000, texture: 'node-wood', count: 2 },
     { id: 'wood-garden-2', itemId: 'mat-wood', at: { x: 15, y: 38.5 }, label: 'Holz hacken', respawnMs: 60_000, texture: 'node-wood', count: 2 },
@@ -266,6 +268,8 @@ export const GARDEN_MAP: MapDef = {
       itemId: 'journal-page-lavender',
     },
   ],
+  // The wooded slope south of the main garden: the player cuts it back with Roden to make room for more beds.
+  clearable: [{ x: 10, y: 45, w: 28, h: 13 }],
   // Where the blight grows from once Episode 1 is done (systems/blight.ts).
   blightHearts: [
     { id: 'heart-plaza', at: { x: 7, y: 62 }, reach: 6 },

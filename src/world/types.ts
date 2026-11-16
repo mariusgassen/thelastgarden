@@ -78,6 +78,8 @@ export interface ResourceNodeDef {
   texture?: string;
   /** Items per collection (default 1). */
   count?: number;
+  /** Only present while this flag is set (a gift left by a night event); collecting it clears the flag. */
+  giftFlag?: string;
 }
 
 /**
@@ -237,6 +239,8 @@ export interface MapDef {
   npcs?: NpcPlacementDef[];
   /** Flag-gated readable notes (Wave 3). */
   journalPages?: JournalPageDef[];
+  /** Forest the player may cut back with the *Roden* build piece (systems/building.ts); everything else stays wall. */
+  clearable?: TileRect[];
   /** Sources of the nightly blight; outdoor maps only. */
   blightHearts?: BlightHeartDef[];
   /** Named spawn points (tiles). `default` is required. */
