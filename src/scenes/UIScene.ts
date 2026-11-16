@@ -19,9 +19,11 @@ import { drawHammerIcon, drawHorseIcon, drawMapIcon, drawToolIcon, HudButton } f
 import { InventoryPanel } from '../ui/InventoryPanel';
 import { Joystick } from '../ui/Joystick';
 import { MapPanel } from '../ui/MapPanel';
+import { MenuPanel } from '../ui/MenuPanel';
 import { QuestLog } from '../ui/QuestLog';
 import { ResourceBar } from '../ui/ResourceBar';
 import { ToolBar } from '../ui/ToolBar';
+import { WikiPanel } from '../ui/WikiPanel';
 import { TutorialHints } from '../ui/TutorialHints';
 import { DPR, isTouchDevice, readSafeArea, type SafeArea } from '../ui/viewport';
 import { SCENES } from './keys';
@@ -46,6 +48,8 @@ export class UIScene extends Phaser.Scene {
   private inventory!: InventoryPanel;
   private crafting!: CraftingPanel;
   private mapPanel!: MapPanel;
+  private wiki!: WikiPanel;
+  private menu!: MenuPanel;
   private mapButton!: HudButton;
   private rideButton!: HudButton;
   private buildButton!: HudButton;
@@ -85,6 +89,7 @@ export class UIScene extends Phaser.Scene {
         this.inventory.setOpen(false);
         this.crafting.setOpen(false);
         this.mapPanel.setOpen(false);
+        this.wiki.setOpen(false);
       }
       this.syncModal();
       if (open) this.releaseJoystick();
@@ -97,6 +102,7 @@ export class UIScene extends Phaser.Scene {
           this.questLog.setOpen(false);
           this.crafting.setOpen(false);
           this.mapPanel.setOpen(false);
+          this.wiki.setOpen(false);
         }
         this.syncModal();
         if (open) this.releaseJoystick();
@@ -115,6 +121,7 @@ export class UIScene extends Phaser.Scene {
           this.questLog.setOpen(false);
           this.inventory.setOpen(false);
           this.mapPanel.setOpen(false);
+          this.wiki.setOpen(false);
         }
         this.syncModal();
         if (open) this.releaseJoystick();
@@ -129,6 +136,7 @@ export class UIScene extends Phaser.Scene {
           this.questLog.setOpen(false);
           this.inventory.setOpen(false);
           this.crafting.setOpen(false);
+          this.wiki.setOpen(false);
         }
         this.syncModal();
         if (open) this.releaseJoystick();
@@ -137,6 +145,27 @@ export class UIScene extends Phaser.Scene {
         if (travelTo(mapId)) this.mapPanel.setOpen(false);
       },
     );
+    this.wiki = new WikiPanel(this, (open) => {
+      if (open) {
+        this.questLog.setOpen(false);
+        this.inventory.setOpen(false);
+        this.crafting.setOpen(false);
+        this.mapPanel.setOpen(false);
+      }
+      this.syncModal();
+      if (open) this.releaseJoystick();
+    });
+    this.menu = new MenuPanel(this, [{ label: 'Almanach  (H)', action: () => this.toggleWiki() }], (open) => {
+      if (open) {
+        this.questLog.setOpen(false);
+        this.inventory.setOpen(false);
+        this.crafting.setOpen(false);
+        this.mapPanel.setOpen(false);
+        this.wiki.setOpen(false);
+      }
+      this.syncModal();
+      if (open) this.releaseJoystick();
+    });
     this.mapButton = new HudButton(this, drawMapIcon, touch ? undefined : 'M');
     this.rideButton = new HudButton(this, drawHorseIcon, touch ? undefined : 'R');
     this.buildButton = new HudButton(this, drawHammerIcon, touch ? undefined : 'B');
@@ -157,6 +186,7 @@ export class UIScene extends Phaser.Scene {
     this.input.on('wheel', (_p: Phaser.Input.Pointer, _o: unknown, _dx: number, dy: number) => {
       if (this.inventory.isOpen) this.inventory.scrollBy(dy * 0.5);
       else if (this.crafting.isOpen) this.crafting.scrollBy(dy * 0.5);
+      else if (this.wiki.isOpen) this.wiki.scrollBy(dy * 0.5);
       else this.questLog.scrollBy(dy * 0.5);
     });
 
@@ -172,6 +202,7 @@ export class UIScene extends Phaser.Scene {
     kb?.on('keydown-C', () => {
       if (!this.dialogue.isOpen && !this.crafting.isOpen && hasPocketWorkbench()) this.openPocketWorkbench();
     });
+    kb?.on('keydown-H', () => this.toggleWiki());
     kb?.on('keydown-M', () => this.toggleMap());
     kb?.on('keydown-R', () => this.toggleRide());
     kb?.on('keydown-B', () => this.toggleBuild());
@@ -185,16 +216,22 @@ export class UIScene extends Phaser.Scene {
       this.inventory.setOpen(false);
       this.crafting.setOpen(false);
       this.mapPanel.setOpen(false);
+      this.wiki.back();
+      this.menu.setOpen(false);
     });
     const stepY = (dir: 1 | -1) => () => {
       if (this.dialogue.isOpen && this.dialogue.hasChoices) this.dialogue.moveChoice(dir);
       else if (this.crafting.isOpen) this.crafting.moveSelection(0, dir);
       else if (this.inventory.isOpen) this.inventory.moveSelection(0, dir);
+      else if (this.menu.isOpen) this.menu.moveSelection(dir);
+      else if (this.wiki.isOpen) this.wiki.moveSelection(dir);
       else this.mapPanel.moveSelection(dir);
     };
     const stepX = (dir: 1 | -1) => () => {
       if (this.crafting.isOpen) this.crafting.moveSelection(dir, 0);
       else if (this.inventory.isOpen) this.inventory.moveSelection(dir, 0);
+      else if (this.menu.isOpen) this.menu.moveSelection(dir);
+      else if (this.wiki.isOpen) this.wiki.moveSelection(dir);
       else this.mapPanel.moveSelection(dir);
     };
     for (const key of ['UP', 'W']) kb?.on(`keydown-${key}`, stepY(-1));
@@ -226,6 +263,8 @@ export class UIScene extends Phaser.Scene {
       this.inventory.setOpen(false);
       this.crafting.setOpen(false);
       this.mapPanel.setOpen(false);
+      this.wiki.setOpen(false);
+      this.menu.setOpen(false);
       this.dialogue.open(id, lines, style, title);
       inputState.modal = this.dialogue.isOpen;
       if (inputState.modal) this.releaseJoystick();
@@ -239,6 +278,8 @@ export class UIScene extends Phaser.Scene {
       else if (this.inventory.isOpen) this.inventory.setOpen(false);
       else if (this.crafting.isOpen) this.crafting.confirm();
       else if (this.mapPanel.isOpen) this.mapPanel.confirm();
+      else if (this.wiki.isOpen) this.wiki.confirm();
+      else if (this.menu.isOpen) this.menu.confirm();
       else if (this.dialogue.isOpen && this.dialogue.hasChoices) {
         const picked = this.dialogue.pickSelectedChoice();
         if (picked) this.applyDialogueChoice(picked);
@@ -314,6 +355,8 @@ export class UIScene extends Phaser.Scene {
     this.inventory.layout(w, h, safe);
     this.crafting.layout(w, h, safe);
     this.mapPanel.layout(w, h, safe);
+    this.wiki.layout(w, h, safe);
+    this.menu.layout(w, h, safe);
     this.buildBar.layout(w, h, safe);
     this.toolBar.layout(w, h, safe);
     this.areaBanner.setMaxWidth(maxBannerW);
@@ -363,7 +406,9 @@ export class UIScene extends Phaser.Scene {
       this.questLog.isOpen ||
       this.inventory.isOpen ||
       this.crafting.isOpen ||
-      this.mapPanel.isOpen;
+      this.mapPanel.isOpen ||
+      this.wiki.isOpen ||
+      this.menu.isOpen;
   }
 
   /** Map, horse and build buttons: a column above the context button, shown once unlocked. */
@@ -404,6 +449,11 @@ export class UIScene extends Phaser.Scene {
   private toggleMap(): void {
     if (this.dialogue.isOpen || !hasTravelMap()) return;
     this.mapPanel.toggle();
+  }
+
+  private toggleWiki(): void {
+    if (this.dialogue.isOpen) return;
+    this.wiki.toggle();
   }
 
   private toggleBuild(): void {
@@ -492,6 +542,8 @@ export class UIScene extends Phaser.Scene {
       }
       return;
     }
+    if (this.menu.pointerDown(p.x, p.y)) return;
+    if (this.wiki.pointerDown(p.x, p.y)) return;
     if (this.mapPanel.pointerDown(p.x, p.y)) return;
     if (this.crafting.pointerDown(p.x, p.y)) return;
     if (this.inventory.pointerDown(p.x, p.y)) return;
@@ -526,8 +578,13 @@ export class UIScene extends Phaser.Scene {
       this.questLog.toggle();
       return;
     }
-    if (this.resourceBar.contains(p.x, p.y)) {
+    const top = this.resourceBar.hit(p.x, p.y);
+    if (top === 'inventory') {
       this.inventory.toggle();
+      return;
+    }
+    if (top === 'menu') {
+      this.menu.toggle();
       return;
     }
     if (this.button.contains(p.x, p.y)) return;
@@ -539,6 +596,10 @@ export class UIScene extends Phaser.Scene {
     if (!pointer.isDown) return;
     const p = this.toCss(pointer);
     if (this.mapPanel.isOpen) return;
+    if (this.wiki.isOpen) {
+      this.wiki.pointerMove(p.y);
+      return;
+    }
     if (this.crafting.isOpen) {
       this.crafting.pointerMove(p.y);
       return;
@@ -559,6 +620,7 @@ export class UIScene extends Phaser.Scene {
     this.questLog.pointerUp();
     this.inventory.pointerUp(p.x, p.y);
     this.crafting.pointerUp(p.x, p.y);
+    this.wiki.pointerUp(p.x, p.y);
     const down = this.downAt.get(pointer.id);
     this.downAt.delete(pointer.id);
     this.joystick.end(pointer.id);
