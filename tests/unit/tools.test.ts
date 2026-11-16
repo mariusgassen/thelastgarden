@@ -141,7 +141,7 @@ describe('tools', () => {
     expect(isAutoTool() && isToolActing()).toBe(true);
     const sown = useTool('garden', feet(0.5));
     expect(sown.ok && sown.used).toBe('satchel');
-    expect(isBedPlanted(planter(0)) && isBedPlanted(planter(1))).toBe(true);
+    expect(plantedIn(0).length + plantedIn(1).length).toBe(2); // two seeds, the two nearest slots
     expect(useTool('garden', feet(0.5)).ok).toBe(false); // nothing ripe, no free bed
     debugRewindGrowth(10 * STAGE_DURATION_MS);
     const reaped = useTool('garden', feet(0.5));
