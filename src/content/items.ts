@@ -453,4 +453,12 @@ export const ITEMS: ItemDef[] = [
     stackable: true,
     color: 0xe0a02b,
   },
+  {
+    id: 'craft-flour',
+    name: 'Blütenmehl',
+    description: 'Fein gemahlen in der Windmühle. Duftet nach Sommer und hält sich lange.',
+    category: 'material',
+    stackable: true,
+    color: 0xe8dcc0,
+  },
 ];

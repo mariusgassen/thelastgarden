@@ -9,6 +9,8 @@ const SLOT = 50;
 const GAP = 6;
 const PAD = 10;
 const TEXT_H = 40;
+/** Slots per row; more pieces wrap into further rows so the bar stays readable on a phone. */
+const COLS = 6;
 
 /**
  * The build mode's piece picker: a row of slots at the bottom of the screen with the picked
@@ -20,9 +22,11 @@ export class BuildBar {
   private readonly bg: Phaser.GameObjects.Graphics;
   private readonly title: Phaser.GameObjects.Text;
   private readonly hint: Phaser.GameObjects.Text;
-  private readonly slots: { id: string; frame: Phaser.GameObjects.Image; icon: Phaser.GameObjects.Image; x: number }[] = [];
+  private readonly slots: { id: string; frame: Phaser.GameObjects.Image; icon: Phaser.GameObjects.Image; x: number; y: number }[] = [];
   private readonly pieces = content.buildables.all();
-  private readonly width = PAD * 2 + this.pieces.length * SLOT + (this.pieces.length - 1) * GAP;
+  private readonly cols = Math.min(COLS, this.pieces.length);
+  private readonly rows = Math.ceil(this.pieces.length / COLS);
+  private readonly width = PAD * 2 + this.cols * SLOT + (this.cols - 1) * GAP;
   private shown = false;
 
   constructor(scene: Phaser.Scene, touch: boolean) {
@@ -44,20 +48,20 @@ export class BuildBar {
       .setAlpha(0.8);
     const parts: Phaser.GameObjects.GameObject[] = [this.bg, this.title, this.hint];
     this.pieces.forEach((piece, i) => {
-      const x = -this.width / 2 + PAD + i * (SLOT + GAP) + SLOT / 2;
-      const y = TEXT_H + PAD / 2 + SLOT / 2;
+      const x = -this.width / 2 + PAD + (i % COLS) * (SLOT + GAP) + SLOT / 2;
+      const y = TEXT_H + PAD / 2 + Math.floor(i / COLS) * (SLOT + GAP) + SLOT / 2;
       const frame = scene.add.image(x, y, 'ui-slot').setDisplaySize(SLOT, SLOT);
       const icon = scene.add.image(x, y, buildTextureKey(piece.id));
       icon.setScale(Math.min(1, (SLOT - 12) / Math.max(icon.width, icon.height)));
       parts.push(frame, icon);
-      if (!touch) {
+      if (!touch && i < 9) {
         parts.push(
           scene.add
             .text(x - SLOT / 2 + 5, y - SLOT / 2 + 3, String(i + 1), { fontFamily: THEME.font, fontSize: '10px', color: THEME.creamCss })
             .setAlpha(0.7),
         );
       }
-      this.slots.push({ id: piece.id, frame, icon, x });
+      this.slots.push({ id: piece.id, frame, icon, x, y });
     });
     this.container = scene.add.container(0, 0, parts).setDepth(90_500).setVisible(false);
     this.refresh();
@@ -69,7 +73,7 @@ export class BuildBar {
 
   /** Total height in CSS px, including the text lines. */
   get height(): number {
-    return TEXT_H + SLOT + PAD * 1.5;
+    return TEXT_H + this.rows * SLOT + (this.rows - 1) * GAP + PAD * 1.5;
   }
 
   layout(viewW: number, viewH: number, safe: SafeArea): void {
@@ -114,7 +118,7 @@ export class BuildBar {
     const lx = (x - this.container.x) / s;
     const ly = (y - this.container.y) / s;
     if (Math.abs(lx) > this.width / 2 || ly < 0 || ly > this.height) return undefined;
-    const slot = this.slots.find((sl) => Math.abs(lx - sl.x) <= SLOT / 2 + GAP / 2 && ly >= TEXT_H);
+    const slot = this.slots.find((sl) => Math.abs(lx - sl.x) <= SLOT / 2 + GAP / 2 && Math.abs(ly - sl.y) <= SLOT / 2 + GAP / 2 && ly >= TEXT_H);
     return slot ? slot.id : null;
   }
 }

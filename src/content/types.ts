@@ -75,6 +75,8 @@ export interface BuildableDef {
   rest?: boolean;
   /** A home for helper animals (systems/animals.ts); the animals move in on their own. */
   home?: { animal: 'bees' | 'hens' | 'goat' | 'horse' };
+  /** A working machine (systems/machines.ts): what it does is decided by this kind. */
+  machine?: 'rain-barrel' | 'compost' | 'drying-rack' | 'windmill';
 }
 
 interface QuestObjectiveBase {

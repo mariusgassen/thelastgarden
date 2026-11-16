@@ -2196,6 +2196,25 @@ const ITEM_ICON_DRAWERS: Record<string, (g: G) => void> = {
     g.lineBetween(18, 11.5, 18, 25.5);
   },
 
+  'craft-flour': (g) => {
+    g.fillStyle(0x000000, 0.15);
+    g.fillEllipse(18, 29, 22, 5);
+    g.fillStyle(0xd9c79a, 1);
+    g.fillRoundedRect(9, 11, 18, 18, 5);
+    g.fillStyle(0xeee3c3, 1);
+    g.fillRoundedRect(9, 11, 18, 6, 4);
+    g.lineStyle(1.4, 0x9a835a, 1);
+    g.strokeRoundedRect(9, 11, 18, 18, 5);
+    g.lineBetween(10, 17, 26, 17);
+    g.fillStyle(0xf7f1de, 0.95);
+    g.fillEllipse(18, 10, 12, 5);
+    g.fillStyle(0x9b84d6, 1);
+    g.fillCircle(18, 23, 2);
+    g.fillStyle(0x6a9a4e, 1);
+    g.fillCircle(14, 24, 1.3);
+    g.fillCircle(22, 25, 1.3);
+  },
+
   // ── Notes & Chronicle ──
   'journal-page-bramble': (g) =>
     drawJournalNote(g, 0xf1e6c8, (g) => {
@@ -2892,6 +2911,116 @@ function generateBuildAndBlightTextures(make: MakeFn): void {
     g.fillStyle(0x2c2018, 1);
     g.fillRect(3, 3.5, 1, 3);
     g.fillRect(5, 3.5, 1, 3);
+  });
+
+  make('build-rain-barrel', 34, 40, (g) => {
+    g.fillStyle(0x000000, 0.2);
+    g.fillEllipse(17, 37, 32, 6);
+    g.fillStyle(0x7a5233, 1);
+    g.fillRoundedRect(4, 8, 26, 28, 6);
+    g.fillStyle(0x9a6a40, 1);
+    for (const x of [8, 14, 20, 26]) g.fillRect(x, 9, 1.4, 26);
+    g.fillStyle(0x5d6770, 1);
+    g.fillRect(4, 14, 26, 3);
+    g.fillRect(4, 28, 26, 3);
+    g.fillStyle(0x4a3624, 1);
+    g.fillEllipse(17, 9, 26, 8);
+    g.fillStyle(0x5aa3c8, 1);
+    g.fillEllipse(17, 9.5, 22, 6);
+    g.fillStyle(0xcfeaf6, 0.8);
+    g.fillEllipse(13, 8.5, 7, 2);
+    g.fillStyle(0x8a8f96, 1);
+    g.fillRect(27, 20, 6, 3);
+    g.fillStyle(0x5aa3c8, 0.9);
+    g.fillCircle(32, 26, 1.4);
+  });
+  make('build-compost', 40, 32, (g) => {
+    g.fillStyle(0x000000, 0.2);
+    g.fillEllipse(20, 29, 38, 6);
+    g.fillStyle(0x4a3322, 1);
+    g.fillEllipse(20, 19, 34, 20);
+    g.fillStyle(0x5f4630, 1);
+    g.fillEllipse(20, 14, 26, 14);
+    g.fillStyle(0x6a9a4e, 1);
+    g.fillEllipse(12, 12, 7, 4);
+    g.fillEllipse(25, 10, 8, 4);
+    g.fillStyle(0xc45a3a, 1);
+    g.fillCircle(19, 15, 2);
+    g.fillStyle(0xe9a23b, 1);
+    g.fillCircle(28, 15, 1.6);
+    g.fillStyle(0x8a603d, 1);
+    g.fillRoundedRect(1, 14, 5, 15, 2);
+    g.fillRoundedRect(34, 14, 5, 15, 2);
+    g.fillRect(2, 22, 36, 3);
+  });
+  make('build-drying-rack', 44, 44, (g) => {
+    g.fillStyle(0x000000, 0.18);
+    g.fillEllipse(22, 41, 40, 6);
+    g.fillStyle(0x6d4a30, 1);
+    g.fillRoundedRect(4, 8, 5, 33, 2);
+    g.fillRoundedRect(35, 8, 5, 33, 2);
+    g.fillStyle(0x8a603d, 1);
+    g.fillRoundedRect(2, 8, 40, 4, 2);
+    g.fillRect(5, 8, 1.5, 33);
+    g.fillRect(36, 8, 1.5, 33);
+    g.lineStyle(1.2, 0xc9b28a, 1);
+    for (const [x, c] of [
+      [12, 0x9b84d6],
+      [22, 0x6a9a4e],
+      [32, 0xe9a23b],
+    ] as const) {
+      g.lineBetween(x, 12, x, 17);
+      g.fillStyle(c, 1);
+      g.fillTriangle(x - 4, 17, x + 4, 17, x, 31);
+      g.fillStyle(0xffffff, 0.25);
+      g.fillTriangle(x - 4, 17, x - 1, 17, x, 29);
+    }
+    g.fillStyle(0xf1e6c8, 1);
+    g.fillRect(4, 38, 36, 2);
+  });
+  make('build-windmill', 48, 66, (g) => {
+    g.fillStyle(0x000000, 0.22);
+    g.fillEllipse(24, 62, 46, 8);
+    g.fillStyle(0x9a968c, 1);
+    g.fillRoundedRect(3, 54, 42, 9, 3);
+    g.fillStyle(0xd9c79a, 1);
+    g.fillTriangle(8, 56, 40, 56, 33, 22);
+    g.fillTriangle(8, 56, 33, 22, 15, 22);
+    g.fillStyle(0xeee3c3, 0.7);
+    g.fillTriangle(10, 56, 18, 56, 20, 22);
+    g.fillTriangle(10, 56, 20, 22, 15, 22);
+    g.lineStyle(1.2, 0x9a835a, 1);
+    for (const y of [32, 42, 50]) g.lineBetween(12 + (56 - y) * 0.15, y, 36 - (56 - y) * 0.15, y);
+    g.fillStyle(0x6d4a30, 1);
+    g.fillRoundedRect(19, 42, 10, 14, 5);
+    g.fillStyle(0xffe08a, 0.9);
+    g.fillRoundedRect(21.5, 30, 5, 6, 2);
+    g.fillStyle(0x8a603d, 1);
+    g.fillTriangle(10, 24, 24, 4, 38, 24);
+    g.fillStyle(0xa8753f, 1);
+    g.fillTriangle(14, 23, 24, 8, 30, 23);
+    g.fillStyle(0x6a9a4e, 0.9);
+    g.fillCircle(8, 57, 3);
+    g.fillCircle(41, 58, 2.5);
+  });
+  make('build-windmill-sails', 52, 52, (g) => {
+    g.lineStyle(3, 0x6d4a30, 1);
+    g.lineBetween(26, 2, 26, 50);
+    g.lineBetween(2, 26, 50, 26);
+    for (let i = 0; i < 4; i++) {
+      const a = (i * Math.PI) / 2;
+      const ca = Math.cos(a);
+      const sa = Math.sin(a);
+      // A cloth panel beside each arm.
+      const at = (along: number, across: number): [number, number] => [26 + ca * along - sa * across, 26 + sa * along + ca * across];
+      g.fillStyle(i % 2 === 0 ? 0xe9dcc0 : 0xd9c79a, 1);
+      g.fillTriangle(...at(8, 1), ...at(24, 1), ...at(24, 8));
+      g.fillTriangle(...at(8, 1), ...at(24, 8), ...at(8, 8));
+    }
+    g.fillStyle(0x4a3624, 1);
+    g.fillCircle(26, 26, 4);
+    g.fillStyle(0xa8753f, 1);
+    g.fillCircle(26, 26, 2);
   });
 
   // ── The blight ──
