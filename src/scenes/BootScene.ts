@@ -8,6 +8,7 @@ import { hideAppLoader, showBootError } from '../systems/pwa';
 import { startNightScheduler } from '../systems/nightEvents';
 import { startQuestRuntime } from '../systems/quests';
 import { gameState } from '../systems/state';
+import { startVillage } from '../systems/village';
 import { generateTextures } from '../world/textures';
 import { SCENES } from './keys';
 
@@ -23,6 +24,7 @@ export class BootScene extends Phaser.Scene {
       gameState.startAutosave();
       startGrowthTicker();
       startQuestRuntime();
+      startVillage();
       startNightScheduler();
       startBlightScheduler();
       startAnimals();

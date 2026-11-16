@@ -190,3 +190,51 @@ export interface NpcDef {
   interactLabel?: string;
   color: number;
 }
+
+/** One of the three quarters of Erlenbrück that wake up one after the other (content/village.ts, systems/village.ts). */
+export interface VillagePartDef {
+  id: string;
+  name: string;
+  description: string;
+  /** Outdoor map the quarter lives on. */
+  mapId: string;
+  /** Any of these flags opens the quarter: an Episode 4 ending, or the quarter that comes before it. */
+  openedBy: string[];
+  /** Once restored, this spot keeps the blight away (tiles, systems/blight.ts). */
+  ward?: { x: number; y: number; radius: number };
+  /** Obstacles the villagers clear when the quarter is restored. */
+  unblocks?: string[];
+  /** Thank-you for the whole quarter, paid out by its quest. */
+  rewardItems: { itemId: string; count: number }[];
+  /** Shown when the quarter is restored. */
+  restoredText: string;
+}
+
+/** The look of a villager: skin, hair, clothes and headwear (drawn in world/textures.ts). */
+export interface VillagerLook {
+  skin: number;
+  hair: number;
+  top: number;
+  bottom: number;
+  apron?: number;
+  hat: 'cap' | 'scarf' | 'straw' | 'bun' | 'beret' | 'none';
+  hatColor: number;
+  beard?: boolean;
+}
+
+/** A villager who moves back and asks for something from the garden (content/village.ts). Its id is also its NPC id. */
+export interface VillagerDef {
+  id: string;
+  partId: string;
+  name: string;
+  description: string;
+  look: VillagerLook;
+  /** Position on the quarter's map, in tiles. */
+  at: { x: number; y: number };
+  /** What they ask for. Handing it over is all there is: no price, no change. */
+  request: { itemId: string; count: number }[];
+  /** A thank-you in return. */
+  gift: { itemId: string; count: number }[];
+  /** Spoken lines. `need` is what they ask for in their own words; the item list is added automatically. */
+  lines: { ask: string; need: string; thanks: string; after: string; restored: string };
+}

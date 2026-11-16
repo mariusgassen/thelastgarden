@@ -54,6 +54,11 @@ export const RIVER_FARMS_MAP: MapDef = {
     { texture: 'farm-bell', at: { x: 16.5, y: 10.5 }, solid: { x: 15.9, y: 9.8, w: 1.2, h: 0.7 } },
     { texture: 'bench', at: { x: 29.0, y: 9.0 }, solid: { x: 27.9, y: 8.2, w: 2.2, h: 0.8 } },
     { texture: 'river-boat', at: { x: 38.0, y: 16.4 } },
+
+    // The farms, restored by q-village-farms (content/village.ts).
+    { texture: 'village-shop', at: { x: 11.4, y: 19.0 }, solid: { x: 9.5, y: 17.5, w: 3.8, h: 1.4 }, showWhenFlag: 'village-restored:farms' },
+    { texture: 'village-washing', at: { x: 18.2, y: 14.2 }, solid: { x: 17.2, y: 13.9, w: 2.0, h: 0.3 }, showWhenFlag: 'village-restored:farms' },
+    { texture: 'village-crates', at: { x: 14.4, y: 18.4 }, solid: { x: 13.6, y: 17.9, w: 1.6, h: 0.5 }, showWhenFlag: 'village-restored:farms' },
   ],
   interactables: [
     {
@@ -81,6 +86,18 @@ export const RIVER_FARMS_MAP: MapDef = {
       dialogueId: 'farms-boat',
       radius: 72,
     },
+    {
+      id: 'village-farm-shop',
+      type: 'dialogue',
+      at: { x: 11.4, y: 19.3 },
+      label: 'Ansehen',
+      dialogueId: 'village-farms-shop',
+      showWhenFlag: 'village-restored:farms',
+    },
+  ],
+  npcs: [
+    { npcId: 'wilma', at: { x: 9.6, y: 12.6 }, radius: 68, showWhenFlag: 'village-open:farms' },
+    { npcId: 'bruno', at: { x: 14.8, y: 14.6 }, radius: 68, showWhenFlag: 'village-open:farms' },
   ],
   plantingBeds: [{ id: 'bed-farms-hollyhock', rect: { x: 27, y: 11, w: 4, h: 2 }, plantId: 'hollyhock' }],
   journalPages: [

@@ -27,6 +27,7 @@ import { initPwa, isBooted, showBootError } from './systems/pwa';
 import { getActiveQuests, getCompletedQuests, getObjectiveStates, startQuest } from './systems/quests';
 import { collectNode, getResourceNodes } from './systems/resources';
 import { gameState } from './systems/state';
+import { getVillageStatus, syncVillage } from './systems/village';
 import { cssViewportSize, DPR } from './ui/viewport';
 import { TILE_SIZE } from './world/tiles';
 
@@ -120,6 +121,7 @@ if (import.meta.env.DEV) {
       blightNightfall,
       // Helper animals: restUntilMorning() also runs the night routines (goat, stable).
       restUntilMorning,
+      village: { syncVillage, getVillageStatus },
       animals: { getHomes, readyProduce, collectProduce, isHorseRested, feedHorse },
       refreshBlight,
       getBlightTiles,

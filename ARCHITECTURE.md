@@ -571,6 +571,48 @@ harvest into something else.
 - **Build bar.** `ui/BuildBar.ts` wraps into rows of six; keys 1–9 pick the first nine slots.
 - **Flour** is a plain `craft-flour` material for cooking recipes; nothing consumes it yet.
 
+## The living village
+
+After Episode 4, Erlenbrück wakes up in three quarters. Villagers move back and ask for things the
+garden makes; handing them over restores the quarter. No selling, no money, nothing to do daily, no
+fail state.
+
+- **Content.** `content/village.ts` is the one place to edit: `VILLAGE_PARTS` (`VillagePartDef`) and
+  `VILLAGERS` (`VillagerDef`: look, spot, `request`, `gift`, four lines). The NPCs, dialogues and one
+  quest per quarter (`q-village-<part>`) are generated from it and added to the registries in
+  `content/index.ts`; `content.villageParts` holds the quarters.
+
+  | Quarter | Map | Villagers | They ask for | Restored |
+  |---|---|---|---|---|
+  | `plaza` Dorfplatz | `garden` | Hanne, Piet | Blütenmehl, Eier · Honig, Leuchtkappen | bakery, stall, 4 lamps; clears `fallen-tree-canal`; wards 6 tiles of the plaza |
+  | `farms` Die drei Höfe | `river-farms` | Wilma, Bruno | Rübeneintopf, Beerenmus · Goldrüben, Honig | farm shop, washing line, crates |
+  | `orchard` Obsthof | `orchard` | Ottilie, Konrad | Honig, Nektar · Honigbeeren, Blütenmehl | cider hut, crates; wards 6 tiles of the meadow |
+
+- **Order.** The Episode 4 ending flag opens the first quarter, and each finished quarter opens the
+  next in the ring plaza → farms → orchard → plaza. `VillagePartDef.openedBy` lists the ending flag and
+  the quest that precedes it, so `QuestDef.startsWhen` does all the work:
+  garden ending → plaza, farms, orchard; valley → farms, orchard, plaza; future → orchard, plaza, farms.
+  M. announces the first one once (`m-village-hint-<ending>`), and celebrates when all three are done.
+- **System.** `systems/village.ts` (no Phaser). `syncVillage()` derives the flags from the quest
+  states, so there is nothing extra to save and old saves land in the right place:
+  `village-open:<part>` (villagers appear), `village-restored:<part>` (buildings appear, unblocks,
+  ward) and `village-all-restored`. `village-helped:<villager>` is set by the villager's NPC rule.
+  A hand-over is an ordinary `NpcDialogueRule` with `requiresItems`, `takeItems`, `giveItems`.
+  `getVillageStatus()` lists each quarter's state and progress.
+- **World data.** Villagers are `MapDef.npcs` with `showWhenFlag: 'village-open:<part>'`; restored
+  buildings are `MapDef.props` with `showWhenFlag: 'village-restored:<part>'`. A prop with
+  `showWhenFlag` and `solid` now has no collision until it appears (`WorldScene.applyPropFlags`).
+  Textures are generated in `world/textures.ts` (`generateVillageTextures`: villager sprites, portraits
+  and the buildings).
+- **Blight.** `registerWardSource(fn)` in `systems/blight.ts` lets other systems add fixed wards;
+  the village adds its `VillagePartDef.ward` once restored.
+- **Save.** Flags and quests only. No new save fields.
+- **Debug.** `__tlg.village.getVillageStatus()` / `syncVillage()`. To skip ahead, set
+  `chronicle-ending-garden` (or `-valley`, `-future`) and then `village-helped:<villager>` flags.
+- **New villager or quarter?** Add a `VillagerDef` or `VillagePartDef`, place the NPC and its
+  restored props on the map, and add the new quarter to the ring through `openedBy`. A unit test
+  checks that everything stands on open ground and clear of pickups.
+
 ## Wave boundaries
 
 - **Wave 2 (plant abilities):** done — see "Plant Abilities" above.

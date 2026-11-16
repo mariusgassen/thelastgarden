@@ -123,6 +123,14 @@ export const GARDEN_MAP: MapDef = {
     { texture: 'bus-sign', at: { x: 23.4, y: 62 }, solid: { x: 23.2, y: 61.6, w: 0.4, h: 0.4 } },
     { texture: 'signpost-east', at: { x: 48.8, y: 65.8 } },
     { texture: 'feather', at: { x: 11.5, y: 34.3 }, showWhenFlag: 'episode-1-complete', hideWhenFlag: 'water-tower-crow-met' },
+
+    // The village plaza, restored by q-village-plaza (content/village.ts).
+    { texture: 'village-bakery', at: { x: 27.6, y: 61.4 }, solid: { x: 25.7, y: 59.9, w: 3.8, h: 1.4 }, showWhenFlag: 'village-restored:plaza' },
+    { texture: 'village-stall', at: { x: 14.6, y: 61.6 }, solid: { x: 13.4, y: 60.6, w: 2.4, h: 0.9 }, showWhenFlag: 'village-restored:plaza' },
+    { texture: 'village-lamp', at: { x: 12.4, y: 60.2 }, solid: { x: 12.2, y: 59.8, w: 0.4, h: 0.3 }, showWhenFlag: 'village-restored:plaza' },
+    { texture: 'village-lamp', at: { x: 12.4, y: 65.2 }, solid: { x: 12.2, y: 64.8, w: 0.4, h: 0.3 }, showWhenFlag: 'village-restored:plaza' },
+    { texture: 'village-lamp', at: { x: 29.4, y: 65.2 }, solid: { x: 29.2, y: 64.8, w: 0.4, h: 0.3 }, showWhenFlag: 'village-restored:plaza' },
+    { texture: 'village-lamp', at: { x: 24.2, y: 59.8 }, solid: { x: 24, y: 59.4, w: 0.4, h: 0.3 }, showWhenFlag: 'village-restored:plaza' },
   ],
   interactables: [
     { id: 'sign-garden', type: 'dialogue', at: { x: 28.2, y: 33.4 }, label: 'Lesen', dialogueId: 'sign-garden' },
@@ -168,6 +176,22 @@ export const GARDEN_MAP: MapDef = {
       lockedDialogueId: 'tramline-locked',
       target: { mapId: 'tramline', spawn: 'west' },
       radius: 64,
+    },
+    {
+      id: 'village-bakery-door',
+      type: 'dialogue',
+      at: { x: 27.6, y: 61.8 },
+      label: 'Ansehen',
+      dialogueId: 'village-plaza-bakery',
+      showWhenFlag: 'village-restored:plaza',
+    },
+    {
+      id: 'village-market-stall',
+      type: 'dialogue',
+      at: { x: 14.6, y: 62.1 },
+      label: 'Ansehen',
+      dialogueId: 'village-plaza-stall',
+      showWhenFlag: 'village-restored:plaza',
     },
   ],
   // The 3 "verwilderte Beete" Quest 3 (Wave 3) restores, plus one open bed. See
@@ -215,6 +239,8 @@ export const GARDEN_MAP: MapDef = {
     { npcId: 'crow', at: { x: 22.5, y: 35.2 }, radius: 64, showWhenFlag: 'jakob-ready-to-return' },
     { npcId: 'm', at: { x: 24.8, y: 36.2 }, radius: 70, showWhenFlag: 'jakob-ready-to-return' },
     { npcId: 'jakob', at: { x: 27.6, y: 36.2 }, radius: 70, showWhenFlag: 'jakob-ready-to-return' },
+    { npcId: 'hanne', at: { x: 25.4, y: 63.6 }, radius: 68, showWhenFlag: 'village-open:plaza' },
+    { npcId: 'piet', at: { x: 17.2, y: 64.6 }, radius: 68, showWhenFlag: 'village-open:plaza' },
   ],
   // One journal page per restored bed, lying right next to it (see systems/journal.ts).
   journalPages: [
