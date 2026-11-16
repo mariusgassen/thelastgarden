@@ -132,8 +132,9 @@ export const WIKI_TOPICS: WikiTopicDef[] = [
     title: 'Werkzeuge',
     requiresFlag: 'harvested-once',
     lines: [
-      'Werkzeuge baust du an der Werkbank. Sie werden nie verbraucht, und jedes gibt es nur einmal. Mit T öffnest du die Werkzeugleiste (oder tippst auf den Knopf); Taste 1–4 wählt eines.',
-      'Sichel, Spaten und Saatbeutel wirken beim Tippen oder mit E rund um dich. Die Stablaterne leuchtet einfach mit, wohin du gehst, und trocknet Welke in ihrer Nähe aus.',
+      'Werkzeuge baust du an der Werkbank. Sie werden nie verbraucht, und jedes gibt es nur einmal. Mit T, einem Tipp oder Halten auf den Werkzeugknopf öffnest du die Leiste und wählst eines.',
+      'Danach schließt sich die Leiste, und der große Aktionsknopf wird selbst zum Werkzeug. Zum Ablegen tippst du kurz auf den Werkzeugknopf, drückst Esc oder wählst das Kreuz.',
+      'Die Sichel erntet alles Reife und sammelt Holz, Steine, Licht, Tau, Eier und Honig ringsum auf einmal. Spaten und Saatbeutel wirken beim Tippen oder mit E; die Stablaterne leuchtet beim Tragen und trocknet Welke aus.',
     ],
   },
   {

@@ -14,6 +14,7 @@ export class ContextButton {
   private readonly icon: Phaser.GameObjects.Graphics;
   private iconKey: string | null = null;
   private visible = false;
+  private suppressed = false;
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -45,7 +46,7 @@ export class ContextButton {
 
     this.hit.setInteractive({ useHandCursor: true });
     this.hit.on('pointerdown', () => {
-      if (!this.visible) return;
+      if (!this.visible || this.suppressed) return;
       scene.tweens.add({ targets: this.container, scale: 0.9, duration: 70, yoyo: true });
       onPress();
     });
@@ -57,6 +58,13 @@ export class ContextButton {
 
   setPosition(x: number, y: number): void {
     this.container.setPosition(x, y);
+  }
+
+  /** Temporarily hides the button while a picker overlays the bottom edge. */
+  setSuppressed(suppressed: boolean): void {
+    if (suppressed === this.suppressed) return;
+    this.suppressed = suppressed;
+    this.container.setVisible(!suppressed);
   }
 
   /** Shows the button with a drawn icon instead of a label (the tool in hand). `key` says when the icon changed. */
@@ -99,6 +107,6 @@ export class ContextButton {
 
   /** True if (x, y) in CSS px hits the button. */
   contains(x: number, y: number): boolean {
-    return this.visible && Math.hypot(x - this.container.x, y - this.container.y) <= SIZE / 2 + 6;
+    return this.visible && !this.suppressed && Math.hypot(x - this.container.x, y - this.container.y) <= SIZE / 2 + 6;
   }
 }
