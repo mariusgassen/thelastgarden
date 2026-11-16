@@ -63,6 +63,12 @@ export interface GameEvents {
   'riding-changed': { riding: boolean };
   /** The player picked a stop on the town map (see systems/travel.ts); WorldScene changes the map. */
   'fast-travel': { mapId: string; spawn: string };
+  /** Build mode was switched on/off or another piece was picked (see systems/building.ts). */
+  'build-mode-changed': { active: boolean; pieceId: string };
+  /** A piece was placed on or removed from a map. */
+  'build-changed': { mapId: string };
+  /** The blighted tiles of a map changed (see systems/blight.ts). */
+  'blight-changed': { mapId: string };
   /** A resource/seed pickup in the world was collected. */
   'resource-collected': { nodeId: string; itemId: string };
   'save-loaded': { save: SaveGame };

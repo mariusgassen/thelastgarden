@@ -204,6 +204,14 @@ export const ORCHARD_MAP: MapDef = {
     { id: 'dew-orchard-2', itemId: 'resource-dew', at: { x: 42, y: 16 }, label: 'Tau sammeln', respawnMs: 45_000 },
     { id: 'curio-orchard-1', itemId: 'resource-curio', at: { x: 43, y: 7 }, label: 'Aufheben' },
     { id: 'curio-orchard-2', itemId: 'resource-curio', at: { x: 6.5, y: 26 }, label: 'Aufheben' },
+    // Piles to chop, dig and salvage: raw material for build mode (systems/building.ts).
+    { id: 'wood-orchard-1', itemId: 'mat-wood', at: { x: 6, y: 17 }, label: 'Holz hacken', respawnMs: 60_000, texture: 'node-wood', count: 2 },
+    { id: 'stone-orchard-1', itemId: 'mat-stone', at: { x: 40, y: 15.5 }, label: 'Steine ausgraben', respawnMs: 60_000, texture: 'node-stone' },
+    { id: 'scrap-orchard-1', itemId: 'mat-scrap', at: { x: 16, y: 24.5 }, label: 'Schrott bergen', respawnMs: 60_000, texture: 'node-scrap' },
+  ],
+  // Where the blight grows from once Episode 1 is done (systems/blight.ts).
+  blightHearts: [
+    { id: 'heart-orchard-meadow', at: { x: 24, y: 26 }, reach: 5 },
   ],
   spawns: {
     default: { x: 9.5, y: 28.8 },

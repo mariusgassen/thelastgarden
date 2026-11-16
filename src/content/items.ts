@@ -297,4 +297,29 @@ export const ITEMS: ItemDef[] = [
     stackable: false,
     color: 0xe9a23b,
   },
+  // Raw materials gathered from piles in the world and spent in build mode (systems/building.ts).
+  {
+    id: 'mat-wood',
+    name: 'Holz',
+    description: 'Trockenes Astholz und alte Latten. Daraus werden Zäune, Stege und Pflanzkübel.',
+    category: 'material',
+    stackable: true,
+    color: 0xa8753f,
+  },
+  {
+    id: 'mat-stone',
+    name: 'Feldstein',
+    description: 'Faustgroße Steine aus der lockeren Erde. Sie geben allem Gebauten ein Fundament.',
+    category: 'material',
+    stackable: true,
+    color: 0x9a968c,
+  },
+  {
+    id: 'mat-scrap',
+    name: 'Schrott',
+    description: 'Verbogenes Blech, Draht und ein paar Schrauben. Die Stadt hat genug davon liegen lassen.',
+    category: 'material',
+    stackable: true,
+    color: 0xb07a52,
+  },
 ];

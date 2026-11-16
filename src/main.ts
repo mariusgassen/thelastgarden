@@ -4,6 +4,8 @@ import { SCENES } from './scenes/keys';
 import { BootScene } from './scenes/BootScene';
 import { UIScene } from './scenes/UIScene';
 import { WorldScene } from './scenes/WorldScene';
+import { blightNightfall, getBlightTiles, refreshBlight } from './systems/blight';
+import { getPieces, placePiece, removePiece, setBuildMode } from './systems/building';
 import { bus } from './systems/events';
 import { getDayTime, setDayTimeHour } from './systems/dayClock';
 import { stopNightScheduler, triggerNightEvent } from './systems/nightEvents';
@@ -108,6 +110,14 @@ if (import.meta.env.DEV) {
       stopNightScheduler,
       setTimeOfDay: (hour: number) => setDayTimeHour(hour),
       getTimeOfDay: () => getDayTime(),
+      // Building & blight:
+      placePiece,
+      removePiece,
+      getPieces,
+      setBuildMode,
+      blightNightfall,
+      refreshBlight,
+      getBlightTiles,
       resetSave: () => {
         gameState.reset();
         location.reload();

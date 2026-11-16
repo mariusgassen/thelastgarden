@@ -239,6 +239,44 @@ export const QUESTS: QuestDef[] = [
       },
     ],
   },
+  // Optional, like q-horse: gathering, building and the blight that wakes with Episode 2.
+  {
+    id: 'q-blight',
+    title: 'Die Welke',
+    summary:
+      'An den Rändern des Gartens kriecht nachts etwas Graues über den Boden. Es weicht dem Licht und allem, was wächst. Zeit, selbst Hand anzulegen.',
+    startsWhen: ['episode-1-complete'],
+    objectives: [
+      {
+        type: 'flag',
+        flag: 'gathered-material',
+        description: 'Sammle Baumaterial: Holzstapel, Steinhaufen und Schrott liegen an den Rändern des Gartens.',
+        markers: ['resource:wood-garden-1', 'resource:wood-garden-2', 'resource:scrap-garden-2', 'resource:stone-garden-2'],
+      },
+      {
+        type: 'flag',
+        flag: 'built-once',
+        description: 'Öffne den Baumodus (Hammer-Knopf oder Taste B) und stelle etwas auf, zum Beispiel einen Zaun (1 Holz).',
+      },
+      {
+        type: 'flag',
+        flag: 'blight-seen',
+        description: 'Sieh dir einen Welkenherd an. Einer sitzt am Westrand der alten Bushaltestelle.',
+        markers: ['blight-heart:heart-plaza', 'blight-heart:heart-pond', 'blight-heart:heart-clearing'],
+      },
+      {
+        type: 'flag',
+        flag: 'blight-heart-sealed',
+        description:
+          'Versiegle einen Herd: Stelle eine Laterne (1 Schrott, 1 Lichtpollen) dicht daneben. Wo noch Welke liegt, arbeite dich Laterne um Laterne vor.',
+        markers: ['blight-heart:heart-plaza', 'blight-heart:heart-pond', 'blight-heart:heart-clearing'],
+      },
+    ],
+    rewardItems: [
+      { itemId: 'mat-wood', count: 4 },
+      { itemId: 'mat-scrap', count: 2 },
+    ],
+  },
   {
     id: 'q-tramline',
     title: 'Linie 3',

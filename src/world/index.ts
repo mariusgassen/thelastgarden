@@ -10,7 +10,7 @@ import { RIVER_FARMS_MAP } from './maps/riverFarms';
 import { TRAMLINE_MAP } from './maps/tramline';
 import { WATER_TOWER_MAP } from './maps/waterTower';
 import { WORKSHOP_MAP } from './maps/workshop';
-import type { JournalPageDef, MapDef, ObstacleDef, PlantingBedDef, ResourceNodeDef } from './types';
+import type { BlightHeartDef, JournalPageDef, MapDef, ObstacleDef, PlantingBedDef, ResourceNodeDef } from './types';
 
 export * from './types';
 export { TILE_SIZE } from './tiles';
@@ -48,9 +48,18 @@ export function findObstacle(id: string): (ObstacleDef & { mapId: string }) | un
   return allObstacles().find((o) => o.id === id);
 }
 
-/** Every planting bed across all maps, with the map it lives on. */
-export function allPlantingBeds(): (PlantingBedDef & { mapId: string })[] {
-  return Object.values(MAPS).flatMap((m) => (m.plantingBeds ?? []).map((b) => ({ ...b, mapId: m.id })));
+type BedWithMap = PlantingBedDef & { mapId: string };
+
+let dynamicBeds: () => BedWithMap[] = () => [];
+
+/** Beds that exist at runtime only: the planters the player built (systems/building.ts). */
+export function setDynamicBedProvider(provider: () => BedWithMap[]): void {
+  dynamicBeds = provider;
+}
+
+/** Every planting bed across all maps (map data plus built planters), with the map it lives on. */
+export function allPlantingBeds(): BedWithMap[] {
+  return [...Object.values(MAPS).flatMap((m) => (m.plantingBeds ?? []).map((b) => ({ ...b, mapId: m.id }))), ...dynamicBeds()];
 }
 
 export function findPlantingBed(id: string): (PlantingBedDef & { mapId: string }) | undefined {
@@ -69,4 +78,9 @@ export function findResourceNode(id: string): (ResourceNodeDef & { mapId: string
 /** Every journal page across all maps, with the map it lives on. */
 export function allJournalPages(): (JournalPageDef & { mapId: string })[] {
   return Object.values(MAPS).flatMap((m) => (m.journalPages ?? []).map((p) => ({ ...p, mapId: m.id })));
+}
+
+/** Every blight heart across all maps, with the map it lives on. */
+export function allBlightHearts(): (BlightHeartDef & { mapId: string })[] {
+  return Object.values(MAPS).flatMap((m) => (m.blightHearts ?? []).map((h) => ({ ...h, mapId: m.id })));
 }

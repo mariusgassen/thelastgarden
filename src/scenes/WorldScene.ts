@@ -1,5 +1,9 @@
 import Phaser from 'phaser';
 import { content, type DialogueLine } from '../content';
+import { isBlightedPx } from '../systems/blight';
+import { BlightLayer } from '../systems/blightLayer';
+import { getBuildMode, isTileWalkable } from '../systems/building';
+import { BuildLayer } from '../systems/buildLayer';
 import { bus } from '../systems/events';
 import { HORSE_FLAG, isRidingHere } from '../systems/horse';
 import { HorseFollower } from '../systems/horseFollower';
@@ -15,7 +19,7 @@ import { QuestMarkerLayer } from '../systems/questMarkers';
 import { ResourceLayer } from '../systems/resources';
 import { AtmosphereLayer } from '../systems/atmosphere';
 import { gameState } from '../systems/state';
-import { DPR } from '../ui/viewport';
+import { DPR, isTouchDevice } from '../ui/viewport';
 import { getMap, MAPS, START_MAP_ID, type MapDef, type ZoneDef } from '../world';
 import { buildTileGrid, seededRandom, toFrameGrid } from '../world/grid';
 import { SOLID_FRAMES, TILE_SIZE, TILES, TILESET_MARGIN, TILESET_SPACING, type TileId } from '../world/tiles';
@@ -29,6 +33,8 @@ export interface WorldSceneData {
 
 /** Tiles visible across the shorter screen side at zoom 1 (before clamping). */
 const TARGET_TILES_ACROSS = 13;
+/** Walking through blighted ground is slow going. */
+const BLIGHT_SPEED_FACTOR = 0.6;
 
 /**
  * Generic map scene: renders any MapDef and wires player, collisions, obstacles,
@@ -39,6 +45,8 @@ export class WorldScene extends Phaser.Scene implements WorldApi {
   player!: PlayerController;
   interaction!: InteractionSystem;
   obstacles!: ObstacleLayer;
+  building!: BuildLayer;
+  blight!: BlightLayer;
   plants!: PlantLayer;
   resources!: ResourceLayer;
   atmosphere!: AtmosphereLayer;
@@ -75,8 +83,8 @@ export class WorldScene extends Phaser.Scene implements WorldApi {
     const grid = buildTileGrid(this.map);
     this.isWalkablePx = (x: number, y: number): boolean => {
       if (x < 16 || x > widthPx - 16 || y < 32 || y > heightPx - 16) return false;
-      const tile = grid[Math.floor(y / TILE_SIZE)]?.[Math.floor(x / TILE_SIZE)];
-      return tile !== undefined && !TILES[tile].solid;
+      // Map tiles plus whatever the player built: bridges open water, solid pieces close ground.
+      return isTileWalkable(this.map.id, Math.floor(x / TILE_SIZE), Math.floor(y / TILE_SIZE));
     };
 
     const tilemap = this.make.tilemap({
@@ -102,6 +110,16 @@ export class WorldScene extends Phaser.Scene implements WorldApi {
     }));
     for (const spec of this.map.interactables) this.interaction.register(createSpecInteractable(spec));
     this.obstacles = new ObstacleLayer(this, this.map, this.solids, this.interaction);
+    this.building = new BuildLayer(
+      this,
+      this.map,
+      this.solids,
+      this.interaction,
+      ground,
+      () => ({ x: this.player.feetX, y: this.player.feetY, facing: this.player.facing }),
+      isTouchDevice(),
+    );
+    this.blight = new BlightLayer(this, this.map.id, this.interaction);
     this.plants = new PlantLayer(this, this.map.id, this.interaction);
     this.resources = new ResourceLayer(this, this.map.id, this.interaction);
     this.atmosphere = new AtmosphereLayer(this, this.map);
@@ -150,7 +168,8 @@ export class WorldScene extends Phaser.Scene implements WorldApi {
     bus.onScene(this, 'tap', ({ x, y }) => {
       if (inputState.modal || this.transitioning) return;
       const p = this.cameras.main.getWorldPoint(x, y);
-      this.interaction.interactAt(p.x, p.y);
+      if (getBuildMode().active) this.building.tap(p.x, p.y);
+      else this.interaction.interactAt(p.x, p.y);
     });
 
     this.cameras.main.fadeIn(300, 31, 46, 29);
@@ -165,14 +184,21 @@ export class WorldScene extends Phaser.Scene implements WorldApi {
   override update(_time: number, delta: number): void {
     if (inputState.consumeInteract()) {
       if (inputState.modal) bus.emit('dialogue-advance', undefined);
-      else if (!this.transitioning) this.interaction.interactFocused();
+      else if (!this.transitioning) {
+        if (getBuildMode().active) this.building.confirm();
+        else this.interaction.interactFocused();
+      }
     }
 
     const frozen = inputState.modal || this.transitioning;
-    this.player.update(delta, frozen);
+    const building = getBuildMode().active;
+    const onBlight = isBlightedPx(this.map.id, this.player.feetX, this.player.feetY);
+    this.player.update(delta, frozen, onBlight ? BLIGHT_SPEED_FACTOR : 1);
+    this.building.update(!frozen);
     this.horse.update(this.player.feetX, this.player.feetY, delta, frozen);
     this.atmosphere.update(delta);
-    this.interaction.update(!frozen);
+    // While building, E and taps place pieces, so nothing else takes the focus.
+    this.interaction.update(!frozen && !building);
     this.updateMarker();
     this.updateZone();
     if (!this.transitioning) this.syncPlayerToSave();

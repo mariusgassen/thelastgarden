@@ -226,6 +226,17 @@ addObstacleInteractHandler((obstacle, ctx) => {
   return true;
 });
 
+/** Empties a bed (a planter being taken down). Returns the species that grew there, if any. */
+export function clearBed(bedId: string): string | undefined {
+  const state = readState();
+  const bed = state.beds[bedId];
+  if (!bed) return undefined;
+  delete state.beds[bedId];
+  writeState(state);
+  gameState.setFlag(`bed-restored:${bedId}`, false);
+  return bed.plantId;
+}
+
 let tickerStarted = false;
 /** Flips `bed-restored:<bedId>` / `ability:<abilityId>` flags as beds mature, even off-screen. Call once at boot. */
 export function startGrowthTicker(): void {

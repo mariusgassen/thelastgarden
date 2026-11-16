@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { content, type DialogueChoice } from '../content';
+import { getBuildMode, isBuildUnlocked, selectBuildPiece, setBuildMode } from '../systems/building';
 import { craftWithToast, getUnlockedRecipes, hasPocketWorkbench } from '../systems/crafting';
 import { bus } from '../systems/events';
 import { canRideHere, hasHorse, isRiding, toggleRiding } from '../systems/horse';
@@ -7,11 +8,12 @@ import { inputState } from '../systems/input';
 import { gameState } from '../systems/state';
 import { hasTravelMap, travelTo } from '../systems/travel';
 import { Banner } from '../ui/Banner';
+import { BuildBar } from '../ui/BuildBar';
 import { ContextButton } from '../ui/ContextButton';
 import { CraftingPanel } from '../ui/CraftingPanel';
 import { DayClock } from '../ui/DayClock';
 import { DialoguePanel } from '../ui/DialoguePanel';
-import { drawHorseIcon, drawMapIcon, HudButton } from '../ui/HudButton';
+import { drawHammerIcon, drawHorseIcon, drawMapIcon, HudButton } from '../ui/HudButton';
 import { InventoryPanel } from '../ui/InventoryPanel';
 import { Joystick } from '../ui/Joystick';
 import { MapPanel } from '../ui/MapPanel';
@@ -43,6 +45,8 @@ export class UIScene extends Phaser.Scene {
   private mapPanel!: MapPanel;
   private mapButton!: HudButton;
   private rideButton!: HudButton;
+  private buildButton!: HudButton;
+  private buildBar!: BuildBar;
   private dayClock!: DayClock;
   private tutorial!: TutorialHints;
   private safe: SafeArea = { top: 0, right: 0, bottom: 0, left: 0 };
@@ -127,6 +131,8 @@ export class UIScene extends Phaser.Scene {
     );
     this.mapButton = new HudButton(this, drawMapIcon, touch ? undefined : 'M');
     this.rideButton = new HudButton(this, drawHorseIcon, touch ? undefined : 'R');
+    this.buildButton = new HudButton(this, drawHammerIcon, touch ? undefined : 'B');
+    this.buildBar = new BuildBar(this, touch);
     this.dayClock = new DayClock(this);
     this.tutorial = new TutorialHints(this, touch, () => this.layoutTopStack());
 
@@ -154,7 +160,9 @@ export class UIScene extends Phaser.Scene {
     });
     kb?.on('keydown-M', () => this.toggleMap());
     kb?.on('keydown-R', () => this.toggleRide());
+    kb?.on('keydown-B', () => this.toggleBuild());
     kb?.on('keydown-ESC', () => {
+      if (!inputState.modal) setBuildMode(false);
       this.questLog.setOpen(false);
       this.inventory.setOpen(false);
       this.crafting.setOpen(false);
@@ -182,6 +190,9 @@ export class UIScene extends Phaser.Scene {
           if (picked) this.applyDialogueChoice(picked);
         } else if (this.crafting.isOpen) {
           this.crafting.craftIndex(idx);
+        } else if (this.buildBar.visible) {
+          const pieceId = this.buildBar.pieceAt(idx);
+          if (pieceId) selectBuildPiece(pieceId);
         }
       });
     });
@@ -212,7 +223,9 @@ export class UIScene extends Phaser.Scene {
         if (picked) this.applyDialogueChoice(picked);
       } else this.advanceDialogue();
     });
+    bus.onScene(this, 'build-mode-changed', () => this.buildBar.refresh());
     bus.onScene(this, 'inventory-changed', () => {
+      this.buildBar.refresh();
       this.resourceBar.refresh();
       this.inventory.refresh();
       this.crafting.refresh();
@@ -274,6 +287,7 @@ export class UIScene extends Phaser.Scene {
     this.inventory.layout(w, h, safe);
     this.crafting.layout(w, h, safe);
     this.mapPanel.layout(w, h, safe);
+    this.buildBar.layout(w, h, safe);
     this.areaBanner.setMaxWidth(maxBannerW);
     this.toast.setMaxWidth(maxBannerW);
     this.tutorial.layout(w, 0, centerX, maxBannerW);
@@ -324,15 +338,21 @@ export class UIScene extends Phaser.Scene {
       this.mapPanel.isOpen;
   }
 
-  /** Map and horse buttons: a column above the context button, shown once unlocked. */
+  /** Map, horse and build buttons: a column above the context button, shown once unlocked. */
   private syncHudButtons(): void {
     const hidden = inputState.modal;
+    const building = getBuildMode().active;
+    this.buildBar.setVisible(building && !hidden);
+    this.buildButton.setVisible(!hidden && isBuildUnlocked() && canRideHere());
+    this.buildButton.setState(building);
     this.mapButton.setVisible(!hidden && hasTravelMap());
     this.rideButton.setVisible(!hidden && hasHorse());
     this.rideButton.setState(isRiding(), canRideHere());
     const x = this.viewW - this.safe.right - 22 - HudButton.RADIUS;
     let y = this.viewH - this.safe.bottom - 34 - this.button.radius * 2 - 16 - HudButton.RADIUS;
-    for (const b of [this.rideButton, this.mapButton]) {
+    // The build bar takes the bottom edge on narrow screens; the column moves up above it.
+    if (this.buildBar.visible) y = Math.min(y, this.viewH - this.safe.bottom - this.buildBar.height - 26 - HudButton.RADIUS);
+    for (const b of [this.buildButton, this.rideButton, this.mapButton]) {
       if (!b.visible) continue;
       b.setPosition(x, y);
       y -= HudButton.RADIUS * 2 + 12;
@@ -342,6 +362,13 @@ export class UIScene extends Phaser.Scene {
   private toggleMap(): void {
     if (this.dialogue.isOpen || !hasTravelMap()) return;
     this.mapPanel.toggle();
+  }
+
+  private toggleBuild(): void {
+    if (inputState.modal) return;
+    if (!isBuildUnlocked()) return;
+    if (!canRideHere()) this.enqueueToast('Drinnen ist kein Platz zum Bauen.');
+    else setBuildMode(!getBuildMode().active);
   }
 
   private toggleRide(): void {
@@ -415,6 +442,15 @@ export class UIScene extends Phaser.Scene {
     if (this.crafting.pointerDown(p.x, p.y)) return;
     if (this.inventory.pointerDown(p.x, p.y)) return;
     if (this.questLog.pointerDown(p.x, p.y)) return;
+    const pickedPiece = this.buildBar.pointerDown(p.x, p.y);
+    if (pickedPiece !== undefined) {
+      if (pickedPiece) selectBuildPiece(pickedPiece);
+      return;
+    }
+    if (this.buildButton.contains(p.x, p.y)) {
+      this.toggleBuild();
+      return;
+    }
     if (this.mapButton.contains(p.x, p.y)) {
       this.toggleMap();
       return;

@@ -82,7 +82,7 @@ describe('quests, NPCs, journal, resources, and interaction', () => {
     expect(gameState.hasFlag('episode-1-complete')).toBe(true);
     expect(gameState.hasFlag('quest-completed:q-greenhouse')).toBe(true);
     expect(startQuest('q-greenhouse')).toBe(false); // already completed
-    expect(getActiveQuests().map((q) => q.id)).toEqual(['q-canal-path', 'q-horse', 'q-tramline']);
+    expect(getActiveQuests().map((q) => q.id)).toEqual(['q-canal-path', 'q-horse', 'q-blight', 'q-tramline']);
     expect(getTrackedObjective()?.quest.id).toBe('q-tramline');
 
     // Complete the optional q-horse: meet Mohn, read the note, craft the treat, hand it over
@@ -91,6 +91,11 @@ describe('quests, NPCs, journal, resources, and interaction', () => {
     gameState.setFlag('crafted:horse-treat');
     gameState.setFlag('horse-tamed');
     expect(getCompletedQuests().map((q) => q.id)).toContain('q-horse');
+
+    // Complete the optional q-blight: gather, build, look at a heart, seal it -> grants building material
+    for (const flag of ['gathered-material', 'built-once', 'blight-seen', 'blight-heart-sealed']) gameState.setFlag(flag);
+    expect(getCompletedQuests().map((q) => q.id)).toContain('q-blight');
+    expect(gameState.getItemCount('mat-wood')).toBe(4);
 
     // Complete q-canal-path -> grants reward items
     gameState.setFlag('saw-found');

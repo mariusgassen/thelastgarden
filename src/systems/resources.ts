@@ -3,6 +3,8 @@ import { content } from '../content';
 import { allResourceNodes, findResourceNode } from '../world';
 import { TILE_SIZE } from '../world/tiles';
 import type { ResourceNodeDef } from '../world/types';
+import { isBlighted } from './blight';
+import { BUILD_UNLOCK_FLAG } from './building';
 import { bus } from './events';
 import type { InteractionSystem } from './interaction';
 import { gameState } from './state';
@@ -44,15 +46,21 @@ export function isNodeAvailable(def: ResourceNodeWithMap): boolean {
   return last === undefined || Date.now() - last >= def.respawnMs;
 }
 
+/** Renewable pickups stay gone while the blight lies on their tile; one-time finds are never lost to it. */
+export function isNodeBlighted(def: ResourceNodeWithMap): boolean {
+  return def.respawnMs !== undefined && isBlighted(def.mapId, Math.floor(def.at.x), Math.floor(def.at.y));
+}
+
 /** Adds the node's item to the inventory and persists its consumed/respawn state. */
 export function collectNode(id: string): boolean {
   const def = findResourceNode(id);
-  if (!def || !isNodeAvailable(def)) return false;
+  if (!def || !isNodeAvailable(def) || isNodeBlighted(def)) return false;
   const state = readState();
   if (def.respawnMs === undefined) state.collected.push(id);
   else state.lastCollectedAt[id] = Date.now();
   writeState(state);
-  gameState.addItem(def.itemId, 1);
+  gameState.addItem(def.itemId, def.count ?? 1);
+  if (content.items.get(def.itemId).category === 'material') gameState.setFlag(BUILD_UNLOCK_FLAG);
   gameState.save();
   bus.emit('resource-collected', { nodeId: id, itemId: def.itemId });
   return true;
@@ -69,17 +77,25 @@ export class ResourceLayer {
   ) {
     for (const def of getResourceNodes(mapId)) this.trySpawn(def);
     bus.onScene(scene, 'resource-collected', ({ nodeId }) => this.remove(nodeId));
+    bus.onScene(scene, 'blight-changed', () => {
+      for (const def of getResourceNodes(mapId)) if (isNodeBlighted(def)) this.remove(def.id);
+    });
     scene.time.addEvent({ delay: 1000, loop: true, callback: () => this.pollRespawns() });
   }
 
   private trySpawn(def: ResourceNodeWithMap): void {
-    if (this.live.has(def.id) || !isNodeAvailable(def)) return;
+    if (this.live.has(def.id) || !isNodeAvailable(def) || isNodeBlighted(def)) return;
     const x = def.at.x * TILE_SIZE;
     const y = def.at.y * TILE_SIZE;
     const item = content.items.get(def.itemId);
-    const sprite = this.scene.add.image(x, y, 'pickup-orb').setTint(item.color).setDepth(y).setScale(0.001);
+    // A pile to chop, dig or salvage sits on the ground; everything else is a hovering orb of light.
+    const sprite = def.texture
+      ? this.scene.add.image(x, y + 10, def.texture).setOrigin(0.5, 1).setDepth(y + 10).setScale(0.001)
+      : this.scene.add.image(x, y, 'pickup-orb').setTint(item.color).setDepth(y).setScale(0.001);
     this.scene.tweens.add({ targets: sprite, scale: 1, duration: 260, ease: 'Back.easeOut' });
-    this.scene.tweens.add({ targets: sprite, y: y - 4, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    if (!def.texture) {
+      this.scene.tweens.add({ targets: sprite, y: y - 4, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    }
 
     this.interaction.register({
       id: `resource:${def.id}`,
@@ -88,7 +104,7 @@ export class ResourceLayer {
       getPosition: () => ({ x, y }),
       onInteract: (ctx) => {
         if (!collectNode(def.id)) return;
-        ctx.world.toast(`+1 ${item.name}`);
+        ctx.world.toast(`+${def.count ?? 1} ${item.name}`);
       },
     });
     this.live.set(def.id, sprite);

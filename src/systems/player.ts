@@ -77,7 +77,8 @@ export class PlayerController {
     return this.sprite.y + FEET_OFFSET_Y;
   }
 
-  update(deltaMs: number, frozen: boolean): void {
+  /** `speedFactor` slows the player down on heavy ground (the blight). */
+  update(deltaMs: number, frozen: boolean, speedFactor = 1): void {
     let dx = 0;
     let dy = 0;
     if (!frozen) {
@@ -96,7 +97,7 @@ export class PlayerController {
       }
     }
 
-    const speed = this.riding ? RIDE_SPEED : SPEED;
+    const speed = (this.riding ? RIDE_SPEED : SPEED) * speedFactor;
     this.sprite.setVelocity(dx * speed, dy * speed);
     const moving = Math.hypot(dx, dy) > 0.05;
     if (dx < -0.1) this.facing = 'left';

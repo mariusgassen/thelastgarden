@@ -53,16 +53,12 @@ export class PlantLayer {
 
   constructor(
     private readonly scene: Phaser.Scene,
-    mapId: string,
+    private readonly mapId: string,
     private readonly interaction: InteractionSystem,
   ) {
-    for (const bed of allPlantingBeds().filter((b) => b.mapId === mapId)) {
-      const cx = (bed.rect.x + bed.rect.w / 2) * TILE_SIZE;
-      const cy = (bed.rect.y + bed.rect.h) * TILE_SIZE;
-      this.live.set(bed.id, { cx, cy, lastRenderedStage: -1 });
-      this.registerInteractable(bed.id, cx, cy);
-      this.render(bed.id);
-    }
+    this.syncBeds();
+    // Planters come and go with what the player builds (systems/building.ts).
+    bus.onScene(scene, 'build-changed', () => this.syncBeds());
     bus.onScene(scene, 'plant-planted', ({ bedId }) => this.render(bedId));
     bus.onScene(scene, 'plant-matured', ({ bedId }) => this.render(bedId));
     bus.onScene(scene, 'plant-harvested', ({ bedId }) => this.render(bedId));
@@ -73,6 +69,25 @@ export class PlantLayer {
       this.render(bedId);
     });
     scene.time.addEvent({ delay: 1000, loop: true, callback: () => this.pollAll() });
+  }
+
+  private syncBeds(): void {
+    const beds = allPlantingBeds().filter((b) => b.mapId === this.mapId);
+    const wanted = new Set(beds.map((b) => b.id));
+    for (const [bedId, entry] of this.live) {
+      if (wanted.has(bedId)) continue;
+      for (const part of [entry.sprite, entry.glow, entry.fireflies, entry.scent, entry.produce]) part?.destroy();
+      this.interaction.unregister(`bed:${bedId}`);
+      this.live.delete(bedId);
+    }
+    for (const bed of beds) {
+      if (this.live.has(bed.id)) continue;
+      const cx = (bed.rect.x + bed.rect.w / 2) * TILE_SIZE;
+      const cy = (bed.rect.y + bed.rect.h) * TILE_SIZE;
+      this.live.set(bed.id, { cx, cy, lastRenderedStage: -1 });
+      this.registerInteractable(bed.id, cx, cy);
+      this.render(bed.id);
+    }
   }
 
   private registerInteractable(bedId: string, cx: number, cy: number): void {

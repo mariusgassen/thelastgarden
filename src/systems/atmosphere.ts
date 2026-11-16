@@ -2,6 +2,8 @@ import Phaser from 'phaser';
 import { findPlantingBed } from '../world';
 import type { MapDef } from '../world/types';
 import { TILE_SIZE } from '../world/tiles';
+import { content } from '../content';
+import { getPieces } from './building';
 import { advanceDayClock, getDayTime } from './dayClock';
 import { getLightSources } from './plants';
 
@@ -70,7 +72,8 @@ export class AtmosphereLayer {
 
     this.shade.setVisible(true);
     const sources = getLightSources().filter((source) => source.mapId === this.map.id);
-    const sourcesKey = sources.map((s) => s.bedId).join(',');
+    const lamps = getPieces(this.map.id).filter((p) => content.buildables.find(p.id)?.lightRadius);
+    const sourcesKey = [...sources.map((s) => s.bedId), ...lamps.map((p) => `${p.x}:${p.y}`)].join(',');
     if (Math.abs(alpha - this.lastAlpha) < 0.01 && sourcesKey === this.lastSourcesKey) return;
     this.lastAlpha = alpha;
     this.lastSourcesKey = sourcesKey;
@@ -79,17 +82,21 @@ export class AtmosphereLayer {
     this.shade.fill(0x101936, alpha);
 
     // Mature light plants punch soft-edged clear halos into the night veil.
+    const punch = (x: number, y: number, radius: number): void => {
+      this.shade.stamp('light-halo', undefined, x, y, {
+        scaleX: (radius * 2) / this.haloWidth,
+        scaleY: (radius * 2) / this.haloHeight,
+        blendMode: Phaser.BlendModes.ERASE,
+      });
+    };
     for (const source of sources) {
       const bed = findPlantingBed(source.bedId);
       if (!bed) continue;
-      const x = (bed.rect.x + bed.rect.w / 2) * TILE_SIZE;
-      const y = (bed.rect.y + bed.rect.h / 2) * TILE_SIZE - 16;
-      const diameter = source.lightRadius * 2;
-      this.shade.stamp('light-halo', undefined, x, y, {
-        scaleX: diameter / this.haloWidth,
-        scaleY: diameter / this.haloHeight,
-        blendMode: Phaser.BlendModes.ERASE,
-      });
+      punch((bed.rect.x + bed.rect.w / 2) * TILE_SIZE, (bed.rect.y + bed.rect.h / 2) * TILE_SIZE - 16, source.lightRadius);
+    }
+    // Built lanterns light the night the same way.
+    for (const lamp of lamps) {
+      punch((lamp.x + 0.5) * TILE_SIZE, (lamp.y + 0.5) * TILE_SIZE - 12, content.buildables.get(lamp.id).lightRadius as number);
     }
     this.shade.render();
   }

@@ -65,6 +65,21 @@ export interface ResourceNodeDef {
   label: string;
   /** ms before the node reappears after collection; omit for a one-time pickup. */
   respawnMs?: number;
+  /** Own sprite (a wood pile, a scrap heap) instead of the tinted glowing orb. */
+  texture?: string;
+  /** Items per collection (default 1). */
+  count?: number;
+}
+
+/**
+ * Where the blight grows from (src/systems/blight.ts). Each night it spreads from here over
+ * open ground, at most `reach` steps far, until a ward covers the heart itself.
+ */
+export interface BlightHeartDef {
+  id: string;
+  /** Whole tile coordinates. */
+  at: TilePoint;
+  reach: number;
 }
 
 export interface PropDef {
@@ -206,6 +221,8 @@ export interface MapDef {
   npcs?: NpcPlacementDef[];
   /** Flag-gated readable notes (Wave 3). */
   journalPages?: JournalPageDef[];
+  /** Sources of the nightly blight; outdoor maps only. */
+  blightHearts?: BlightHeartDef[];
   /** Named spawn points (tiles). `default` is required. */
   spawns: Record<string, TilePoint> & { default: TilePoint };
   /** Scatter decorative trees along forest edges. */

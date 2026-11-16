@@ -1,10 +1,11 @@
+import { BUILDABLES } from './buildables';
 import { DIALOGUES } from './dialogues';
 import { ITEMS } from './items';
 import { NPCS } from './npcs';
 import { PLANTS } from './plants';
 import { QUESTS } from './quests';
 import { RECIPES } from './recipes';
-import type { DialogueDef, ItemDef, NpcDef, PlantDef, QuestDef, RecipeDef } from './types';
+import type { BuildableDef, DialogueDef, ItemDef, NpcDef, PlantDef, QuestDef, RecipeDef } from './types';
 
 export * from './types';
 
@@ -50,4 +51,5 @@ export const content = {
   dialogues: new Registry<DialogueDef>('dialogue', DIALOGUES),
   npcs: new Registry<NpcDef>('npc', NPCS),
   recipes: new Registry<RecipeDef>('recipe', RECIPES),
+  buildables: new Registry<BuildableDef>('buildable', BUILDABLES),
 };

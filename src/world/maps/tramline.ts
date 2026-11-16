@@ -77,6 +77,10 @@ export const TRAMLINE_MAP: MapDef = {
     { id: 'sun-tram-1', itemId: 'resource-sunlight', at: { x: 21, y: 16 }, label: 'Sonnenlicht sammeln', respawnMs: 45_000 },
     { id: 'dew-tram-1', itemId: 'resource-dew', at: { x: 36, y: 13.5 }, label: 'Tau sammeln', respawnMs: 45_000 },
     { id: 'curio-tram-1', itemId: 'resource-curio', at: { x: 26, y: 6.8 }, label: 'Aufheben' },
+    // Piles to chop, dig and salvage: raw material for build mode (systems/building.ts).
+    { id: 'wood-tram-1', itemId: 'mat-wood', at: { x: 8, y: 13.5 }, label: 'Holz hacken', respawnMs: 60_000, texture: 'node-wood', count: 2 },
+    { id: 'stone-tram-1', itemId: 'mat-stone', at: { x: 33.5, y: 13.5 }, label: 'Steine ausgraben', respawnMs: 60_000, texture: 'node-stone' },
+    { id: 'scrap-tram-1', itemId: 'mat-scrap', at: { x: 33, y: 7.5 }, label: 'Schrott bergen', respawnMs: 60_000, texture: 'node-scrap' },
   ],
   // Mohn grazes here until she is befriended; afterwards she travels with the player (systems/horse.ts).
   npcs: [{ npcId: 'mohn', at: { x: 23, y: 16.9 }, radius: 72, hideWhenFlag: 'horse-tamed' }],
@@ -88,6 +92,10 @@ export const TRAMLINE_MAP: MapDef = {
       appearsWhenFlag: 'horse-met',
       itemId: 'journal-page-mohn',
     },
+  ],
+  // Where the blight grows from once Episode 1 is done (systems/blight.ts).
+  blightHearts: [
+    { id: 'heart-tram-east', at: { x: 41, y: 6 }, reach: 5 },
   ],
   spawns: {
     default: { x: 3, y: 10.5 },
