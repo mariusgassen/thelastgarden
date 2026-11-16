@@ -169,8 +169,22 @@ export interface RepairInteractableSpec extends InteractableSpecBase {
   giveItems?: { itemId: string; count: number }[];
 }
 
+/**
+ * A workbench: opens the crafting menu (systems/crafting.ts). `variants` run first, like on a
+ * dialogue spec (e.g. finding the saw); `emptyDialogueId` shows while no recipe is unlocked.
+ */
+export interface CraftInteractableSpec extends InteractableSpecBase {
+  type: 'craft';
+  emptyDialogueId: string;
+  variants?: DialogueVariant[];
+}
+
 /** Built-in data-driven interactables. Add new variants here + a handler in systems/interaction.ts. */
-export type InteractableSpec = DialogueInteractableSpec | DoorInteractableSpec | RepairInteractableSpec;
+export type InteractableSpec =
+  | DialogueInteractableSpec
+  | DoorInteractableSpec
+  | RepairInteractableSpec
+  | CraftInteractableSpec;
 
 export interface MapDef {
   id: string;

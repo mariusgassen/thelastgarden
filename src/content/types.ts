@@ -38,6 +38,16 @@ export interface ItemDef {
   color: number;
 }
 
+/** A workbench recipe (content/recipes.ts, systems/crafting.ts). */
+export interface RecipeDef {
+  id: string;
+  name: string;
+  result: { itemId: string; count: number }[];
+  cost: { itemId: string; count: number }[];
+  /** Flag that unlocks the recipe, usually `journal-read:<pageId>`; omit for always known. */
+  requiresFlag?: string;
+}
+
 interface QuestObjectiveBase {
   description: string;
   /**

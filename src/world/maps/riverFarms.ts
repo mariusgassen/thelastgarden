@@ -44,7 +44,7 @@ export const RIVER_FARMS_MAP: MapDef = {
       removable: true,
       rect: { x: 20.6, y: 10.8, w: 2.8, h: 3.4 },
       name: 'Verwachsenes Hoftor',
-      hint: 'Dichte Brombeerranken haben das alte Hoftor zum Flussgarten überwuchert. Eine reife Brombeerranke im Garten weiß, wie man sie teilt.',
+      hint: 'Dichte Brombeerranken haben das alte Hoftor zum Flussgarten überwuchert. Ein Brombeer-Steckling von der Werkbank würde sich hier hindurchwinden.',
     },
   ],
   props: [

@@ -88,6 +88,38 @@ describe('night events system', () => {
     expect(safe.protectedBy).toBe('glow-lily');
   });
 
+  it('spends a carried sachet or lantern to protect beds no plant covers', async () => {
+    gameState.addItem('seed-bramble-vine', 1);
+    expect(plantSeed('bed-bramble')).toBe(true);
+    const plantedAt = getBedState('bed-bramble')!.plantedAt;
+    gameState.addItem('craft-lavender-sachet', 1);
+    gameState.addItem('craft-lily-lantern', 1);
+
+    const snails = await runNight('snails');
+    expect(snails.dialogueId).toBe('night-snails-sachet');
+    expect(snails.protectedBy).toBe('sachet');
+    expect(snails.affectedBedIds).toEqual([]);
+    expect(gameState.getItemCount('craft-lavender-sachet')).toBe(0);
+    expect(gameState.getItemCount('craft-lily-lantern')).toBe(1); // the wrong tool is not spent
+
+    const voles = await runNight('voles');
+    expect(voles.dialogueId).toBe('night-voles-lantern');
+    expect(voles.protectedBy).toBe('lantern');
+    expect(gameState.getItemCount('craft-lily-lantern')).toBe(0);
+    expect(getBedState('bed-bramble')!.plantedAt).toBe(plantedAt);
+
+    // Used up: the next night harms the bed again
+    expect((await runNight('snails')).dialogueId).toBe('night-snails-hit');
+
+    // Not spent when a plant already protects the beds
+    gameState.addItem('seed-glow-lily', 1);
+    expect(plantSeed('bed-lily')).toBe(true);
+    shiftGrowth('bed-lily', -STAGE_DURATION_MS * 3);
+    gameState.addItem('craft-lily-lantern', 1);
+    expect((await runNight('voles')).protectedBy).toBe('glow-lily');
+    expect(gameState.getItemCount('craft-lily-lantern')).toBe(1);
+  });
+
   it('resolves crow nights based on crow friendship, glow lily, or curio inventory', async () => {
     const nothing = await runNight('crows');
     expect(nothing.dialogueId).toBe('night-crows-nothing');

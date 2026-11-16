@@ -23,10 +23,10 @@ export const WORKSHOP_MAP: MapDef = {
   interactables: [
     {
       id: 'workbench',
-      type: 'dialogue',
+      type: 'craft',
       at: { x: 3.2, y: 4.1 },
-      label: 'Ansehen',
-      dialogueId: 'workbench',
+      label: 'Werkeln',
+      emptyDialogueId: 'workbench',
       variants: [
         {
           dialogueId: 'workbench-saw',

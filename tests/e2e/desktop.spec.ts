@@ -175,6 +175,55 @@ test.describe('Desktop gameplay and PWA', () => {
     expect(errors).toEqual([]);
   });
 
+  test('crafts a bramble cutting at the workbench', async ({ page }) => {
+    const errors = trackErrors(page);
+
+    await page.addInitScript((key) => {
+      if (localStorage.getItem(key)) return;
+      localStorage.setItem(
+        key,
+        JSON.stringify({
+          version: 1,
+          savedAt: Date.now(),
+          // Standing in front of the workbench (3.2, 4.1)
+          player: { mapId: 'workshop', x: 3.2 * 32, y: 4.7 * 32, facing: 'right' },
+          world: {
+            unblockedPaths: [],
+            visitedZones: ['garden', 'workshop'],
+            flags: { 'crow-met': true, 'saw-found': true, 'journal-read:page-bramble': true },
+          },
+          inventory: { items: { 'garden-saw': 1, 'produce-tendril': 2, 'resource-dew': 1 } },
+          quests: { active: ['q-restore-beds'], completed: ['q-meet-crow'], progress: {} },
+          ext: {},
+        }),
+      );
+    }, SAVE_KEY);
+
+    await page.goto('/');
+    await waitForGameBoot(page);
+
+    // E opens the recipe list (1 = Brombeer-Steckling); 1 crafts it
+    await expect
+      .poll(
+        async () => {
+          const have = (await flushAndReadSave(page))?.inventory.items['craft-bramble-cutting'] ?? 0;
+          if (have > 0) return have;
+          await page.keyboard.press('KeyE');
+          await page.waitForTimeout(400);
+          await page.keyboard.press('Digit1');
+          await page.waitForTimeout(300);
+          return (await flushAndReadSave(page))?.inventory.items['craft-bramble-cutting'] ?? 0;
+        },
+        { timeout: 15_000, intervals: [100] },
+      )
+      .toBe(1);
+
+    const save = (await flushAndReadSave(page)) as SaveSnapshot;
+    expect(save.inventory.items['produce-tendril']).toBeUndefined();
+    expect(save.inventory.items['resource-dew']).toBeUndefined();
+    expect(errors).toEqual([]);
+  });
+
   test('completes greenhouse vestibule unlock and Episode 1 ending from seeded save', async ({ page }) => {
     const errors = trackErrors(page);
 

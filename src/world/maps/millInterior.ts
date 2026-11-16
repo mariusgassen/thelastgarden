@@ -25,6 +25,7 @@ export const MILL_INTERIOR_MAP: MapDef = {
     { id: 'mill-interior-stone', type: 'dialogue', at: { x: 4.5, y: 5.5 }, label: 'Ansehen', dialogueId: 'mill-interior-stone' },
     { id: 'mill-interior-ledger', type: 'dialogue', at: { x: 8.5, y: 4.9 }, label: 'Aufschlagen', dialogueId: 'mill-interior-ledger' },
     { id: 'mill-interior-sacks', type: 'dialogue', at: { x: 12.8, y: 5.3 }, label: 'Ansehen', dialogueId: 'mill-interior-sacks' },
+    { id: 'mill-workbench', type: 'craft', at: { x: 12.8, y: 2.9 }, label: 'Werkeln', emptyDialogueId: 'mill-workbench' },
     {
       id: 'mill-exit',
       type: 'door',

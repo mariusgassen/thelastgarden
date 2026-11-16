@@ -89,7 +89,7 @@ export class UIScene extends Phaser.Scene {
     kb?.on('keydown-S', () => {
       if (this.dialogue.isOpen && this.dialogue.hasChoices) this.dialogue.moveChoice(1);
     });
-    ['ONE', 'TWO', 'THREE', 'FOUR'].forEach((key, idx) => {
+    ['ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX', 'SEVEN', 'EIGHT', 'NINE'].forEach((key, idx) => {
       kb?.on(`keydown-${key}`, () => {
         if (!this.dialogue.isOpen || !this.dialogue.hasChoices) return;
         const picked = this.dialogue.pickChoiceIndex(idx);

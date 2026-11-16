@@ -102,6 +102,7 @@ export const DIALOGUES: DialogueDef[] = [
     lines: [
       { text: 'Die Brombeere ist keine Feindin. Ich habe sie jahrelang zurückgeschnitten, bis ich endlich verstand: Sie wächst nicht gegen den Garten. Sie wächst für ihn.' },
       { text: 'Wo ich eine Ranke pflanze, weichen die wilden Dornen zurück — als würden sie eine Verwandte erkennen und ihr Platz machen. Ein gepflanzter Weg durchs Gestrüpp, wo vorher keiner war.' },
+      { text: 'Für die Werkbank: zwei frische Triebe und ein Tropfen Tau, in feuchtes Moos gewickelt. So wird ein Steckling daraus, den man bis an jedes Gestrüpp tragen kann. Jedes braucht seinen eigenen.' },
       { text: 'Die Amseln kamen zurück, sobald die erste Ranke blühte. Erst die Amseln, dann die Igel. Die Stadt war da schon still. Niemand hat es bemerkt außer mir.' },
       { text: 'Ich glaube, dieser Garten hält etwas zusammen, das größer ist als er selbst. Ich schreibe es auf, falls ich es irgendwann jemandem erklären muss. — M.' },
     ],
@@ -113,6 +114,7 @@ export const DIALOGUES: DialogueDef[] = [
     lines: [
       { text: 'Die Leuchtlilie speichert den Tag. Ich habe sie aus dem Gewächshaus nach draußen geholt, als der Strom in Erlenbrück ausfiel — der letzte Winter, in dem noch jemand im Rathaus Licht gemacht hat.' },
       { text: 'Ihre Blüten geben nachts ab, was sie am Tag gesammelt haben. Kein grelles Licht. Eher wie ein Fenster, hinter dem jemand noch wach ist.' },
+      { text: 'Für die Werkbank: zweimal Lichtpollen in ein Einmachglas, einen Sonnenstrahl dazu. Die Laterne hält genau eine Nacht — lang genug für Beete, die keine Lilie erreicht.' },
       { text: 'Die Falter folgen ihr, und wo Falter sind, finden die Fledermäuse zurück. Die Wühlmäuse dagegen meiden ihr Leuchten — sie graben nur im Dunkeln. Jedes Licht ist für irgendwen eine Einladung und für irgendwen eine Grenze.' },
       { text: 'Ich glaube inzwischen: Der Garten hat die Tiere nie verloren. Er hat sie nur nicht mehr gerufen. — M.' },
     ],
@@ -123,6 +125,7 @@ export const DIALOGUES: DialogueDef[] = [
     title: 'Tagebuchseite · Der Lavendel',
     lines: [
       { text: 'Lavendel beruhigt. Nicht nur mich. Die Zecken im hohen Gras ziehen ab, wenn er blüht, die Rehe kommen näher, und die Schnecken drehen auf halbem Weg wieder um.' },
+      { text: 'Für die Werkbank: zwei Duftbündel, in der Sonne getrocknet und in Leinen genäht. Ein Säckchen in der Tasche schützt eine Nacht lang auch die Beete, zu denen kein Lavendel hinüberduftet.' },
       { text: 'Als der letzte Bus fuhr, habe ich den Lavendel an den Pfad gepflanzt — damit wenigstens die Tiere bleiben, wenn schon die Menschen gehen. Sie sind geblieben.' },
       { text: 'Ich gehe jetzt zum Wasserturm, der Krähe hinterher. Sie weiß etwas über die Stadt, das ich nur ahne. Ich komme wieder, wenn ich es verstanden habe.' },
       { text: 'Den Schlüssel zum Gewächshaus habe ich ihr gegeben. Sie gibt ihn nur jemandem, der die Beete versteht. Wenn du das liest: Du verstehst sie. — M.' },
@@ -172,7 +175,7 @@ export const DIALOGUES: DialogueDef[] = [
     id: 'night-snails-hit',
     lines: [
       { text: 'Über Nacht waren Schnecken im Garten. An den jungen Trieben glänzen Schleimspuren — ein Beet hat ein Stück Wachstum verloren.' },
-      { text: 'Schnecken meiden Lavendelduft. Ein blühender Lavendel im Garten hält sie von den zarten Beeten fern.' },
+      { text: 'Schnecken meiden Lavendelduft. Ein blühender Lavendel im Garten hält sie von den zarten Beeten fern — oder ein Lavendelsäckchen von der Werkbank.' },
     ],
   },
   {
@@ -182,10 +185,22 @@ export const DIALOGUES: DialogueDef[] = [
     ],
   },
   {
+    id: 'night-snails-sachet',
+    lines: [
+      { text: 'Schnecken kamen in der Nacht. Der Duft aus deinem Lavendelsäckchen lag über den Beeten — sie drehten um. Das Säckchen ist nun verduftet.' },
+    ],
+  },
+  {
+    id: 'night-voles-lantern',
+    lines: [
+      { text: 'Wühlmäuse schnupperten nachts an den Beeten. Deine Lilienlaterne stand dazwischen und leuchtete bis zum Morgen — sie blieben im Dunkeln. Jetzt ist das Glas erloschen.' },
+    ],
+  },
+  {
     id: 'night-voles-hit',
     lines: [
       { text: 'Wühlmäuse haben nachts an einem Beet gegraben. Ein Erdhügel, lockere Wurzeln — der junge Trieb braucht Zeit, um sich zu erholen.' },
-      { text: 'Wühlmäuse scheuen Licht. Das Leuchten einer reifen Leuchtlilie hält sie von den Beeten in ihrer Nähe fern.' },
+      { text: 'Wühlmäuse scheuen Licht. Das Leuchten einer reifen Leuchtlilie hält sie von den Beeten in ihrer Nähe fern — oder eine Lilienlaterne von der Werkbank.' },
     ],
   },
   {
@@ -389,13 +404,13 @@ export const DIALOGUES: DialogueDef[] = [
     id: 'cistern-missing',
     lines: [
       { text: 'Das alte Zisternen-Ventil klemmt trocken im Stein. Die Dichtung ist porös und ein Zahnrad im Handrad fehlt.' },
-      { text: 'Mit 3× Sonnenlicht, 3× Tau und 1× Fundstück als Ersatzteil ließe sich die Leitung wieder abdichten.' },
+      { text: 'Mit einer Ventildichtung von der Werkbank, 2× Sonnenlicht und 1× Fundstück als Zahnrad ließe sich die Leitung wieder abdichten.' },
     ],
   },
   {
     id: 'cistern-repaired',
     lines: [
-      { text: 'Du setzt das Fundstück ins Handrad ein, benetzt die Dichtung mit Tau und wärmst das kalte Messing mit gesammeltem Sonnenlicht.' },
+      { text: 'Du setzt das Fundstück ins Handrad ein, drückst die neue Dichtung in den Sitz und wärmst das kalte Messing mit gesammeltem Sonnenlicht.' },
       { text: 'Ein tiefes, zufriedenes Rauschen läuft durch die Steine unter dir. Klares Quellwasser steigt ins Becken!' },
     ],
   },
@@ -423,6 +438,7 @@ export const DIALOGUES: DialogueDef[] = [
     lines: [
       { text: 'Von hier oben sieht man die ganze Stadt auf einmal. Sie wirkt gar nicht tot — eher wie ein Zimmer, aus dem alle nur kurz hinausgegangen sind.' },
       { text: 'Die alte Wasserleitung zum Gewächshaus ist noch heil. Sie wartet nur darauf, dass jemand das Ventil unten am Turm wieder öffnet.' },
+      { text: 'Die Dichtung ist hin. Ich würde sie an der Werkbank neu drehen: ein Brombeertrieb für die Faser, ein Duftbündel als Füllung. Der Garten liefert, was die Stadt nicht mehr hat.' },
       { text: 'Ich gehe jetzt zurück in den Herzraum des Gewächshauses und schließe hinter mir ab, bis jemand kommt, der die Beete versteht. Die Krähe weiß Bescheid. — M.' },
     ],
   },
@@ -463,6 +479,7 @@ export const DIALOGUES: DialogueDef[] = [
       { text: 'Wenn du diese Zeilen liest, haben meine Ranken dich eingelassen — und das heißt, du hast nicht nur gepflanzt, sondern zugehört.' },
       { text: 'Ich bin nicht fortgelaufen. Als Erlenbrück einschlief, habe ich die letzten Samen aller Gärten hier im Herzraum gesammelt, damit sie auf jemanden warten können, der Geduld mitbringt.' },
       { text: 'Der Mondfarn im Glasfläschchen ist die älteste Pflanze dieses Hauses. Wenn er im Herzbeet blüht, erinnert sich der ganze Garten an seinen Ursprung.' },
+      { text: 'Noch etwas Praktisches, falls du mir folgst: Alte Holzrinnen dichtet man mit einem Zopf aus zwei Duftbündeln, in Tau eingeweicht. Mein Kräuterregal im Gartenhaus taugt als Werkbank.' },
       { text: 'Ich bin die alte Bahntrasse noch ein Stück weiter hinaufgezogen, zu den Obstwiesen hinter dem Hügel. Pflege Erlenbrücks letzten Garten — und vielleicht sehen wir uns dort draußen. — M.' },
     ],
   },
@@ -581,13 +598,13 @@ export const DIALOGUES: DialogueDef[] = [
     lines: [
       { speaker: 'crow', text: 'Geschafft! Willkommen hinter dem Hügel — hier hängen noch die alten Holzleitern in den Kirschbäumen.' },
       { speaker: 'crow', text: 'M. wohnt dort drüben in dem kleinen Gartenhaus am Bach. Aber eben habe ich sie den Hang hinaufgehen sehen, zum großen Mutterbaum.' },
-      { speaker: 'crow', text: 'Eine Brombeerhecke hat den Aufstieg überwuchert. Gut, dass deine Brombeerranke im Garten weiß, wie man höflich Platz macht. Krah!' },
+      { speaker: 'crow', text: 'Eine Brombeerhecke hat den Aufstieg überwuchert. Hier, zwei Triebe aus deinem Garten — mit einem Tropfen Tau wird an M.s Kräuterregal ein Steckling daraus. Krah!' },
     ],
   },
   {
     id: 'crow-orchard-waiting',
     lines: [
-      { speaker: 'crow', text: 'M. steht oben auf der Terrasse am Mutterbaum. Überquere den Bach auf der Holzbrücke und teile die Brombeerhecke am Hang.' },
+      { speaker: 'crow', text: 'M. steht oben auf der Terrasse am Mutterbaum. Überquere den Bach auf der Holzbrücke und teile die Brombeerhecke am Hang mit einem Steckling. Werkeln kannst du an M.s Kräuterregal im Gartenhaus.' },
     ],
   },
   {
@@ -601,13 +618,13 @@ export const DIALOGUES: DialogueDef[] = [
     id: 'orchard-sluice-missing',
     lines: [
       { text: 'Die hölzerne Bewässerungsrinne am Hang ist ausgetrocknet. Ein Keil im Sperrschieber fehlt, und das Holz ist spröde.' },
-      { text: 'Mit 2× Sonnenlicht, 2× Tau und 1× Fundstück als Metallkeil lässt sich das Wasser wieder auf die Obstwiese leiten.' },
+      { text: 'Mit einem Dichtzopf von der Werkbank, 1× Sonnenlicht und 1× Fundstück als Metallkeil lässt sich das Wasser wieder auf die Obstwiese leiten.' },
     ],
   },
   {
     id: 'orchard-sluice-repaired',
     lines: [
-      { text: 'Du klemmst das Fundstück als Keil in das Wehr, feuchtest die trockenen Fugen mit Tau an und löst das harzige Holz mit warmem Sonnenlicht.' },
+      { text: 'Du klemmst das Fundstück als Keil in das Wehr, drückst den feuchten Dichtzopf in die trockenen Fugen und löst das harzige Holz mit warmem Sonnenlicht.' },
       { text: 'Mit einem fröhlichen Glucksen schießt klares Bergwasser in die alte Rinne und sickert bis unter die Wurzeln der Apfelbäume!' },
     ],
   },
@@ -694,6 +711,7 @@ export const DIALOGUES: DialogueDef[] = [
     lines: [
       { text: 'Als die Menschen aus Erlenbrück fortgingen, habe ich nicht nur die Beete im Botanischen Garten gepflegt. Jede Woche stieg ich über den Hügel hierher.' },
       { text: 'Die alten Obstbäume tragen die Erinnerung ganzer Generationen in ihrer Rinde. Solange man ihre Wasserader offen hält und im Frühjahr Nachtviolen für die Wildbienen sät, überdauern sie jedes Schweigen.' },
+      { text: 'Aus dem Nektar der Nachtviolen koche ich in der Sonne ein zähes Wachs. Zweimal Nektar, ein Sonnenstrahl — damit lief früher jede Achse im Tal, auch die der Mühle am Fluss.' },
       { text: 'Doch allein reichten meine Hände irgendwann nicht mehr bis ganz ans Ende der Wiese. Deshalb habe ich den Schlüssel im Garten hinterlassen.' },
       { text: 'Falls du heute hier stehst und diese Zeilen liest: Jetzt gibt es wieder zwei Paar Hände in Erlenbrück. — M.' },
     ],
@@ -737,6 +755,7 @@ export const DIALOGUES: DialogueDef[] = [
     id: 'm-intro-task',
     lines: [
       { speaker: 'm', text: 'Gleich drei kleine Dinge, genau nach deinem Geschmack: Öffne die Bewässerungsrinne am Bach, pflanze diese Nachtviolen beim Bienenstand und lies in meinem Gartenhaus mein Notizbuch.' },
+      { speaker: 'm', text: 'Für die Rinne gebe ich dir zwei Duftbündel von meinem Hut mit. In Tau eingeweicht wird an meinem Kräuterregal ein Dichtzopf daraus.' },
       { speaker: 'm', text: 'Wenn Wasser, Blüten und Erinnerung zusammenfinden, wird der Mutterbaum wieder blühen. Danach treffen wir uns wieder hier oben.' },
     ],
   },
@@ -875,16 +894,20 @@ export const DIALOGUES: DialogueDef[] = [
     ],
   },
   {
+    id: 'mill-workbench',
+    lines: [{ text: 'Ein Wandregal mit Jakobs Werkzeug: Ahle, Wachstopf, Bindfaden. Aufgeräumt wie ein Mahlbuch — hier ließe sich gut werkeln, wenn man wüsste, was.' }],
+  },
+  {
     id: 'mill-wheel-missing',
     lines: [
       { text: 'Das große hölzerne Wasserrad der Mühle sitzt trocken und schief in seiner Halterung. Mehrere Schaufelbretter sind vermorscht, und der Eisenzapfen klemmt.' },
-      { text: 'Mit 3× Sonnenlicht, 3× Tau und 2× Fundstück ließen sich die Zapfen lösen, das Holz geschmeidig machen und die gebrochenen Streben ersetzen.' },
+      { text: 'Mit Achsenwachs von der Werkbank, 2× Sonnenlicht und 2× Fundstück ließen sich die Zapfen lösen, das Holz geschmeidig machen und die gebrochenen Streben ersetzen.' },
     ],
   },
   {
     id: 'mill-wheel-repaired',
     lines: [
-      { text: 'Du richtest die Schaufeln mit zwei Fundstücken als Keilen, benetzt das harte Lager mit klarem Tau und lässt warmes Sonnenlicht über das morsche Holz strömen.' },
+      { text: 'Du richtest die Schaufeln mit zwei Fundstücken als Keilen, streichst das harte Lager mit Achsenwachs ein und lässt warmes Sonnenlicht über das morsche Holz strömen.' },
       { text: 'Ein tiefes Knarren geht durch die Mühle — dann greift das Wasser unter das Rad, und Tropfen für Tropfen beginnt es sich wieder ruhig im Strom zu drehen!' },
     ],
   },
@@ -951,6 +974,7 @@ export const DIALOGUES: DialogueDef[] = [
     lines: [
       { text: 'Wer Mehl mahlt, wartet immer auf die Ernte anderer Leute. Ohne die Höfe flussabwärts dreht sich dieses Rad nur für den Wind.' },
       { text: 'Als Erlenbrück still wurde, habe ich die letzten Stockrosensamen aus dem Lindenweg in meinem Mahlbuch versteckt. Sie blühen an jedem Zaun, wenn jemand nur Erde lockert.' },
+      { text: 'Wer mir zwei Samenkapseln der Stockrose und einen Tropfen Tau aufs Wandregal legt, darf sich ein Saattütchen aus meinen Resten mischen: Brombeere, Leuchtlilie, Lavendel.' },
       { text: 'Heute stand wieder Wasser im Graben, als hätte oben auf den Obstwiesen jemand das alte Wehr geöffnet. Vielleicht bleibt der Fluss diesmal nicht allein. — Jakob' },
     ],
   },
@@ -1064,7 +1088,7 @@ export const DIALOGUES: DialogueDef[] = [
   {
     id: 'jakob-help-farms',
     lines: [
-      { speaker: 'jakob', text: 'Hinter der Flusswiese geht der Pfad nach Süden zu den drei Höfen. Für das zugewachsene Hoftor dort solltest du im Garten schon die Brombeerranke gezüchtet haben.' },
+      { speaker: 'jakob', text: 'Hinter der Flusswiese geht der Pfad nach Süden zu den drei Höfen. Für das zugewachsene Hoftor dort brauchst du einen Brombeer-Steckling. Werkeln kannst du an meinem Wandregal in der Mahlstube.' },
     ],
   },
   {

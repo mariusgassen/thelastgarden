@@ -87,8 +87,8 @@ export const WATER_TOWER_MAP: MapDef = {
       radius: 64,
       doneFlag: 'tower-cistern-repaired',
       cost: [
-        { itemId: 'resource-sunlight', count: 3 },
-        { itemId: 'resource-dew', count: 3 },
+        { itemId: 'craft-valve-seal', count: 1 },
+        { itemId: 'resource-sunlight', count: 2 },
         { itemId: 'resource-curio', count: 1 },
       ],
       missingDialogueId: 'cistern-missing',

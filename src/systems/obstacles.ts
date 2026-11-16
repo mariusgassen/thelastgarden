@@ -69,6 +69,11 @@ export function addObstacleInteractHandler(handler: ObstacleInteractHandler): ()
   };
 }
 
+/** Runs the handlers in precedence order; true if one of them handled the inspection. */
+export function runObstacleInteractHandlers(obstacle: ObstacleWithMap, ctx: InteractionContext): boolean {
+  return interactHandlers.some((handler) => handler(obstacle, ctx));
+}
+
 interface LiveObstacle {
   def: ObstacleWithMap;
   sprite: Phaser.GameObjects.Image;
@@ -120,7 +125,7 @@ export class ObstacleLayer {
       getPosition: () => ({ x: cx, y: px.y + px.h / 2 }),
       markerOffset: px.h / 2 + 30,
       onInteract: (ctx) => {
-        for (const handler of interactHandlers) if (handler(def, ctx)) return;
+        if (runObstacleInteractHandlers(def, ctx)) return;
         ctx.world.showLines(`obstacle:${def.id}`, [{ speaker: def.name, text: def.hint }]);
       },
     });

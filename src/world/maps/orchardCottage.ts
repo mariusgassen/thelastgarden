@@ -33,7 +33,8 @@ export const ORCHARD_COTTAGE_MAP: MapDef = {
       dialogueId: 'cottage-valley-map',
       radius: 64,
     },
-    { id: 'cottage-herb-rack', type: 'dialogue', at: { x: 13.2, y: 3.9 }, label: 'Ansehen', dialogueId: 'cottage-herb-rack' },
+    // M.'s herb rack doubles as a workbench, so hedge and sluice can be handled without the long walk home.
+    { id: 'cottage-herb-rack', type: 'craft', at: { x: 13.2, y: 3.9 }, label: 'Werkeln', emptyDialogueId: 'cottage-herb-rack' },
     { id: 'cottage-tea-table', type: 'dialogue', at: { x: 8, y: 7.7 }, label: 'Ansehen', dialogueId: 'cottage-tea-table' },
     {
       id: 'cottage-seed-chest',

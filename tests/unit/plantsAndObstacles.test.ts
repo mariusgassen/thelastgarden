@@ -5,6 +5,7 @@ import {
   getObstacles,
   getObstaclesBlockedBy,
   isBlocked,
+  runObstacleInteractHandlers,
   unblockPath,
 } from '../../src/systems/obstacles';
 import {
@@ -202,6 +203,38 @@ describe('plants and obstacles systems', () => {
     expect(isProduceReady('bed-heart-fern')).toBe(false);
   });
 
+  it('opens one bramble per crafted cutting; a mature vine alone no longer clears them', () => {
+    const toasts: string[] = [];
+    const ctx = {
+      world: { mapId: 'garden', changeMap: () => {}, showDialogue: () => {}, showLines: () => {}, toast: (t: string) => toasts.push(t) },
+      playerX: 0,
+      playerY: 0,
+    };
+    const gardenBramble = findObstacle('bramble-greenhouse-yard')!;
+    const tramBramble = findObstacle('bramble-tram-switch')!;
+
+    gameState.addItem('seed-bramble-vine', 1);
+    expect(plantSeed('bed-bramble')).toBe(true);
+    debugRewindGrowth(STAGE_DURATION_MS * 3);
+    expect(isBedMature('bed-bramble')).toBe(true);
+    expect(getMatureClearingKind('bramble')).toBeUndefined();
+    expect(runObstacleInteractHandlers(gardenBramble, ctx)).toBe(false); // falls through to the hint
+    expect(isBlocked('bramble-greenhouse-yard')).toBe(true);
+
+    gameState.addItem('craft-bramble-cutting', 1);
+    expect(runObstacleInteractHandlers(gardenBramble, ctx)).toBe(true);
+    expect(isBlocked('bramble-greenhouse-yard')).toBe(false);
+    expect(gameState.getItemCount('craft-bramble-cutting')).toBe(0);
+    expect(toasts).toHaveLength(1);
+
+    // The next bramble needs its own cutting; a cutting is not spent on other obstacle kinds
+    expect(runObstacleInteractHandlers(tramBramble, ctx)).toBe(false);
+    expect(isBlocked('bramble-tram-switch')).toBe(true);
+    gameState.addItem('craft-bramble-cutting', 1);
+    expect(runObstacleInteractHandlers(findObstacle('fallen-tree-canal')!, ctx)).toBe(false);
+    expect(gameState.getItemCount('craft-bramble-cutting')).toBe(1);
+  });
+
   it('manages obstacles and lets mature plant abilities clear matching obstacles', () => {
     expect(getObstacles('garden')).toHaveLength(3);
     expect(getObstacles('workshop')).toHaveLength(0);
@@ -218,13 +251,13 @@ describe('plants and obstacles systems', () => {
     expect(unblockPath('non-existent')).toBe(false);
     expect(warn).toHaveBeenCalledOnce();
 
-    // Mature bramble-vine clears bramble, not fallenTree
-    gameState.addItem('seed-bramble-vine', 1);
-    expect(plantSeed('bed-bramble')).toBe(true);
-    expect(getMatureClearingKind('bramble')).toBeUndefined();
+    // Mature lavender clears tallGrass, not fallenTree
+    gameState.addItem('seed-lavender', 1);
+    expect(plantSeed('bed-lavender')).toBe(true);
+    expect(getMatureClearingKind('tallGrass')).toBeUndefined();
 
     debugRewindGrowth(STAGE_DURATION_MS * 3);
-    expect(getMatureClearingKind('bramble')?.id).toBe('bramble-vine');
+    expect(getMatureClearingKind('tallGrass')?.id).toBe('lavender');
     expect(getMatureClearingKind('fallenTree')).toBeUndefined();
 
     // Exercise the obstacle interact handler registered by plants.ts via addObstacleInteractHandler precedence

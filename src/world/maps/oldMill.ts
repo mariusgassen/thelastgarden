@@ -95,8 +95,8 @@ export const OLD_MILL_MAP: MapDef = {
       radius: 68,
       doneFlag: 'mill-wheel-repaired',
       cost: [
-        { itemId: 'resource-sunlight', count: 3 },
-        { itemId: 'resource-dew', count: 3 },
+        { itemId: 'craft-axle-wax', count: 1 },
+        { itemId: 'resource-sunlight', count: 2 },
         { itemId: 'resource-curio', count: 2 },
       ],
       missingDialogueId: 'mill-wheel-missing',

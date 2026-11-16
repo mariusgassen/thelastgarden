@@ -3,7 +3,8 @@ import { ITEMS } from './items';
 import { NPCS } from './npcs';
 import { PLANTS } from './plants';
 import { QUESTS } from './quests';
-import type { DialogueDef, ItemDef, NpcDef, PlantDef, QuestDef } from './types';
+import { RECIPES } from './recipes';
+import type { DialogueDef, ItemDef, NpcDef, PlantDef, QuestDef, RecipeDef } from './types';
 
 export * from './types';
 
@@ -48,4 +49,5 @@ export const content = {
   quests: new Registry<QuestDef>('quest', QUESTS),
   dialogues: new Registry<DialogueDef>('dialogue', DIALOGUES),
   npcs: new Registry<NpcDef>('npc', NPCS),
+  recipes: new Registry<RecipeDef>('recipe', RECIPES),
 };

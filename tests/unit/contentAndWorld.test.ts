@@ -37,6 +37,22 @@ describe('content registries', () => {
     }
   });
 
+  it('validates workbench recipes', () => {
+    expect(content.recipes.all().length).toBeGreaterThan(0);
+    for (const recipe of content.recipes.all()) {
+      expect(recipe.name.trim().length).toBeGreaterThan(0);
+      expect(recipe.result.length).toBeGreaterThan(0);
+      expect(recipe.cost.length).toBeGreaterThan(0);
+      for (const entry of [...recipe.result, ...recipe.cost]) {
+        expect(content.items.has(entry.itemId), `${recipe.id}: ${entry.itemId}`).toBe(true);
+        expect(entry.count).toBeGreaterThan(0);
+      }
+      // Every recipe is taught by a journal page that exists somewhere in the world.
+      const pageId = recipe.requiresFlag?.replace('journal-read:', '');
+      expect(allJournalPages().some((p) => p.id === pageId), `${recipe.id}: ${recipe.requiresFlag}`).toBe(true);
+    }
+  });
+
   it('validates all quest references, rewards, and markers', () => {
     const knownMarkerIds = new Set<string>();
     for (const map of Object.values(MAPS)) {
@@ -145,6 +161,9 @@ describe('world maps and grid rasterizer', () => {
             const targetMap = getMap(spec.target.mapId);
             expect(targetMap.spawns[spec.target.spawn]).toBeDefined();
           }
+        } else if (spec.type === 'craft') {
+          expect(content.dialogues.has(spec.emptyDialogueId)).toBe(true);
+          for (const variant of spec.variants ?? []) expect(content.dialogues.has(variant.dialogueId)).toBe(true);
         } else if (spec.type === 'repair') {
           expect(content.dialogues.has(spec.missingDialogueId)).toBe(true);
           expect(content.dialogues.has(spec.repairedDialogueId)).toBe(true);

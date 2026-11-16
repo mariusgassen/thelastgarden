@@ -96,10 +96,14 @@ const resolvers: Record<NightEventKind, Resolver> = {
     const tender = tenderBeds(mapId);
     if (tender.length === 0) return null;
     const harmed = tender.filter((b) => !protectedByLavender(b));
-    for (const bed of harmed) shiftGrowth(bed.id, STAGE_DURATION_MS);
     if (harmed.length === 0) {
       return { kind: 'snails', dialogueId: 'night-snails-safe', affectedBedIds: [], remnants: [], protectedBy: 'lavender' };
     }
+    // A carried lavender sachet covers the beds no lavender reaches; it is used up by the night.
+    if (gameState.removeItem('craft-lavender-sachet', 1)) {
+      return { kind: 'snails', dialogueId: 'night-snails-sachet', affectedBedIds: [], remnants: [], protectedBy: 'sachet' };
+    }
+    for (const bed of harmed) shiftGrowth(bed.id, STAGE_DURATION_MS);
     return {
       kind: 'snails',
       dialogueId: 'night-snails-hit',
@@ -114,10 +118,14 @@ const resolvers: Record<NightEventKind, Resolver> = {
     const tender = tenderBeds(mapId);
     if (tender.length === 0) return null;
     const harmed = tender.filter((b) => !protectedByLight(b));
-    for (const bed of harmed) shiftGrowth(bed.id, STAGE_DURATION_MS);
     if (harmed.length === 0) {
       return { kind: 'voles', dialogueId: 'night-voles-safe', affectedBedIds: [], remnants: [], protectedBy: 'glow-lily' };
     }
+    // A lily lantern lights the beds no lily reaches; it burns down over the night.
+    if (gameState.removeItem('craft-lily-lantern', 1)) {
+      return { kind: 'voles', dialogueId: 'night-voles-lantern', affectedBedIds: [], remnants: [], protectedBy: 'lantern' };
+    }
+    for (const bed of harmed) shiftGrowth(bed.id, STAGE_DURATION_MS);
     return {
       kind: 'voles',
       dialogueId: 'night-voles-hit',
