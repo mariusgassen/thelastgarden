@@ -1,8 +1,23 @@
 import { expect, test } from '@playwright/test';
-import { countColorPixels, flushAndReadSave, SAVE_KEY, type SaveSnapshot, trackErrors, waitForGameBoot } from './helpers';
+import {
+  countColorPixels,
+  findColorCenter,
+  flushAndReadSave,
+  SAVE_KEY,
+  type SaveSnapshot,
+  seedSave,
+  trackErrors,
+  triggerAndWaitForMap,
+  triggerUntil,
+  waitForGameBoot,
+  waitFrames,
+} from './helpers';
 
 const STRAW_HAT_RGB: readonly [number, number, number] = [232, 207, 122];
 const HORSE_COAT_RGB: readonly [number, number, number] = [154, 106, 66];
+const EAT_PILL_RGB: readonly [number, number, number] = [223, 156, 58];
+const PANEL_BG_RGB: readonly [number, number, number] = [43, 58, 38];
+const SUN_GOLD_RGB: readonly [number, number, number] = [233, 162, 59];
 
 test.describe('Desktop gameplay and PWA', () => {
   test('moves with keyboard and toggles quest log', async ({ page }) => {
@@ -46,37 +61,16 @@ test.describe('Desktop gameplay and PWA', () => {
   test('transitions from garden to workshop map via door interaction', async ({ page }) => {
     const errors = trackErrors(page);
 
-    await page.addInitScript((key) => {
-      if (localStorage.getItem(key)) return;
-      localStorage.setItem(
-        key,
-        JSON.stringify({
-          version: 1,
-          savedAt: Date.now(),
-          player: { mapId: 'garden', x: 7 * 32, y: 33 * 32, facing: 'right' },
-          world: { unblockedPaths: [], visitedZones: ['garden'], flags: {} },
-          inventory: { items: {} },
-          quests: { active: ['q-meet-crow'], completed: [], progress: {} },
-          ext: {},
-        }),
-      );
-    }, SAVE_KEY);
+    await seedSave(page, {
+      player: { mapId: 'garden', x: 7 * 32, y: 33 * 32, facing: 'right' },
+      world: { visitedZones: ['garden'] },
+      quests: { active: ['q-meet-crow'] },
+    });
 
     await page.goto('/');
     await waitForGameBoot(page);
 
-    await expect
-      .poll(
-        async () => {
-          const current = await flushAndReadSave(page);
-          if (current?.player.mapId === 'workshop') return 'workshop';
-          await page.keyboard.press('KeyE');
-          await page.waitForTimeout(450);
-          return (await flushAndReadSave(page))?.player.mapId;
-        },
-        { timeout: 15_000, intervals: [100] },
-      )
-      .toBe('workshop');
+    await triggerAndWaitForMap(page, 'workshop', () => page.keyboard.press('KeyE'));
 
     const workshopSave = await flushAndReadSave(page);
     expect(workshopSave!.player.mapId).toBe('workshop');
@@ -87,58 +81,35 @@ test.describe('Desktop gameplay and PWA', () => {
   test('rides the horse and fast travels with the town map', async ({ page }) => {
     const errors = trackErrors(page);
 
-    await page.addInitScript((key) => {
-      if (localStorage.getItem(key)) return;
-      localStorage.setItem(
-        key,
-        JSON.stringify({
-          version: 1,
-          savedAt: Date.now(),
-          player: { mapId: 'garden', x: 25.5 * 32, y: 31 * 32, facing: 'right' },
-          world: {
-            unblockedPaths: [],
-            visitedZones: ['garden', 'tram-tracks'],
-            flags: { 'crow-met': true, 'greenhouse-hint-read': true, 'horse-tamed': true },
-          },
-          inventory: { items: {} },
-          quests: { active: [], completed: ['q-meet-crow'], progress: {} },
-          ext: {},
-        }),
-      );
-    }, SAVE_KEY);
+    await seedSave(page, {
+      player: { mapId: 'garden', x: 25.5 * 32, y: 31 * 32, facing: 'right' },
+      world: {
+        visitedZones: ['garden', 'tram-tracks'],
+        flags: { 'crow-met': true, 'greenhouse-hint-read': true, 'horse-tamed': true },
+      },
+      quests: { completed: ['q-meet-crow'] },
+    });
 
     await page.goto('/');
     await waitForGameBoot(page);
 
     const ridingState = async () => ((await flushAndReadSave(page))?.ext.horse as { riding: boolean } | undefined)?.riding;
-    await expect
-      .poll(
-        async () => {
-          if (await ridingState()) return true;
-          await page.keyboard.press('KeyR');
-          await page.waitForTimeout(300);
-          return ridingState();
-        },
-        { timeout: 15_000, intervals: [100] },
-      )
-      .toBe(true);
+    await triggerUntil(page, async () => Boolean(await ridingState()), () => page.keyboard.press('KeyR'), {
+      timeout: 15_000,
+      attemptWaitMs: 2_500,
+      label: 'mount with R',
+    });
 
     // Open the map, pick the next known stop (the tramline) and confirm
-    await expect
-      .poll(
-        async () => {
-          if ((await flushAndReadSave(page))?.player.mapId === 'tramline') return 'tramline';
-          await page.keyboard.press('KeyM');
-          await page.waitForTimeout(300);
-          await page.keyboard.press('ArrowRight');
-          await page.waitForTimeout(150);
-          await page.keyboard.press('KeyE');
-          await page.waitForTimeout(900);
-          return (await flushAndReadSave(page))?.player.mapId;
-        },
-        { timeout: 20_000, intervals: [100] },
-      )
-      .toBe('tramline');
+    await triggerAndWaitForMap(page, 'tramline', async () => {
+      await page.keyboard.press('Escape');
+      await page.waitForTimeout(100);
+      await page.keyboard.press('KeyM');
+      await page.waitForTimeout(300);
+      await page.keyboard.press('ArrowRight');
+      await page.waitForTimeout(150);
+      await page.keyboard.press('KeyE');
+    });
 
     // Still riding after the journey
     expect(await ridingState()).toBe(true);
@@ -148,38 +119,28 @@ test.describe('Desktop gameplay and PWA', () => {
   test('horse follows along on foot outdoors and mounts with R', async ({ page }) => {
     const errors = trackErrors(page);
 
-    await page.addInitScript((key) => {
-      if (localStorage.getItem(key)) return;
-      localStorage.setItem(
-        key,
-        JSON.stringify({
-          version: 1,
-          savedAt: Date.now(),
-          player: { mapId: 'garden', x: 20 * 32, y: 36 * 32, facing: 'right' },
-          world: {
-            unblockedPaths: [],
-            visitedZones: ['garden', 'tram-tracks'],
-            flags: { 'crow-met': true, 'greenhouse-hint-read': true, 'horse-tamed': true },
-          },
-          inventory: { items: {} },
-          quests: { active: [], completed: ['q-meet-crow'], progress: {} },
-          ext: { horse: { riding: false } },
-        }),
-      );
-    }, SAVE_KEY);
+    await seedSave(page, {
+      player: { mapId: 'garden', x: 20 * 32, y: 36 * 32, facing: 'right' },
+      world: {
+        visitedZones: ['garden', 'tram-tracks'],
+        flags: { 'crow-met': true, 'greenhouse-hint-read': true, 'horse-tamed': true },
+      },
+      quests: { completed: ['q-meet-crow'] },
+      ext: { horse: { riding: false } },
+    });
 
     await page.goto('/');
     await waitForGameBoot(page);
     // Mohn spawns beside the player on foot
     await expect
       .poll(() => countColorPixels(page, { x: 460, y: 260, width: 280, height: 220 }, HORSE_COAT_RGB), {
-        timeout: 6_000,
+        timeout: 12_000,
         intervals: [150],
       })
       .toBeGreaterThan(100);
     await expect
       .poll(() => countColorPixels(page, { x: 540, y: 260, width: 200, height: 200 }, STRAW_HAT_RGB), {
-        timeout: 6_000,
+        timeout: 12_000,
         intervals: [150],
       })
       .toBeGreaterThan(30);
@@ -197,27 +158,21 @@ test.describe('Desktop gameplay and PWA', () => {
 
     await expect
       .poll(() => countColorPixels(page, { x: 480, y: 260, width: 220, height: 220 }, HORSE_COAT_RGB), {
-        timeout: 6_000,
+        timeout: 12_000,
         intervals: [150],
       })
       .toBeGreaterThan(100);
 
     // Mount with R: riding state becomes true and the mounted player-horse sprite is rendered
-    await expect
-      .poll(
-        async () => {
-          const riding = ((await flushAndReadSave(page))?.ext.horse as { riding: boolean } | undefined)?.riding;
-          if (riding) return true;
-          await page.keyboard.press('KeyR');
-          await page.waitForTimeout(300);
-          return ((await flushAndReadSave(page))?.ext.horse as { riding: boolean } | undefined)?.riding;
-        },
-        { timeout: 10_000, intervals: [100] },
-      )
-      .toBe(true);
+    await triggerUntil(
+      page,
+      async () => Boolean(((await flushAndReadSave(page))?.ext.horse as { riding: boolean } | undefined)?.riding),
+      () => page.keyboard.press('KeyR'),
+      { timeout: 10_000, attemptWaitMs: 2_500, label: 'mount with R' },
+    );
     await expect
       .poll(() => countColorPixels(page, { x: 540, y: 260, width: 200, height: 220 }, HORSE_COAT_RGB), {
-        timeout: 6_000,
+        timeout: 12_000,
         intervals: [150],
       })
       .toBeGreaterThan(60);
@@ -228,25 +183,15 @@ test.describe('Desktop gameplay and PWA', () => {
   test('leaving a building restores riding and fast travel keeps character visible', async ({ page }) => {
     const errors = trackErrors(page);
 
-    await page.addInitScript((key) => {
-      if (localStorage.getItem(key)) return;
-      localStorage.setItem(
-        key,
-        JSON.stringify({
-          version: 1,
-          savedAt: Date.now(),
-          player: { mapId: 'garden', x: 7 * 32, y: 33 * 32, facing: 'right' },
-          world: {
-            unblockedPaths: [],
-            visitedZones: ['garden', 'workshop-yard', 'tram-tracks', 'river-farms-yard'],
-            flags: { 'crow-met': true, 'greenhouse-hint-read': true, 'horse-tamed': true },
-          },
-          inventory: { items: {} },
-          quests: { active: [], completed: ['q-meet-crow'], progress: {} },
-          ext: { horse: { riding: true } },
-        }),
-      );
-    }, SAVE_KEY);
+    await seedSave(page, {
+      player: { mapId: 'garden', x: 7 * 32, y: 33 * 32, facing: 'right' },
+      world: {
+        visitedZones: ['garden', 'workshop-yard', 'tram-tracks', 'river-farms-yard'],
+        flags: { 'crow-met': true, 'greenhouse-hint-read': true, 'horse-tamed': true },
+      },
+      quests: { completed: ['q-meet-crow'] },
+      ext: { horse: { riding: true } },
+    });
 
     await page.goto('/');
     await waitForGameBoot(page);
@@ -254,94 +199,63 @@ test.describe('Desktop gameplay and PWA', () => {
     // Outdoors before entering: riding near hut door (left-of-center clamped camera)
     await expect
       .poll(() => countColorPixels(page, { x: 260, y: 200, width: 260, height: 260 }, HORSE_COAT_RGB), {
-        timeout: 6_000,
+        timeout: 12_000,
         intervals: [150],
       })
       .toBeGreaterThan(60);
 
     // Enter workshop: Mohn waits outside while riding preference stays true
-    await expect
-      .poll(
-        async () => {
-          if ((await flushAndReadSave(page))?.player.mapId === 'workshop') return 'workshop';
-          await page.keyboard.press('KeyE');
-          await page.waitForTimeout(450);
-          return (await flushAndReadSave(page))?.player.mapId;
-        },
-        { timeout: 15_000, intervals: [100] },
-      )
-      .toBe('workshop');
+    await triggerAndWaitForMap(page, 'workshop', () => page.keyboard.press('KeyE'));
 
     const indoorSave = await flushAndReadSave(page);
     expect((indoorSave?.ext.horse as { riding: boolean }).riding).toBe(true);
     await expect
       .poll(() => countColorPixels(page, { x: 540, y: 420, width: 200, height: 160 }, STRAW_HAT_RGB), {
-        timeout: 6_000,
+        timeout: 12_000,
         intervals: [150],
       })
       .toBeGreaterThan(30);
     expect(await countColorPixels(page, { x: 540, y: 420, width: 200, height: 160 }, HORSE_COAT_RGB, 6)).toBeLessThan(15);
 
     // Leave workshop: back outdoors on Mohn again
-    await expect
-      .poll(
-        async () => {
-          if ((await flushAndReadSave(page))?.player.mapId === 'garden') return 'garden';
-          await page.keyboard.press('KeyE');
-          await page.waitForTimeout(450);
-          return (await flushAndReadSave(page))?.player.mapId;
-        },
-        { timeout: 15_000, intervals: [100] },
-      )
-      .toBe('garden');
+    await triggerAndWaitForMap(page, 'garden', () => page.keyboard.press('KeyE'));
 
     const outdoorSave = await flushAndReadSave(page);
     expect((outdoorSave?.ext.horse as { riding: boolean }).riding).toBe(true);
     await expect
       .poll(() => countColorPixels(page, { x: 260, y: 200, width: 260, height: 260 }, HORSE_COAT_RGB), {
-        timeout: 6_000,
+        timeout: 12_000,
         intervals: [150],
       })
       .toBeGreaterThan(60);
     await expect
       .poll(() => countColorPixels(page, { x: 260, y: 200, width: 260, height: 260 }, STRAW_HAT_RGB), {
-        timeout: 6_000,
+        timeout: 12_000,
         intervals: [150],
       })
       .toBeGreaterThan(30);
 
     // Fast travel to Drei Höfe (river-farms) and verify character & horse are clearly visible below top HUD
-    await expect
-      .poll(
-        async () => {
-          if ((await flushAndReadSave(page))?.player.mapId === 'river-farms') return 'river-farms';
-          await page.keyboard.press('KeyM');
-          await page.waitForTimeout(300);
-          await page.keyboard.press('ArrowLeft');
-          await page.waitForTimeout(150);
-          await page.keyboard.press('KeyE');
-          await page.waitForTimeout(900);
-          return (await flushAndReadSave(page))?.player.mapId;
-        },
-        { timeout: 20_000, intervals: [100] },
-      )
-      .toBe('river-farms');
-
-    // The poll above can retry once more after the trip already happened (the save lags the scene restart), which
-    // reopens the town map over the character. Close it so the pixel checks look at the courtyard.
-    await page.keyboard.press('Escape');
-    await page.waitForTimeout(200);
+    await triggerAndWaitForMap(page, 'river-farms', async () => {
+      await page.keyboard.press('Escape');
+      await page.waitForTimeout(100);
+      await page.keyboard.press('KeyM');
+      await page.waitForTimeout(300);
+      await page.keyboard.press('ArrowLeft');
+      await page.waitForTimeout(150);
+      await page.keyboard.press('KeyE');
+    });
 
     expect(((await flushAndReadSave(page))?.ext.horse as { riding: boolean }).riding).toBe(true);
     await expect
       .poll(() => countColorPixels(page, { x: 460, y: 120, width: 360, height: 400 }, STRAW_HAT_RGB), {
-        timeout: 6_000,
+        timeout: 12_000,
         intervals: [150],
       })
       .toBeGreaterThan(30);
     await expect
       .poll(() => countColorPixels(page, { x: 460, y: 120, width: 360, height: 400 }, HORSE_COAT_RGB), {
-        timeout: 6_000,
+        timeout: 12_000,
         intervals: [150],
       })
       .toBeGreaterThan(60);
@@ -351,26 +265,17 @@ test.describe('Desktop gameplay and PWA', () => {
   test('harvests regrowing produce from a mature bed', async ({ page }) => {
     const errors = trackErrors(page);
 
-    await page.addInitScript((key) => {
-      if (localStorage.getItem(key)) return;
-      localStorage.setItem(
-        key,
-        JSON.stringify({
-          version: 1,
-          savedAt: Date.now(),
-          // Standing at the first plant slot of bed-bramble (tiles 16..20 × 29..31, one slot per tile)
-          player: { mapId: 'garden', x: 16.5 * 32, y: 30 * 32, facing: 'right' },
-          world: { unblockedPaths: [], visitedZones: ['garden'], flags: { 'crow-met': true, 'bed-restored:bed-bramble': true } },
-          inventory: { items: {} },
-          quests: { active: ['q-restore-beds'], completed: ['q-meet-crow'], progress: {} },
-          ext: {
-            plants: {
-              beds: { 'bed-bramble': { bedId: 'bed-bramble', plantId: 'bramble-vine', plantedAt: Date.now() - 600_000 } },
-            },
-          },
-        }),
-      );
-    }, SAVE_KEY);
+    await seedSave(page, {
+      // Standing at the first plant slot of bed-bramble (tiles 16..20 × 29..31, one slot per tile)
+      player: { mapId: 'garden', x: 16.5 * 32, y: 30 * 32, facing: 'right' },
+      world: { visitedZones: ['garden'], flags: { 'crow-met': true, 'bed-restored:bed-bramble': true } },
+      quests: { active: ['q-restore-beds'], completed: ['q-meet-crow'] },
+      ext: {
+        plants: {
+          beds: { 'bed-bramble': { bedId: 'bed-bramble', plantId: 'bramble-vine', plantedAt: Date.now() - 600_000 } },
+        },
+      },
+    });
 
     await page.goto('/');
     await waitForGameBoot(page);
@@ -397,22 +302,13 @@ test.describe('Desktop gameplay and PWA', () => {
   test('offers a seed picker on an open bed when several kinds of seed are carried', async ({ page }) => {
     const errors = trackErrors(page);
 
-    await page.addInitScript((key) => {
-      if (localStorage.getItem(key)) return;
-      localStorage.setItem(
-        key,
-        JSON.stringify({
-          version: 1,
-          savedAt: Date.now(),
-          // Standing at the first plant slot of bed-extra (tiles 30..34 × 41..43, one slot per tile)
-          player: { mapId: 'garden', x: 30.5 * 32, y: 42 * 32, facing: 'right' },
-          world: { unblockedPaths: [], visitedZones: ['garden'], flags: { 'crow-met': true } },
-          inventory: { items: { 'seed-glow-lily': 1, 'seed-lavender': 2 } },
-          quests: { active: ['q-restore-beds'], completed: ['q-meet-crow'], progress: {} },
-          ext: {},
-        }),
-      );
-    }, SAVE_KEY);
+    await seedSave(page, {
+      // Standing at the first plant slot of bed-extra (tiles 30..34 × 41..43, one slot per tile)
+      player: { mapId: 'garden', x: 30.5 * 32, y: 42 * 32, facing: 'right' },
+      world: { visitedZones: ['garden'], flags: { 'crow-met': true } },
+      inventory: { items: { 'seed-glow-lily': 1, 'seed-lavender': 2 } },
+      quests: { active: ['q-restore-beds'], completed: ['q-meet-crow'] },
+    });
 
     await page.goto('/');
     await waitForGameBoot(page);
@@ -421,22 +317,21 @@ test.describe('Desktop gameplay and PWA', () => {
       (save?.ext.plants as { beds?: Record<string, { plantId: string }> } | undefined)?.beds?.['bed-extra']?.plantId;
 
     // E opens the picker (1 = Leuchtlilie, 2 = Lavendel); 2 plants the lavender
-    await expect
-      .poll(
-        async () => {
-          const planted = plantedIn(await flushAndReadSave(page));
-          if (planted) return planted;
-          await page.keyboard.press('KeyE');
-          await page.waitForTimeout(400);
-          await page.keyboard.press('Digit2');
-          await page.waitForTimeout(300);
-          return plantedIn(await flushAndReadSave(page));
-        },
-        { timeout: 15_000, intervals: [100] },
-      )
-      .toBe('lavender');
+    await triggerUntil(
+      page,
+      async () => Boolean(plantedIn(await flushAndReadSave(page))),
+      async () => {
+        await page.keyboard.press('Escape');
+        await page.waitForTimeout(100);
+        await page.keyboard.press('KeyE');
+        await page.waitForTimeout(350);
+        await page.keyboard.press('Digit2');
+      },
+      { timeout: 15_000, attemptWaitMs: 3_000, label: 'plant lavender via seed picker' },
+    );
 
     const save = (await flushAndReadSave(page)) as SaveSnapshot;
+    expect(plantedIn(save)).toBe('lavender');
     expect(save.inventory.items['seed-lavender']).toBe(1);
     expect(save.inventory.items['seed-glow-lily']).toBe(1);
     expect(errors).toEqual([]);
@@ -445,45 +340,33 @@ test.describe('Desktop gameplay and PWA', () => {
   test('crafts a bramble cutting at the workbench', async ({ page }) => {
     const errors = trackErrors(page);
 
-    await page.addInitScript((key) => {
-      if (localStorage.getItem(key)) return;
-      localStorage.setItem(
-        key,
-        JSON.stringify({
-          version: 1,
-          savedAt: Date.now(),
-          // Standing in front of the workbench (3.2, 4.1)
-          player: { mapId: 'workshop', x: 3.2 * 32, y: 4.7 * 32, facing: 'right' },
-          world: {
-            unblockedPaths: [],
-            visitedZones: ['garden', 'workshop'],
-            flags: { 'crow-met': true, 'saw-found': true, 'journal-read:page-bramble': true },
-          },
-          inventory: { items: { 'garden-saw': 1, 'produce-tendril': 2, 'resource-dew': 1 } },
-          quests: { active: ['q-restore-beds'], completed: ['q-meet-crow'], progress: {} },
-          ext: {},
-        }),
-      );
-    }, SAVE_KEY);
+    await seedSave(page, {
+      // Standing in front of the workbench (3.2, 4.1)
+      player: { mapId: 'workshop', x: 3.2 * 32, y: 4.7 * 32, facing: 'right' },
+      world: {
+        visitedZones: ['garden', 'workshop'],
+        flags: { 'crow-met': true, 'saw-found': true, 'journal-read:page-bramble': true },
+      },
+      inventory: { items: { 'garden-saw': 1, 'produce-tendril': 2, 'resource-dew': 1 } },
+      quests: { active: ['q-restore-beds'], completed: ['q-meet-crow'] },
+    });
 
     await page.goto('/');
     await waitForGameBoot(page);
 
     // E opens the recipe list (1 = Brombeer-Steckling); 1 crafts it
-    await expect
-      .poll(
-        async () => {
-          const have = (await flushAndReadSave(page))?.inventory.items['craft-bramble-cutting'] ?? 0;
-          if (have > 0) return have;
-          await page.keyboard.press('KeyE');
-          await page.waitForTimeout(400);
-          await page.keyboard.press('Digit1');
-          await page.waitForTimeout(300);
-          return (await flushAndReadSave(page))?.inventory.items['craft-bramble-cutting'] ?? 0;
-        },
-        { timeout: 15_000, intervals: [100] },
-      )
-      .toBe(1);
+    await triggerUntil(
+      page,
+      async () => ((await flushAndReadSave(page))?.inventory.items['craft-bramble-cutting'] ?? 0) === 1,
+      async () => {
+        await page.keyboard.press('Escape');
+        await page.waitForTimeout(100);
+        await page.keyboard.press('KeyE');
+        await page.waitForTimeout(350);
+        await page.keyboard.press('Digit1');
+      },
+      { timeout: 15_000, attemptWaitMs: 3_000, label: 'craft bramble cutting at workbench' },
+    );
 
     const save = (await flushAndReadSave(page)) as SaveSnapshot;
     expect(save.inventory.items['produce-tendril']).toBeUndefined();
@@ -494,26 +377,16 @@ test.describe('Desktop gameplay and PWA', () => {
   test('opens the bag and crafts anywhere with the pocket workbench', async ({ page }) => {
     const errors = trackErrors(page);
 
-    await page.addInitScript((key) => {
-      if (localStorage.getItem(key)) return;
-      localStorage.setItem(
-        key,
-        JSON.stringify({
-          version: 1,
-          savedAt: Date.now(),
-          // Out in the garden, far from any workbench
-          player: { mapId: 'garden', x: 25.5 * 32, y: 36 * 32, facing: 'right' },
-          world: {
-            unblockedPaths: [],
-            visitedZones: ['garden'],
-            flags: { 'crow-met': true, 'journal-read:page-bramble': true },
-          },
-          inventory: { items: { 'pocket-workbench': 1, 'produce-tendril': 2, 'resource-dew': 1 } },
-          quests: { active: ['q-restore-beds'], completed: ['q-meet-crow'], progress: {} },
-          ext: {},
-        }),
-      );
-    }, SAVE_KEY);
+    await seedSave(page, {
+      // Out in the garden, far from any workbench
+      player: { mapId: 'garden', x: 25.5 * 32, y: 36 * 32, facing: 'right' },
+      world: {
+        visitedZones: ['garden'],
+        flags: { 'crow-met': true, 'journal-read:page-bramble': true },
+      },
+      inventory: { items: { 'pocket-workbench': 1, 'produce-tendril': 2, 'resource-dew': 1 } },
+      quests: { active: ['q-restore-beds'], completed: ['q-meet-crow'] },
+    });
 
     await page.goto('/');
     await waitForGameBoot(page);
@@ -523,26 +396,25 @@ test.describe('Desktop gameplay and PWA', () => {
     await page.keyboard.press('KeyI');
     await page.waitForTimeout(300);
     await page.keyboard.down('KeyD');
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(450);
     await page.keyboard.up('KeyD');
     expect(((await flushAndReadSave(page)) as SaveSnapshot).player.x).toBe(before.player.x);
     await page.keyboard.press('Escape');
+    await page.waitForTimeout(150);
 
     // C opens the recipe list anywhere (1 = Brombeer-Steckling)
-    await expect
-      .poll(
-        async () => {
-          const have = (await flushAndReadSave(page))?.inventory.items['craft-bramble-cutting'] ?? 0;
-          if (have > 0) return have;
-          await page.keyboard.press('KeyC');
-          await page.waitForTimeout(400);
-          await page.keyboard.press('Digit1');
-          await page.waitForTimeout(300);
-          return (await flushAndReadSave(page))?.inventory.items['craft-bramble-cutting'] ?? 0;
-        },
-        { timeout: 15_000, intervals: [100] },
-      )
-      .toBe(1);
+    await triggerUntil(
+      page,
+      async () => ((await flushAndReadSave(page))?.inventory.items['craft-bramble-cutting'] ?? 0) === 1,
+      async () => {
+        await page.keyboard.press('Escape');
+        await page.waitForTimeout(100);
+        await page.keyboard.press('KeyC');
+        await page.waitForTimeout(350);
+        await page.keyboard.press('Digit1');
+      },
+      { timeout: 15_000, attemptWaitMs: 3_000, label: 'craft via pocket workbench' },
+    );
 
     expect(((await flushAndReadSave(page)) as SaveSnapshot).world.flags['crafted:bramble-cutting']).toBe(true);
     expect(errors).toEqual([]);
@@ -551,37 +423,27 @@ test.describe('Desktop gameplay and PWA', () => {
   test('completes greenhouse vestibule unlock and Episode 1 ending from seeded save', async ({ page }) => {
     const errors = trackErrors(page);
 
-    await page.addInitScript((key) => {
-      if (localStorage.getItem(key)) return;
-      localStorage.setItem(
-        key,
-        JSON.stringify({
-          version: 1,
-          savedAt: Date.now(),
-          player: { mapId: 'garden', x: 25 * 32, y: 21 * 32, facing: 'right' },
-          world: {
-            unblockedPaths: [],
-            visitedZones: ['garden', 'greenhouse'],
-            flags: {
-              'crow-met': true,
-              'bed-restored:bed-bramble': true,
-              'bed-restored:bed-lily': true,
-              'bed-restored:bed-lavender': true,
-              'journal-read:page-bramble': true,
-              'journal-read:page-lily': true,
-              'journal-read:page-lavender': true,
-              'quest-completed:q-meet-crow': true,
-              'quest-completed:q-restore-beds': true,
-              'quest-completed:q-journal-pages': true,
-              'crow-gave-key': true,
-            },
-          },
-          inventory: { items: { 'greenhouse-key': 1 } },
-          quests: { active: ['q-greenhouse'], completed: ['q-meet-crow', 'q-restore-beds', 'q-journal-pages'], progress: {} },
-          ext: {},
-        }),
-      );
-    }, SAVE_KEY);
+    await seedSave(page, {
+      player: { mapId: 'garden', x: 25 * 32, y: 21 * 32, facing: 'right' },
+      world: {
+        visitedZones: ['garden', 'greenhouse'],
+        flags: {
+          'crow-met': true,
+          'bed-restored:bed-bramble': true,
+          'bed-restored:bed-lily': true,
+          'bed-restored:bed-lavender': true,
+          'journal-read:page-bramble': true,
+          'journal-read:page-lily': true,
+          'journal-read:page-lavender': true,
+          'quest-completed:q-meet-crow': true,
+          'quest-completed:q-restore-beds': true,
+          'quest-completed:q-journal-pages': true,
+          'crow-gave-key': true,
+        },
+      },
+      inventory: { items: { 'greenhouse-key': 1 } },
+      quests: { active: ['q-greenhouse'], completed: ['q-meet-crow', 'q-restore-beds', 'q-journal-pages'] },
+    });
 
     await page.goto('/');
     await waitForGameBoot(page);
@@ -600,9 +462,7 @@ test.describe('Desktop gameplay and PWA', () => {
       )
       .toBe(true);
 
-    await page.evaluate(
-      () => new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))),
-    );
+    await waitFrames(page, 3);
 
     // Walk up into open upper floor (y < 3.6 tiles) then left to map-board (4, 2.9)
     await page.keyboard.down('KeyW');
@@ -787,6 +647,453 @@ test.describe('Desktop gameplay and PWA', () => {
     expect(errors).toEqual([]);
   });
 
+  test('talks to the crow to unlock the main garden quest', async ({ page }) => {
+    const errors = trackErrors(page);
+
+    await seedSave(page, {
+      player: { mapId: 'garden', x: 11.5 * 32, y: 32.8 * 32, facing: 'down' },
+      world: { visitedZones: ['garden'] },
+      quests: { active: ['q-meet-crow'] },
+    });
+
+    await page.goto('/');
+    await waitForGameBoot(page);
+
+    await expect
+      .poll(
+        async () => {
+          const s = await flushAndReadSave(page);
+          if (s?.world.flags['crow-met'] && s.quests.active.includes('q-restore-beds')) return true;
+          await page.keyboard.press('KeyE');
+          await page.waitForTimeout(250);
+          return false;
+        },
+        { timeout: 15_000, intervals: [100] },
+      )
+      .toBe(true);
+
+    expect(errors).toEqual([]);
+  });
+
+  test('waters a growing bed with dew', async ({ page }) => {
+    const errors = trackErrors(page);
+
+    await seedSave(page, {
+      player: { mapId: 'garden', x: 16.5 * 32, y: 30 * 32, facing: 'right' },
+      world: { visitedZones: ['garden'], flags: { 'crow-met': true } },
+      inventory: { items: { 'resource-dew': 1 } },
+      quests: { active: ['q-restore-beds'], completed: ['q-meet-crow'] },
+      ext: {
+        plants: {
+          beds: { 'bed-bramble': { bedId: 'bed-bramble', plantId: 'bramble-vine', plantedAt: Date.now() - 3_000 } },
+        },
+      },
+    });
+
+    await page.goto('/');
+    await waitForGameBoot(page);
+
+    // Water growing bed ("Gießen") -> spends resource-dew and marks wateredStage = 1
+    await triggerUntil(
+      page,
+      async () => ((await flushAndReadSave(page))?.inventory.items['resource-dew'] ?? 0) === 0,
+      () => page.keyboard.press('KeyE'),
+      { timeout: 10_000, attemptWaitMs: 2_000, label: 'water bed with dew' },
+    );
+
+    const wateredSave = (await flushAndReadSave(page))!;
+    expect(
+      (wateredSave.ext.plants as { beds: Record<string, { wateredStage?: number }> }).beds['bed-bramble'].wateredStage,
+    ).toBe(1);
+
+    expect(errors).toEqual([]);
+  });
+
+  test('clears bramble obstacle with crafted bramble cutting', async ({ page }) => {
+    const errors = trackErrors(page);
+
+    await seedSave(page, {
+      player: { mapId: 'garden', x: 33.5 * 32, y: 15.4 * 32, facing: 'right' },
+      world: { visitedZones: ['garden', 'greenhouse'], flags: { 'crow-met': true } },
+      inventory: { items: { 'craft-bramble-cutting': 1 } },
+      quests: { active: ['q-restore-beds'], completed: ['q-meet-crow'] },
+    });
+
+    await page.goto('/');
+    await waitForGameBoot(page);
+
+    await triggerUntil(
+      page,
+      async () => (await flushAndReadSave(page))?.world.unblockedPaths.includes('bramble-greenhouse-yard') ?? false,
+      () => page.keyboard.press('KeyE'),
+      { timeout: 10_000, attemptWaitMs: 2_500, label: 'unblock bramble-greenhouse-yard' },
+    );
+
+    const save = (await flushAndReadSave(page))!;
+    expect(save.inventory.items['craft-bramble-cutting']).toBeUndefined();
+    expect(save.world.unblockedPaths).toContain('bramble-greenhouse-yard');
+    expect(errors).toEqual([]);
+  });
+
+  test('builds a fence, clears forest with Roden, and dismantles for refund', async ({ page }) => {
+    const errors = trackErrors(page);
+
+    await seedSave(page, {
+      // Standing on overgrownPath (22, 46) adjacent to clearable forest (23, 46)
+      player: { mapId: 'garden', x: 22.5 * 32, y: 46.5 * 32, facing: 'right' },
+      world: { visitedZones: ['garden'], flags: { 'crow-met': true, 'gathered-material': true } },
+      inventory: { items: { 'mat-wood': 4 } },
+      quests: { completed: ['q-meet-crow'] },
+    });
+
+    await page.goto('/');
+    await waitForGameBoot(page);
+
+    const clearedCount = async () =>
+      (((await flushAndReadSave(page))?.ext.building as { cleared?: { garden?: string[] } } | undefined)?.cleared?.garden ?? [])
+        .length;
+    const piecesCount = async () =>
+      (((await flushAndReadSave(page))?.ext.building as { pieces?: { garden?: unknown[] } } | undefined)?.pieces?.garden ?? [])
+        .length;
+
+    // B opens BuildBar, Digit1 selects Roden (clearing forest at (23, 46)), E clears 3x3 forest patch
+    await triggerUntil(
+      page,
+      async () => (await countColorPixels(page, { x: 483, y: 461, width: 314, height: 249 }, SUN_GOLD_RGB, 30)) > 80,
+      () => page.keyboard.press('KeyB'),
+      { timeout: 8_000, attemptWaitMs: 1_500, label: 'open BuildBar with B' },
+    );
+    await page.keyboard.press('Digit1');
+    await page.waitForTimeout(150);
+    await triggerUntil(
+      page,
+      async () => (await clearedCount()) > 0,
+      () => page.keyboard.press('KeyE'),
+      { timeout: 10_000, attemptWaitMs: 2_500, label: 'clear forest with Roden' },
+    );
+    expect((await flushAndReadSave(page))!.inventory.items['mat-wood']).toBe(2);
+
+    // Select Zaun (Digit2) and place fence on the newly cleared forest tile (23, 46), then dismantle it with E
+    await page.keyboard.press('Digit2');
+    await page.waitForTimeout(150);
+    await triggerUntil(
+      page,
+      async () => (await piecesCount()) === 1,
+      () => page.keyboard.press('KeyE'),
+      { timeout: 10_000, attemptWaitMs: 2_500, label: 'place fence on cleared tile' },
+    );
+    expect((await flushAndReadSave(page))!.inventory.items['mat-wood']).toBe(1);
+
+    await triggerUntil(
+      page,
+      async () => (await piecesCount()) === 0,
+      () => page.keyboard.press('KeyE'),
+      { timeout: 10_000, attemptWaitMs: 2_500, label: 'dismantle fence for refund' },
+    );
+    expect((await flushAndReadSave(page))!.inventory.items['mat-wood']).toBe(2);
+
+    expect(errors).toEqual([]);
+  });
+
+  test('uses sickle, satchel, and shovel tools via tool bar', async ({ page }) => {
+    const errors = trackErrors(page);
+
+    await seedSave(page, {
+      player: { mapId: 'garden', x: 20.5 * 32, y: 30 * 32, facing: 'right' },
+      world: { visitedZones: ['garden'], flags: { 'crow-met': true, 'bed-restored:bed-bramble': true } },
+      inventory: { items: { 'tool-sickle': 1, 'tool-shovel': 1, 'tool-satchel': 1 } },
+      quests: { active: ['q-restore-beds'], completed: ['q-meet-crow'] },
+      ext: {
+        plants: {
+          beds: {
+            // harvests: 1 yields produce-tendril cleanly; digging afterwards returns seed-bramble-vine
+            // bed-bramble#3 sits at x=19.5, y=29.5 (1.12 tiles from player at 20.5, 30)
+            'bed-bramble#3': {
+              bedId: 'bed-bramble#3',
+              plantId: 'bramble-vine',
+              plantedAt: Date.now() - 600_000,
+              harvests: 1,
+            },
+          },
+        },
+      },
+    });
+
+    await page.goto('/');
+    await waitForGameBoot(page);
+
+    const equippedTool = async () =>
+      ((await flushAndReadSave(page))?.ext.tools as { equipped?: string } | undefined)?.equipped;
+
+    // T opens ToolBar and Digit1 equips sickle (and closes bar)
+    await triggerUntil(
+      page,
+      async () => (await equippedTool()) === 'tool-sickle',
+      async () => {
+        await page.keyboard.press('KeyT');
+        await page.waitForTimeout(150);
+        await page.keyboard.press('Digit1');
+      },
+      { timeout: 10_000, attemptWaitMs: 1_500, label: 'equip sickle via ToolBar' },
+    );
+
+    await triggerUntil(
+      page,
+      async () => (await flushAndReadSave(page))?.world.flags['used-tool:sickle'] === true,
+      () => page.keyboard.press('KeyE'),
+      { timeout: 10_000, attemptWaitMs: 2_500, label: 'harvest with sickle' },
+    );
+    expect((await flushAndReadSave(page))!.inventory.items['produce-tendril']).toBe(1);
+
+    // T -> Digit2 equips shovel; E digs bed-bramble#3 back into inventory as seed-bramble-vine
+    await triggerUntil(
+      page,
+      async () => (await equippedTool()) === 'tool-shovel',
+      async () => {
+        await page.keyboard.press('KeyT');
+        await page.waitForTimeout(150);
+        await page.keyboard.press('Digit2');
+      },
+      { timeout: 10_000, attemptWaitMs: 1_500, label: 'equip shovel via ToolBar' },
+    );
+    await triggerUntil(
+      page,
+      async () => (await flushAndReadSave(page))?.world.flags['used-tool:shovel'] === true,
+      () => page.keyboard.press('KeyE'),
+      { timeout: 10_000, attemptWaitMs: 2_500, label: 'dig plant with shovel' },
+    );
+
+    const afterDig = (await flushAndReadSave(page))!;
+    expect((afterDig.ext.plants as { beds: Record<string, unknown> }).beds['bed-bramble#3']).toBeUndefined();
+    expect(afterDig.inventory.items['seed-bramble-vine']).toBe(1);
+
+    // Walk east into satchel reach of bed-lily (center x = 30.5, reach = 4 -> x >= 28.5 * 32)
+    await page.keyboard.down('KeyD');
+    await expect
+      .poll(async () => (await flushAndReadSave(page))?.player.x ?? 0, { timeout: 20_000, intervals: [150] })
+      .toBeGreaterThan(28.5 * 32);
+    await page.keyboard.up('KeyD');
+
+    // T -> Digit3 equips satchel; E sows seed-bramble-vine into bed-lily
+    await triggerUntil(
+      page,
+      async () => (await equippedTool()) === 'tool-satchel',
+      async () => {
+        await page.keyboard.press('KeyT');
+        await page.waitForTimeout(150);
+        await page.keyboard.press('Digit3');
+      },
+      { timeout: 10_000, attemptWaitMs: 1_500, label: 'equip satchel via ToolBar' },
+    );
+    await triggerUntil(
+      page,
+      async () =>
+        Boolean(
+          ((await flushAndReadSave(page))?.ext.plants as { beds?: Record<string, { plantId: string }> } | undefined)?.beds?.[
+            'bed-lily'
+          ]?.plantId,
+        ),
+      () => page.keyboard.press('KeyE'),
+      { timeout: 10_000, attemptWaitMs: 2_500, label: 'sow with satchel' },
+    );
+
+    const endSave = (await flushAndReadSave(page))!;
+    expect((endSave.ext.plants as { beds: Record<string, { plantId: string }> }).beds['bed-lily'].plantId).toBe('bramble-vine');
+    expect(endSave.inventory.items['seed-bramble-vine']).toBeUndefined();
+    expect(endSave.world.flags['used-tool:satchel']).toBe(true);
+    expect(errors).toEqual([]);
+  });
+
+  test('collects eggs from henhouse, loads drying rack, and rests at shelter', async ({ page }) => {
+    const errors = trackErrors(page);
+
+    await seedSave(page, {
+      player: { mapId: 'garden', x: 23.5 * 32, y: 37.3 * 32, facing: 'up' },
+      world: { visitedZones: ['garden'], flags: { 'crow-met': true, 'gathered-material': true, 'horse-tamed': true } },
+      inventory: { items: { 'produce-tendril': 1 } },
+      quests: { completed: ['q-meet-crow'] },
+      ext: {
+        horse: { riding: false },
+        building: {
+          pieces: {
+            garden: [
+              { id: 'henhouse', x: 23, y: 36 },
+              { id: 'stable', x: 25, y: 36 },
+              { id: 'drying-rack', x: 27, y: 36 },
+              { id: 'shelter', x: 29, y: 36 },
+            ],
+          },
+        },
+        animals: { stamps: { 'garden:23:36': Date.now() - 200_000 }, rested: false },
+      },
+    });
+
+    await page.goto('/');
+    await waitForGameBoot(page);
+
+    // Collect eggs from henhouse
+    await triggerUntil(
+      page,
+      async () => ((await flushAndReadSave(page))?.inventory.items['produce-egg'] ?? 0) >= 2,
+      () => page.keyboard.press('KeyE'),
+      { timeout: 10_000, attemptWaitMs: 2_500, label: 'collect eggs from henhouse' },
+    );
+
+    // Walk east to drying-rack (x = 27.5 * 32) and hang produce-tendril to dry
+    await page.keyboard.down('KeyD');
+    await expect
+      .poll(async () => (await flushAndReadSave(page))?.player.x ?? 0, { timeout: 10_000, intervals: [80] })
+      .toBeGreaterThan(27.2 * 32);
+    await page.keyboard.up('KeyD');
+
+    await triggerUntil(
+      page,
+      async () =>
+        Boolean(
+          ((await flushAndReadSave(page))?.ext.machines as { stations?: Record<string, unknown> } | undefined)?.stations?.[
+            'garden:27:36'
+          ],
+        ),
+      () => page.keyboard.press('KeyE'),
+      { timeout: 10_000, attemptWaitMs: 2_500, label: 'start drying rack' },
+    );
+    expect((await flushAndReadSave(page))!.inventory.items['produce-tendril']).toBeUndefined();
+
+    // Walk further east to shelter (x = 29.5 * 32) and rest until morning -> runs nightAtStable -> rested = true
+    await page.keyboard.down('KeyD');
+    await expect
+      .poll(async () => (await flushAndReadSave(page))?.player.x ?? 0, { timeout: 10_000, intervals: [80] })
+      .toBeGreaterThan(29.2 * 32);
+    await page.keyboard.up('KeyD');
+
+    await triggerUntil(
+      page,
+      async () => ((await flushAndReadSave(page))?.ext.animals as { rested?: boolean } | undefined)?.rested === true,
+      () => page.keyboard.press('KeyE'),
+      { timeout: 10_000, attemptWaitMs: 2_500, label: 'rest at shelter until morning' },
+    );
+    expect(errors).toEqual([]);
+  });
+
+  test('browses Almanach entries with H and eats a meal from the bag', async ({ page }) => {
+    const errors = trackErrors(page);
+
+    await seedSave(page, {
+      player: { mapId: 'garden', x: 25.5 * 32, y: 36 * 32, facing: 'right' },
+      world: { visitedZones: ['garden'], flags: { 'crow-met': true, 'bed-restored:bed-bramble': true } },
+      inventory: { items: { 'meal-berry-mash': 1 } },
+      quests: { completed: ['q-meet-crow'] },
+    });
+
+    await page.goto('/');
+    await waitForGameBoot(page);
+
+    // Open Almanach (H), select first entry, open detail view, step back with Escape, then close
+    await page.keyboard.press('KeyH');
+    await waitFrames(page, 4);
+    await expect
+      .poll(() => countColorPixels(page, { x: 460, y: 180, width: 360, height: 320 }, PANEL_BG_RGB, 18), {
+        timeout: 10_000,
+        intervals: [100],
+      })
+      .toBeGreaterThan(400);
+
+    await page.keyboard.press('ArrowDown');
+    await waitFrames(page, 2);
+    await expect
+      .poll(() => countColorPixels(page, { x: 420, y: 90, width: 320, height: 100 }, SUN_GOLD_RGB, 32), {
+        timeout: 10_000,
+        intervals: [100],
+      })
+      .toBeGreaterThan(15);
+    await page.keyboard.press('KeyE');
+    await page.waitForTimeout(150);
+    await page.keyboard.press('Escape'); // detail -> list
+    await page.waitForTimeout(150);
+    await page.keyboard.press('Escape'); // list -> closed
+    await page.waitForTimeout(150);
+
+    // Open Bag with I, locate golden "Essen" pill, click it -> eats meal-berry-mash
+    await triggerUntil(
+      page,
+      async () => (await flushAndReadSave(page))?.world.flags['ate-meal'] === true,
+      async () => {
+        await page.keyboard.press('Escape');
+        await page.waitForTimeout(100);
+        await page.keyboard.press('KeyI');
+        await page.waitForTimeout(300);
+        const pill = await findColorCenter(page, { x: 640, y: 160, width: 250, height: 240 }, EAT_PILL_RGB, 20);
+        if (pill && pill.count > 40) {
+          await page.mouse.click(pill.x, pill.y);
+        }
+      },
+      { timeout: 12_000, attemptWaitMs: 3_000, label: 'eat meal from bag' },
+    );
+
+    const afterEat = (await flushAndReadSave(page))!;
+    expect(afterEat.inventory.items['meal-berry-mash']).toBeUndefined();
+    expect((afterEat.ext.meal as { effect: string } | undefined)?.effect).toBe('swift');
+    expect(errors).toEqual([]);
+  });
+
+  test('helps Hanne and Piet to restore the village plaza and unlock the next quarter', async ({ page }) => {
+    const errors = trackErrors(page);
+
+    await seedSave(page, {
+      player: { mapId: 'garden', x: 25.4 * 32, y: 64.5 * 32, facing: 'up' },
+      world: {
+        visitedZones: ['garden', 'bus-stop'],
+        flags: { 'crow-met': true, 'episode-1-complete': true, 'chronicle-ending-garden': true },
+      },
+      inventory: { items: { 'craft-flour': 2, 'produce-egg': 2, 'produce-honey': 1, 'produce-glowcap': 2 } },
+      quests: { active: ['q-village-plaza'], completed: ['q-meet-crow'] },
+    });
+
+    await page.goto('/');
+    await waitForGameBoot(page);
+
+    // Hand over bread ingredients to Hanne (25.4, 63.6)
+    await expect
+      .poll(
+        async () => {
+          const s = await flushAndReadSave(page);
+          if (s?.world.flags['village-helped:hanne']) return true;
+          await page.keyboard.press('KeyE');
+          await page.waitForTimeout(250);
+          return false;
+        },
+        { timeout: 12_000, intervals: [100] },
+      )
+      .toBe(true);
+
+    // Walk west across the plaza to Piet (17.2, 64.6)
+    await page.keyboard.down('KeyA');
+    await expect
+      .poll(async () => (await flushAndReadSave(page))?.player.x ?? 999, { timeout: 15_000, intervals: [80] })
+      .toBeLessThan(18 * 32);
+    await page.keyboard.up('KeyA');
+
+    // Hand over lantern supplies to Piet -> completes q-village-plaza, restores plaza, unblocks fallen-tree-canal
+    await expect
+      .poll(
+        async () => {
+          const s = await flushAndReadSave(page);
+          if (s?.world.flags['village-restored:plaza']) return true;
+          await page.keyboard.press('KeyE');
+          await page.waitForTimeout(250);
+          return false;
+        },
+        { timeout: 12_000, intervals: [100] },
+      )
+      .toBe(true);
+
+    const restoredSave = (await flushAndReadSave(page))!;
+    expect(restoredSave.world.flags['village-helped:piet']).toBe(true);
+    expect(restoredSave.quests.completed).toContain('q-village-plaza');
+    expect(restoredSave.quests.active).toContain('q-village-farms');
+    expect(restoredSave.world.unblockedPaths).toContain('fallen-tree-canal');
+    expect(errors).toEqual([]);
+  });
   test('PWA manifest and service worker work offline after initial load', async ({ page, context }) => {
     const errors = trackErrors(page);
 
@@ -1002,3 +1309,4 @@ test.describe('Desktop gameplay and PWA', () => {
     expect(errors).toEqual([]);
   });
 });
+

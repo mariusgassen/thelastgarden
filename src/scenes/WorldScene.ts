@@ -269,6 +269,7 @@ export class WorldScene extends Phaser.Scene implements WorldApi {
     if (this.transitioning) return;
     getMap(mapId); // throws early on typos in map data
     this.transitioning = true;
+    this.interaction.clear();
     this.player.sprite.setVelocity(0, 0);
     this.cameras.main.fadeOut(250, 31, 46, 29);
     this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
