@@ -5,7 +5,7 @@ import { isHorseRested, RESTED_SPEED_FACTOR } from '../systems/animals';
 import { AnimalLayer } from '../systems/animalLayer';
 import { getMealSpeedFactor, isBlightproof } from '../systems/meals';
 import { BlightLayer } from '../systems/blightLayer';
-import { getBuildMode, isTileWalkable } from '../systems/building';
+import { CLEARED_TILE, getBuildMode, getClearedTiles, groundGrid, isTileWalkable } from '../systems/building';
 import { BuildLayer } from '../systems/buildLayer';
 import { bus } from '../systems/events';
 import { HORSE_FLAG, isRidingHere } from '../systems/horse';
@@ -24,10 +24,10 @@ import { QuestMarkerLayer } from '../systems/questMarkers';
 import { ResourceLayer } from '../systems/resources';
 import { AtmosphereLayer } from '../systems/atmosphere';
 import { gameState } from '../systems/state';
-import { DPR, isTouchDevice } from '../ui/viewport';
+import { DPR, isTouchDevice, prefersReducedMotion } from '../ui/viewport';
 import { getMap, MAPS, START_MAP_ID, type MapDef, type ZoneDef } from '../world';
 import { buildTileGrid, seededRandom, toFrameGrid } from '../world/grid';
-import { SOLID_FRAMES, TILE_SIZE, TILES, TILESET_MARGIN, TILESET_SPACING, type TileId } from '../world/tiles';
+import { SOLID_FRAMES, TILE_FRAME_START, TILE_SIZE, TILES, TILESET_MARGIN, TILESET_SPACING, type TileId } from '../world/tiles';
 import { SCENES } from './keys';
 
 export interface WorldSceneData {
@@ -64,6 +64,8 @@ export class WorldScene extends Phaser.Scene implements WorldApi {
   /** Static colliders (props, obstacles). Add your own solid bodies here. */
   solids!: Phaser.Physics.Arcade.StaticGroup;
   private marker!: Phaser.GameObjects.Image;
+  /** Decorative trees by the forest tile they stand on, so Roden can fell them. */
+  private trees = new Map<string, Phaser.GameObjects.Image>();
   private horse!: HorseFollower;
   private isWalkablePx: (x: number, y: number) => boolean = () => true;
   private flagProps: { image: Phaser.GameObjects.Image; showWhenFlag?: string; hideWhenFlag?: string; collider?: Phaser.GameObjects.Zone }[] = [];
@@ -87,7 +89,8 @@ export class WorldScene extends Phaser.Scene implements WorldApi {
     const widthPx = this.map.width * TILE_SIZE;
     const heightPx = this.map.height * TILE_SIZE;
 
-    const grid = buildTileGrid(this.map);
+    // The map's tiles with the forest the player has already cut back (systems/building.ts).
+    const grid = groundGrid(this.map.id) ?? buildTileGrid(this.map);
     this.isWalkablePx = (x: number, y: number): boolean => {
       if (x < 16 || x > widthPx - 16 || y < 32 || y > heightPx - 16) return false;
       // Map tiles plus whatever the player built: bridges open water, solid pieces close ground.
@@ -102,11 +105,21 @@ export class WorldScene extends Phaser.Scene implements WorldApi {
     const tileset = tilemap.addTilesetImage('tiles', 'tiles', TILE_SIZE, TILE_SIZE, TILESET_MARGIN, TILESET_SPACING)!;
     const ground = tilemap.createLayer(0, tileset, 0, 0)!;
     ground.setCollision(SOLID_FRAMES).setDepth(-10);
+    // Roden during play: turn the freed forest into grass and drop the trees that stood on it.
+    bus.onScene(this, 'build-changed', ({ mapId: changed }) => {
+      if (changed !== this.map.id) return;
+      for (const [x, y] of getClearedTiles(changed)) {
+        if (!ground.getTileAt(x, y)?.collides) continue;
+        ground.putTileAt(TILE_FRAME_START[CLEARED_TILE], x, y);
+        this.dropTreesAround(x, y);
+      }
+    });
 
     this.physics.world.setBounds(0, 0, widthPx, heightPx);
     this.cameras.main.setBackgroundColor(this.map.backgroundColor);
 
     this.solids = this.physics.add.staticGroup();
+    this.trees = new Map();
     this.decorate(grid);
     this.placeProps();
 
@@ -357,6 +370,18 @@ export class WorldScene extends Phaser.Scene implements WorldApi {
     }
   }
 
+  /** A cleared tile frees the canopies that reached over it: trees on the tile itself and up to two rows below, one column either side. */
+  private dropTreesAround(x: number, y: number): void {
+    for (let dy = 0; dy <= 2; dy++)
+      for (let dx = -1; dx <= 1; dx++) {
+        const k = `${x + dx},${y + dy}`;
+        const tree = this.trees.get(k);
+        if (!tree) continue;
+        this.trees.delete(k);
+        this.tweens.add({ targets: tree, alpha: 0, duration: prefersReducedMotion() ? 1 : 350, onComplete: () => tree.destroy() });
+      }
+  }
+
   /** Purely visual: trees along forest edges, flowers and tufts on grass. Deterministic per map. */
   private decorate(grid: TileId[][]): void {
     const deco = this.map.decorate;
@@ -377,12 +402,13 @@ export class WorldScene extends Phaser.Scene implements WorldApi {
           const edge = !solidAt(x, y + 1) || !solidAt(x - 1, y) || !solidAt(x + 1, y);
           if (canopyFree && ((edge && r < 0.6) || r < 0.05)) {
             const by = (y + 1) * TILE_SIZE + rnd() * 8;
-            this.add
+            const tree = this.add
               .image(cx + (rnd() - 0.5) * 14, by, rnd() < 0.5 ? 'tree' : 'tree-dark')
               .setOrigin(0.5, 1)
               .setScale(0.8 + rnd() * 0.35)
               .setFlipX(rnd() < 0.5)
               .setDepth(by);
+            this.trees.set(`${x},${y}`, tree);
           }
         } else if (deco.flowers && (tile === 'grass' || tile === 'wildGrass') && r < 0.09) {
           this.add

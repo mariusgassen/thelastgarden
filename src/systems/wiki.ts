@@ -117,8 +117,12 @@ function recipeEntry(recipe: RecipeDef): WikiEntry {
 }
 
 function buildableEntry(piece: BuildableDef): WikiEntry {
-  const lines = [piece.description, `Kosten: ${stack(piece.cost)}. Beim Abbauen bekommst du alles zurück.`];
-  lines.push(piece.on === 'water' ? 'Wird auf Wasser neben dem Ufer gebaut.' : 'Wird auf freiem Boden gebaut.');
+  const lines = [piece.description];
+  if (piece.on === 'forest') lines.push(`Kosten: ${stack(piece.cost)}. Der Wald wächst nicht zurück.`, 'Geht nur an Waldstücken, die an freien Boden grenzen.');
+  else {
+    lines.push(`Kosten: ${stack(piece.cost)}. Beim Abbauen bekommst du alles zurück.`);
+    lines.push(piece.on === 'water' ? 'Wird auf Wasser neben dem Ufer gebaut.' : 'Wird auf freiem Boden gebaut.');
+  }
   if (piece.wardRadius) lines.push(`Hält die Welke im Umkreis von ${piece.wardRadius} Feldern fern.`);
   if (piece.lightRadius) lines.push('Leuchtet nachts.');
   if (piece.planter) lines.push(`Hier wachsen bis zu ${piece.planter.cols * piece.planter.rows} Pflanzen nebeneinander.`);

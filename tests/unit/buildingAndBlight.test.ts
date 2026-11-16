@@ -12,6 +12,7 @@ import {
 } from '../../src/systems/blight';
 import {
   baseTileAt,
+  getClearedTiles,
   getPieceAt,
   getPieces,
   isBuildUnlocked,
@@ -35,6 +36,51 @@ const give = (items: Record<string, number>): void => {
 /** Open grass in the main garden, away from beds, props and the spawn. */
 const SPOT = { x: 22, y: 37 };
 const PLAZA_HEART = { x: 7, y: 62 };
+
+describe('Roden: cutting the forest back', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    gameState.reset();
+  });
+
+  it('frees a 3x3 patch at the edge for wood, and the new ground can be built on', () => {
+    give({ 'mat-wood': 4 });
+    expect(baseTileAt('garden', 30, 46)).toBe('forest');
+    expect(isTileWalkable('garden', 30, 46)).toBe(false);
+    expect(placePiece('garden', 'clearing', 30, 45)).toBeNull();
+    expect(gameState.getItemCount('mat-wood')).toBe(2);
+    expect(getClearedTiles('garden')).toHaveLength(6);
+    expect(isTileWalkable('garden', 30, 46)).toBe(true);
+    expect(baseTileAt('garden', 30, 46)).toBe('wildGrass');
+    expect(getPieces('garden')).toEqual([]); // no piece is left behind
+    expect(whyNotPlace('garden', 'fence', 30, 46)).toBeNull();
+    expect(whyNotPlace('garden', 'clearing', 30, 45)).toMatch(/schon freier Boden/);
+    // The next patch has to start at the new edge.
+    expect(whyNotPlace('garden', 'clearing', 30, 48)).toBeNull();
+    expect(whyNotPlace('garden', 'clearing', 30, 52)).toMatch(/Rand/);
+  });
+
+  it('refuses far inside the wood, outside the clearable slope, without wood, and out of reach', () => {
+    expect(whyNotPlace('garden', 'clearing', 30, 45)).toMatch(/fehlt noch: 2 Holz/);
+    give({ 'mat-wood': 2 });
+    expect(whyNotPlace('garden', 'clearing', 30, 45)).toBeNull();
+    expect(whyNotPlace('garden', 'clearing', 30, 55)).toMatch(/Rand/);
+    expect(whyNotPlace('garden', 'clearing', 0, 0)).toMatch(/nichts roden/);
+    expect(whyNotPlace('garden', 'clearing', 42, 40)).toMatch(/nichts roden/); // water
+    expect(whyNotPlace('garden', 'clearing', 30, 45, { x: 2 * TILE_SIZE, y: 30 * TILE_SIZE })).toMatch(/zu weit/);
+  });
+
+  it('survives a save round trip and old saves without cleared tiles', () => {
+    give({ 'mat-wood': 2 });
+    placePiece('garden', 'clearing', 30, 45);
+    const copy = parseSave(JSON.stringify(gameState.data));
+    gameState.data = copy!;
+    expect(isTileWalkable('garden', 30, 46)).toBe(true);
+    gameState.setExt('building', { pieces: {} });
+    expect(isTileWalkable('garden', 30, 46)).toBe(false);
+    expect(getClearedTiles('garden')).toEqual([]);
+  });
+});
 
 describe('free building', () => {
   beforeEach(() => {

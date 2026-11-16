@@ -266,6 +266,8 @@ export const GARDEN_MAP: MapDef = {
       itemId: 'journal-page-lavender',
     },
   ],
+  // The wooded slope south of the main garden: the player cuts it back with Roden to make room for more beds.
+  clearable: [{ x: 10, y: 45, w: 28, h: 13 }],
   // Where the blight grows from once Episode 1 is done (systems/blight.ts).
   blightHearts: [
     { id: 'heart-plaza', at: { x: 7, y: 62 }, reach: 6 },

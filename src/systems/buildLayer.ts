@@ -5,6 +5,7 @@ import type { MapDef } from '../world/types';
 import { restUntilMorning } from './blight';
 import {
   BUILD_REACH_TILES,
+  CLEAR_SIZE,
   getBuildMode,
   getPieceAt,
   getPieces,
@@ -148,12 +149,15 @@ export class BuildLayer {
       ? whyNotRemove(this.map.id, tile.x, tile.y, player)
       : whyNotPlace(this.map.id, mode.pieceId, tile.x, tile.y, player);
     const color = blocked ? NO_COLOR : existing ? PICK_COLOR : OK_COLOR;
+    // Roden works on a square: outline all of it.
+    const span = content.buildables.get(mode.pieceId).on === 'forest' ? CLEAR_SIZE : 1;
+    const corner = Math.floor(span / 2);
     this.outline
       .clear()
       .lineStyle(2, color, 0.95)
-      .strokeRect(tile.x * TILE_SIZE + 1, tile.y * TILE_SIZE + 1, TILE_SIZE - 2, TILE_SIZE - 2)
+      .strokeRect((tile.x - corner) * TILE_SIZE + 1, (tile.y - corner) * TILE_SIZE + 1, span * TILE_SIZE - 2, span * TILE_SIZE - 2)
       .setVisible(true);
-    if (existing) {
+    if (existing || span > 1) {
       this.ghost.setVisible(false);
       return;
     }

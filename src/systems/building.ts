@@ -12,6 +12,9 @@
  *   isTileWalkable(mapId, x, y)       map tiles plus bridges, minus solid pieces
  *   getBuildMode() / setBuildMode() / selectBuildPiece()   runtime only, emits `build-mode-changed`
  *   addPlacementBlocker(fn)           lets another system veto a tile (the blight does)
+ *
+ * Roden (`on: 'forest'`) is no piece: it moves tiles of the map's `clearable` forest into
+ * `ext.building.cleared` ({ [mapId]: "x,y"[] }), which every ground query below then treats as open grass.
  */
 import { content } from '../content';
 import type { BuildableDef } from '../content/types';
@@ -32,7 +35,14 @@ export interface PlacedPiece {
 
 interface BuildingExt {
   pieces: Record<string, PlacedPiece[]>;
+  /** Forest tiles cut back by the player, per map. Missing in older saves. */
+  cleared?: Record<string, string[]>;
 }
+
+/** What a cleared forest tile turns into. */
+export const CLEARED_TILE: TileId = 'wildGrass';
+/** Roden works on a square of this many tiles around the one the player picks. */
+export const CLEAR_SIZE = 3;
 
 /** Set by the first gathered raw material (systems/resources.ts); unlocks build mode. */
 export const BUILD_UNLOCK_FLAG = 'gathered-material';
@@ -51,6 +61,27 @@ export function isBuildUnlocked(): boolean {
 
 export function getPieces(mapId: string): PlacedPiece[] {
   return readState().pieces[mapId] ?? [];
+}
+
+const clearedCache = new Map<string, { src: string[]; set: Set<string> }>();
+
+function clearedSet(mapId: string): Set<string> {
+  const src = readState().cleared?.[mapId];
+  if (!src) return new Set();
+  const hit = clearedCache.get(mapId);
+  if (hit && hit.src === src && hit.set.size === src.length) return hit.set;
+  const set = new Set(src);
+  clearedCache.set(mapId, { src, set });
+  return set;
+}
+
+/** Tiles of `mapId` the player has cut free so far, as [x, y]. */
+export function getClearedTiles(mapId: string): [number, number][] {
+  return (readState().cleared?.[mapId] ?? []).map((k) => k.split(',').map(Number) as [number, number]);
+}
+
+export function isCleared(mapId: string, x: number, y: number): boolean {
+  return clearedSet(mapId).has(key(x, y));
 }
 
 export function getPieceAt(mapId: string, x: number, y: number): PlacedPiece | undefined {
@@ -123,9 +154,19 @@ export function isKeepClearTile(mapId: string, x: number, y: number): boolean {
   return mapInfo(mapId)?.keepClear.has(key(x, y)) ?? false;
 }
 
-/** The map's own tile at (x, y), ignoring anything built. */
+/** The ground at (x, y), ignoring anything built: the map's own tile, or grass where forest was cleared. */
 export function baseTileAt(mapId: string, x: number, y: number): TileId | undefined {
-  return mapInfo(mapId)?.grid[y]?.[x];
+  const tile = mapInfo(mapId)?.grid[y]?.[x];
+  return tile !== undefined && isCleared(mapId, x, y) ? CLEARED_TILE : tile;
+}
+
+/** The map's own tile with cleared forest applied, as a full grid (what the scene draws). */
+export function groundGrid(mapId: string): TileId[][] | undefined {
+  const info = mapInfo(mapId);
+  if (!info) return undefined;
+  const grid = info.grid.map((row) => [...row]);
+  for (const [x, y] of getClearedTiles(mapId)) if (grid[y]?.[x] !== undefined) grid[y][x] = CLEARED_TILE;
+  return grid;
 }
 
 function isOpenGround(mapId: string, x: number, y: number): boolean {
@@ -185,8 +226,9 @@ export function whyNotPlace(mapId: string, pieceId: string, x: number, y: number
   if (!def || !map || !info) return 'Das lässt sich nicht bauen.';
   if (map.indoor) return 'Drinnen ist kein Platz zum Bauen.';
   if (player && !inReach(x, y, player)) return 'Das ist zu weit weg.';
-  const tile = info.grid[y]?.[x];
+  const tile = baseTileAt(mapId, x, y);
   if (tile === undefined) return 'Hier ist die Karte zu Ende.';
+  if (def.on === 'forest') return whyNotClear(mapId, x, y) ?? missingCostReason(def);
   if (getPieceAt(mapId, x, y)) return 'Hier steht schon etwas.';
   if (def.on === 'water') {
     if (tile !== 'water') return 'Der Steg gehört aufs Wasser.';
@@ -210,9 +252,59 @@ export function whyNotPlace(mapId: string, pieceId: string, x: number, y: number
     const reason = blocker(mapId, x, y);
     if (reason) return reason;
   }
+  return missingCostReason(def);
+}
+
+function missingCostReason(def: BuildableDef): string | null {
   const missing = getMissingCost(def);
-  if (missing.length > 0) return `Dafür fehlt noch: ${itemList(missing)}.`;
-  return null;
+  return missing.length > 0 ? `Dafür fehlt noch: ${itemList(missing)}.` : null;
+}
+
+// ── Roden: cutting the forest back ───────────────────────────
+
+/** Forest the map lets the player cut back, and that is still standing. */
+export function isClearable(mapId: string, x: number, y: number): boolean {
+  const map = MAPS[mapId];
+  const raw = mapInfo(mapId)?.grid[y]?.[x];
+  if (!map || raw === undefined || raw !== 'forest' || isCleared(mapId, x, y)) return false;
+  return (map.clearable ?? []).some((r) => x >= r.x && x < r.x + r.w && y >= r.y && y < r.y + r.h);
+}
+
+/** The tiles Roden would free when the player picks (x, y): the 3×3 square's standing, clearable forest. */
+export function clearTilesAround(mapId: string, x: number, y: number): { x: number; y: number }[] {
+  const half = Math.floor(CLEAR_SIZE / 2);
+  const out: { x: number; y: number }[] = [];
+  for (let dy = -half; dy <= half; dy++)
+    for (let dx = -half; dx <= half; dx++) if (isClearable(mapId, x + dx, y + dy)) out.push({ x: x + dx, y: y + dy });
+  return out;
+}
+
+/** Why Roden cannot start on (x, y), or null. Cost is checked by the caller. */
+export function whyNotClear(mapId: string, x: number, y: number): string | null {
+  const tiles = clearTilesAround(mapId, x, y);
+  if (tiles.length === 0) {
+    const tile = baseTileAt(mapId, x, y);
+    if (tile !== undefined && !TILES[tile].solid) return 'Hier ist schon freier Boden.';
+    return 'Hier lässt sich nichts roden.';
+  }
+  // Start at the edge of the open ground: some tile of the patch must touch it.
+  const touchesOpen = tiles.some((t) =>
+    [
+      [1, 0],
+      [-1, 0],
+      [0, 1],
+      [0, -1],
+    ].some(([dx, dy]) => isOpenGround(mapId, t.x + dx, t.y + dy)),
+  );
+  return touchesOpen ? null : 'Fang am Rand der freien Fläche an.';
+}
+
+function clearForest(mapId: string, x: number, y: number): void {
+  const state = readState();
+  const cleared = state.cleared ?? {};
+  cleared[mapId] = [...(cleared[mapId] ?? []), ...clearTilesAround(mapId, x, y).map((t) => key(t.x, t.y))];
+  state.cleared = cleared;
+  gameState.setExt('building', state);
 }
 
 function writePieces(mapId: string, pieces: PlacedPiece[]): void {
@@ -228,8 +320,11 @@ export function placePiece(mapId: string, pieceId: string, x: number, y: number,
   if (reason) return reason;
   const def = content.buildables.get(pieceId);
   for (const c of def.cost) gameState.removeItem(c.itemId, c.count);
-  writePieces(mapId, [...getPieces(mapId), { id: pieceId, x, y }]);
-  gameState.setFlag('built-once');
+  if (def.on === 'forest') clearForest(mapId, x, y);
+  else {
+    writePieces(mapId, [...getPieces(mapId), { id: pieceId, x, y }]);
+    gameState.setFlag('built-once');
+  }
   gameState.setFlag(`built:${pieceId}`);
   gameState.save();
   bus.emit('build-changed', { mapId });

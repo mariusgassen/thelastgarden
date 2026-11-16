@@ -411,6 +411,7 @@ push back a grey wilt that creeps in at night. No money, no chores, no fail stat
   | Zaun | 1 Holz | wall; the blight never grows through a piece |
   | Hecke | 1 Holz, 1 Brombeertrieb | wall, wards 1.5 tiles |
   | Laterne | 1 Schrott, 1 Lichtpollen | wards 2.5 tiles, lights the night veil |
+  | Roden (`on: 'forest'`) | 2 Holz | not a piece: frees a 3×3 patch of the map's `clearable` forest (garden: the slope south of the main garden, `x 10..37, y 45..57`); the patch must touch open ground, and the forest does not grow back |
   | Beet (`planter`) | 2 Holz, 1 Feldstein | a planting bed with 2×2 plant slots; a mature plant in it wards like any bed |
   | Steg | 2 Holz | on water next to the bank or another plank; makes it walkable |
   | Unterstand | 4 Holz, 2 Feldstein, 1 Schrott | wards 3.5 tiles; *Rasten* skips to 07:00 |
@@ -418,6 +419,11 @@ push back a grey wilt that creeps in at night. No money, no chores, no fail stat
   | Flechtzaun | 2 Weidenrute | wall, wards 1 tile |
   | Schilfsteg | 2 Schilfbündel | like the Steg |
 
+- **Roden.** Cut tiles live in `ext.building.cleared` (`{ [mapId]: "x,y"[] }`; absent in older saves).
+  `baseTileAt`, `isTileWalkable`, `whyNotPlace` and `groundGrid` all see a cleared tile as `wildGrass`, so
+  beds, pieces, NPCs, animals and the blight treat it like any grass. `WorldScene` draws `groundGrid`
+  on load and, on `build-changed`, swaps the frames and fells the decorative trees that reached over them.
+  To open more forest, add `clearable` rects to a `MapDef`.
 - **System.** `systems/building.ts` (no Phaser): `whyNotPlace` / `placePiece` / `removePiece`
   (full refund; a planter also returns its seed), `isTileWalkable`, `getPieces`, and the
   runtime-only build mode (`getBuildMode`, `setBuildMode`, `selectBuildPiece`, emits
