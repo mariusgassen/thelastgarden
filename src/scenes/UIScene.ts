@@ -10,16 +10,19 @@ import { eatMeal } from '../systems/meals';
 import { gameState } from '../systems/state';
 import { hasTravelMap, travelTo } from '../systems/travel';
 import {
+  AUTO_TOOL,
   DESELECT_TOOL,
   cycleSeed,
   equipTool,
   getEquippedTool,
+  getLastToolId,
   getOwnedTools,
   getSowableSpecies,
   getToolMode,
   isAutoTool,
   isToolActing,
   peekTool,
+  reEquipLastTool,
   setSowSeed,
   setToolMode,
 } from '../systems/tools';
@@ -195,8 +198,14 @@ export class UIScene extends Phaser.Scene {
     this.buildButton = new HudButton(this, drawHammerIcon, touch ? undefined : 'B');
     this.toolButton = new HudButton(
       this,
-      (g, color) =>
-        isAutoTool() ? drawAutoIcon(g, color) : drawToolIcon(g, color, (getEquippedTool() ?? getOwnedTools()[0])?.kind ?? 'sickle'),
+      (g, color) => {
+        const shownId = (isAutoTool() ? AUTO_TOOL : getEquippedTool()?.id) ?? getLastToolId();
+        if (shownId === AUTO_TOOL) drawAutoIcon(g, color);
+        else {
+          const kind = (shownId ? content.tools.find(shownId)?.kind : undefined) ?? getOwnedTools()[0]?.kind ?? 'sickle';
+          drawToolIcon(g, color, kind);
+        }
+      },
       touch ? undefined : 'T',
     );
     this.buildBar = new BuildBar(this, touch);
@@ -784,7 +793,7 @@ export class UIScene extends Phaser.Scene {
         else if (!this.toolButton.contains(p.x, p.y)) setToolMode(false);
       } else if (getEquippedTool() || isAutoTool()) {
         equipTool(null);
-      } else {
+      } else if (!reEquipLastTool()) {
         setToolMode(true);
       }
       return;

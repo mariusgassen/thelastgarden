@@ -35,6 +35,8 @@ import { gameState } from './state';
 
 interface ToolsExt {
   equipped?: string;
+  /** Most recently equipped tool id (or `auto`), remembered when unequipped so a single tap restores it. */
+  lastEquipped?: string;
   /** Plant id of the seed the satchel sows. */
   seed?: string;
   /** Legacy field from older saves where shovel held a plant instead of returning its seed. */
@@ -128,17 +130,36 @@ export function isToolActing(): boolean {
   return isAutoTool() || (tool !== undefined && tool.kind !== 'light');
 }
 
-/** Puts a tool in hand (`null` = hands free). The lantern needs no tool mode: it just shines. */
+/** Puts a tool in hand (`null` = hands free, while remembering `lastEquipped`). The lantern needs no tool mode: it just shines. */
 export function equipTool(toolId: string | null): boolean {
   if (toolId === AUTO_TOOL ? !canUseAutoTool() : toolId !== null && !getOwnedTools().some((t) => t.id === toolId)) return false;
   const state = readState();
-  if (toolId === null) delete state.equipped;
-  else state.equipped = toolId;
+  if (toolId === null) {
+    if (state.equipped) state.lastEquipped = state.equipped;
+    delete state.equipped;
+  } else {
+    state.equipped = toolId;
+    state.lastEquipped = toolId;
+  }
   writeState(state);
   if (toolId !== null && toolId !== AUTO_TOOL && content.tools.get(toolId).kind === 'light') mode.open = false;
   gameState.save();
   announce();
   return true;
+}
+
+/** Most recently equipped tool id (or `auto`) if it is still usable right now. */
+export function getLastToolId(): string | undefined {
+  const last = readState().lastEquipped;
+  if (!last) return undefined;
+  if (last === AUTO_TOOL) return canUseAutoTool() ? last : undefined;
+  return getOwnedTools().some((t) => t.id === last) ? last : undefined;
+}
+
+/** Re-equips the most recently used tool when none is currently in hand. */
+export function reEquipLastTool(): boolean {
+  const last = getLastToolId();
+  return last ? equipTool(last) : false;
 }
 
 bus.on('build-mode-changed', ({ active }) => {
@@ -153,11 +174,18 @@ bus.on('save-loaded', () => {
 });
 bus.on('inventory-changed', () => {
   const state = readState();
-  const gone = state.equipped === AUTO_TOOL ? !canUseAutoTool() : state.equipped && gameState.getItemCount(state.equipped) === 0;
-  if (state.equipped && gone) {
+  const isGone = (id: string | undefined) =>
+    id === AUTO_TOOL ? !canUseAutoTool() : id !== undefined && gameState.getItemCount(id) === 0;
+  let dirty = false;
+  if (state.equipped && isGone(state.equipped)) {
     delete state.equipped;
-    writeState(state);
+    dirty = true;
   }
+  if (state.lastEquipped && isGone(state.lastEquipped)) {
+    delete state.lastEquipped;
+    dirty = true;
+  }
+  if (dirty) writeState(state);
   if (mode.open && getOwnedTools().length === 0) mode.open = false;
 });
 // The first tool made goes straight into the hand.

@@ -494,8 +494,9 @@ Four craftable tools make the garden work easier. None is used up, nothing is so
 - **Tool selection and active use.** The tool button (**T**) sits lowest in the right HUD column
   (above `ContextButton`, below build/horse) and never jumps when opening `ui/ToolBar.ts`: `ToolBar`
   opens as a parallel vertical column to the left of the HUD buttons, animated smoothly out of the
-  tool button (`positionNear` / `setVisible`). Quick-tapping the tool button opens the picker when
-  empty-handed or puts the equipped tool away when one is in hand; pressing and holding (or dragging)
+  tool button (`positionNear` / `setVisible`). Quick-tapping the tool button puts the equipped tool
+  away, re-equips the last used tool (`reEquipLastTool` / `getLastToolId`) when hands are empty, or
+  opens the picker if no tool was used yet; pressing and holding (or dragging)
   opens the picker, highlights the hovered slot (`setPreview` / `slotAt`) with a left-side label pill,
   and selects + closes on release. Picking any slot (1–6 or tap, where slot 5 is **Gärtnerhand**
   `AUTO_TOOL` and slot 6 is **Ablegen** `DESELECT_TOOL`) closes the picker cleanly (`Esc` closes the

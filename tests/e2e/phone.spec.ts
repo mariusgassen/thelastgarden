@@ -447,9 +447,11 @@ test.describe('Phone touch controls', () => {
       )
       .toBe(2);
 
-    // 4. Quick-tapping toolButton (stays lowest at 345, 687 even though buildButton unlocked above it) deselects tool
+    // 4. Quick-tapping toolButton (stays lowest at 345, 687) deselects tool, and tapping once again re-equips the last tool
     await page.touchscreen.tap(345, 687);
     await expect.poll(equipped, { timeout: 6_000, intervals: [100] }).toBeNull();
+    await page.touchscreen.tap(345, 687);
+    await expect.poll(equipped, { timeout: 6_000, intervals: [100] }).toBe('tool-sickle');
 
     // 5. Select specific seeds directly from the seed strip beside Saatbeutel (y=516): lavender (212, 516) then glow-lily (167, 516)
     await page.mouse.move(345, 687);
