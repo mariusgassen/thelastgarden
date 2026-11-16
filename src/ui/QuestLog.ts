@@ -31,7 +31,6 @@ export class QuestLog {
   private readonly panelTitle: Phaser.GameObjects.Text;
   private readonly closeText: Phaser.GameObjects.Text;
   private readonly list: Phaser.GameObjects.Container;
-  private readonly listMask: Phaser.GameObjects.Graphics;
   private panelW = 320;
   private panelH = 200;
   private listTop = 0;
@@ -88,12 +87,6 @@ export class QuestLog {
       .text(0, PAD - 6, '×', { fontFamily: THEME.font, fontSize: '28px', color: THEME.creamCss })
       .setOrigin(1, 0);
     this.list = scene.add.container(0, 0);
-    this.listMask = scene.add.graphics().setVisible(false);
-    if (scene.renderer.type === Phaser.WEBGL) {
-      this.list.enableFilters().filters?.external.addMask(this.listMask);
-    } else {
-      this.list.setMask(this.listMask.createGeometryMask());
-    }
     this.panel = scene.add
       .container(0, 0, [this.panelBg, this.panelTitle, this.closeText, this.list])
       .setDepth(96_000)
@@ -282,13 +275,24 @@ export class QuestLog {
     this.panelBg.lineBetween(PAD, this.listTop - 8, this.panelW - PAD, this.listTop - 8);
     this.closeText.setX(this.panelW - PAD + 6);
     this.list.setPosition(PAD, this.listTop);
-    this.listMask.clear();
-    this.listMask.fillStyle(0xffffff);
-    this.listMask.fillRect(this.panel.x, this.panel.y + this.listTop, this.panelW, this.listViewH);
     this.applyScroll();
   }
 
   private applyScroll(): void {
     this.list.setY(this.listTop - this.scrollY);
+    const clipTop = this.scrollY;
+    const clipBottom = this.scrollY + this.listViewH;
+    for (const child of this.list.list) {
+      const item = child as Phaser.GameObjects.Text;
+      const top = Math.max(0, clipTop - item.y);
+      const bottom = Math.min(item.height, clipBottom - item.y);
+      if (bottom <= top) {
+        item.setVisible(false);
+      } else {
+        item.setVisible(true);
+        if (top <= 0 && bottom >= item.height) item.setCrop();
+        else item.setCrop(0, top, item.width, bottom - top);
+      }
+    }
   }
 }
