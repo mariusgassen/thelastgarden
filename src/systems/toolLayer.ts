@@ -93,9 +93,9 @@ export class ToolLayer {
 
   private use(): void {
     const p = this.getPlayer();
-    const kind = getEquippedTool()?.kind;
     const result = useTool(this.mapId, { x: p.x, y: p.y });
     bus.emit('toast', { text: result.text });
+    const kind = result.used;
     if (!result.ok || !kind) return;
     for (const spot of result.spots) this.puff(spot.x, spot.y, SPOT_COLORS[kind]);
     if (kind === 'sickle') this.swoosh(p);

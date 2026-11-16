@@ -482,7 +482,12 @@ Four craftable tools make the garden work easier. None is used up, nothing is so
 - **Tool mode.** The tool button (**T**) opens `ui/ToolBar.ts` (tap a slot or 1–4; tools not made
   yet stay dim; picking the satchel again switches the seed). While it is open with a sickle,
   spade or satchel in hand, E and any tap use the tool around the player instead of
-  interacting, like build mode, and the two modes close each other. The lantern needs no mode:
+  interacting, like build mode, and the two modes close each other. A fifth slot, the
+  **Gärtnerhand** (`AUTO_TOOL`, equipped as `ext.tools.equipped = 'auto'`, the default when the
+  mode opens with nothing in hand), picks per spot: sets down a carried plant, else harvests,
+  else sows. While the bar is open the big round action button shows the tool in hand as an icon
+  and uses it, so touch needs no world tap; on touch the bar has bigger slots and only the
+  name, and the satchel slot carries the seed it sows as a small badge. The lantern needs no mode:
   picking it closes the bar and it just shines.
 - **World.** `systems/toolLayer.ts` (`ToolLayer`): the lantern on its pole beside the player, puffs
   where a tool worked, a sickle sweep, and the blight push-back every 250 ms. `AtmosphereLayer`

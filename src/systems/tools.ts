@@ -16,7 +16,7 @@
  *   getSowSeed() / cycleSeed() / getCarriedPlant() / describeTool(id)
  */
 import { content } from '../content';
-import type { ToolDef } from '../content/types';
+import type { ToolDef, ToolKind } from '../content/types';
 import { allPlantingBeds } from '../world';
 import { TILE_SIZE } from '../world/tiles';
 import { setBuildMode } from './building';
@@ -42,6 +42,8 @@ interface ToolsExt {
 export interface ToolResult {
   ok: boolean;
   text: string;
+  /** Which tool did the work (for the effects); matters when the all-round hand picked one. */
+  used?: ToolKind;
   /** Where something happened, in px (the plant's base), for the scene's puffs. */
   spots: { x: number; y: number }[];
 }
@@ -59,6 +61,24 @@ const itemName = (itemId: string): string => content.items.get(itemId).name;
 /** Tools the player carries, in the order of content/tools.ts. */
 export function getOwnedTools(): ToolDef[] {
   return content.tools.all().filter((t) => gameState.getItemCount(t.id) > 0);
+}
+
+/** Pseudo tool id of the all-round hand: it picks sickle, satchel or spade by what the spot needs. */
+export const AUTO_TOOL = 'auto';
+
+/** Tools that work on beds (everything but the lantern). */
+function getWorkTools(): ToolDef[] {
+  return getOwnedTools().filter((t) => t.kind !== 'light');
+}
+
+/** True while the all-round hand is the pick (and there is a tool for it to use). */
+export function isAutoTool(): boolean {
+  return readState().equipped === AUTO_TOOL && getWorkTools().length > 0;
+}
+
+/** Whether the all-round hand can be offered: it needs at least one tool that works on beds. */
+export function canUseAutoTool(): boolean {
+  return getWorkTools().length > 0;
 }
 
 export function getEquippedTool(): ToolDef | undefined {
@@ -82,24 +102,28 @@ export function setToolMode(open: boolean): void {
   if (open && getOwnedTools().length === 0) return;
   if (mode.open === open) return;
   mode.open = open;
-  if (open) setBuildMode(false);
+  if (open) {
+    setBuildMode(false);
+    // Nothing in hand yet: start with the hand that picks the right tool by itself.
+    if (!readState().equipped && canUseAutoTool()) equipTool(AUTO_TOOL);
+  }
   announce();
 }
 
 /** While the tool bar is open and a tool that works on the world is in hand, E and taps use it instead of interacting. */
 export function isToolActing(): boolean {
   const tool = getEquippedTool();
-  return mode.open && tool !== undefined && tool.kind !== 'light';
+  return mode.open && (isAutoTool() || (tool !== undefined && tool.kind !== 'light'));
 }
 
 /** Puts a tool in hand (`null` = hands free). The lantern needs no tool mode: it just shines. */
 export function equipTool(toolId: string | null): boolean {
-  if (toolId !== null && !getOwnedTools().some((t) => t.id === toolId)) return false;
+  if (toolId === AUTO_TOOL ? !canUseAutoTool() : toolId !== null && !getOwnedTools().some((t) => t.id === toolId)) return false;
   const state = readState();
   if (toolId === null) delete state.equipped;
   else state.equipped = toolId;
   writeState(state);
-  if (toolId !== null && content.tools.get(toolId).kind === 'light') mode.open = false;
+  if (toolId !== null && toolId !== AUTO_TOOL && content.tools.get(toolId).kind === 'light') mode.open = false;
   gameState.save();
   announce();
   return true;
@@ -116,7 +140,8 @@ bus.on('save-loaded', () => {
 });
 bus.on('inventory-changed', () => {
   const state = readState();
-  if (state.equipped && gameState.getItemCount(state.equipped) === 0) {
+  const gone = state.equipped === AUTO_TOOL ? !canUseAutoTool() : state.equipped && gameState.getItemCount(state.equipped) === 0;
+  if (state.equipped && gone) {
     delete state.equipped;
     writeState(state);
   }
@@ -163,6 +188,9 @@ export function getCarriedPlant(): UprootedPlant | undefined {
 }
 
 export function describeTool(toolId: string): { title: string; hint: string } {
+  if (toolId === AUTO_TOOL) {
+    return { title: 'Gärtnerhand', hint: 'Erntet, sät oder setzt ein: je nachdem, was hier gerade passt.' };
+  }
   const tool = content.tools.get(toolId);
   const name = itemName(tool.id);
   if (tool.kind === 'satchel') {
@@ -223,7 +251,7 @@ function useSickle(tool: ToolDef, mapId: string, at: { x: number; y: number }): 
     return fail(beds.some((b) => isBedPlanted(b.bedId)) ? 'Hier ist noch nichts reif.' : 'Hier gibt es nichts zu ernten.');
   }
   gameState.setFlag('used-tool:sickle');
-  return { ok: true, text: `+${[...gained].map(([id, n]) => `${n} ${itemName(id)}`).join(', ')}`, spots };
+  return { ok: true, used: 'sickle', text: `+${[...gained].map(([id, n]) => `${n} ${itemName(id)}`).join(', ')}`, spots };
 }
 
 function useShovel(tool: ToolDef, mapId: string, at: { x: number; y: number }): ToolResult {
@@ -238,7 +266,7 @@ function useShovel(tool: ToolDef, mapId: string, at: { x: number; y: number }): 
     writeState(state);
     gameState.setFlag('used-tool:shovel');
     announce();
-    return { ok: true, text: `${content.plants.get(plant.plantId).name} ausgegraben. Setze sie in ein freies Beet.`, spots: [bed] };
+    return { ok: true, used: 'shovel', text: `${content.plants.get(plant.plantId).name} ausgegraben. Setze sie in ein freies Beet.`, spots: [bed] };
   }
   const name = content.plants.get(carried.plantId).name;
   const open = beds.filter((b) => !isBedPlanted(b.bedId));
@@ -252,7 +280,7 @@ function useShovel(tool: ToolDef, mapId: string, at: { x: number; y: number }): 
   gameState.setFlag('used-tool:shovel');
   gameState.save();
   announce();
-  return { ok: true, text: `${name} eingesetzt. Sie wächst dort weiter.`, spots: [bed] };
+  return { ok: true, used: 'shovel', text: `${name} eingesetzt. Sie wächst dort weiter.`, spots: [bed] };
 }
 
 function useSatchel(tool: ToolDef, mapId: string, at: { x: number; y: number }): ToolResult {
@@ -271,11 +299,31 @@ function useSatchel(tool: ToolDef, mapId: string, at: { x: number; y: number }):
   if (spots.length === 0) return fail('Der Saatbeutel ist leer. Du brauchst Samen.');
   gameState.setFlag('used-tool:satchel');
   announce();
-  return { ok: true, text: `${name} gesät: ${spots.length} ${spots.length === 1 ? 'Beet' : 'Beete'}.`, spots };
+  return { ok: true, used: 'satchel', text: `${name} gesät: ${spots.length} ${spots.length === 1 ? 'Beet' : 'Beete'}.`, spots };
+}
+
+/** The all-round hand: sets down a carried plant, else harvests what is ripe, else sows. */
+function useAuto(mapId: string, at: { x: number; y: number }): ToolResult {
+  const owned = getOwnedTools();
+  const find = (kind: ToolKind) => owned.find((t) => t.kind === kind);
+  const shovel = find('shovel');
+  if (shovel && getCarriedPlant()) return useShovel(shovel, mapId, at);
+  const sickle = find('sickle');
+  if (sickle) {
+    const done = useSickle(sickle, mapId, at);
+    if (done.ok) return done;
+  }
+  const satchel = find('satchel');
+  if (satchel && getSowSeed()) {
+    const done = useSatchel(satchel, mapId, at);
+    if (done.ok) return done;
+  }
+  return fail('Hier gibt es gerade nichts zu tun.');
 }
 
 /** Works the beds around `at` (px) with the tool in hand. Never costs the tool anything. */
 export function useTool(mapId: string, at: { x: number; y: number }): ToolResult {
+  if (isAutoTool()) return useAuto(mapId, at);
   const tool = getEquippedTool();
   if (!tool) return fail('Du hast kein Werkzeug in der Hand.');
   switch (tool.kind) {
