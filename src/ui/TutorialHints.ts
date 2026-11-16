@@ -96,8 +96,8 @@ export class TutorialHints {
         this.enqueue({
           id: 'tools',
           text: touch
-            ? 'Ein Werkzeug! Der Knopf unten rechts öffnet die Werkzeugleiste: Werkzeug wählen, dann irgendwo antippen, um es zu benutzen.'
-            : 'Ein Werkzeug! Taste T oder der Knopf unten rechts öffnet die Werkzeugleiste: Werkzeug wählen, dann E oder Klick, um es zu benutzen.',
+            ? 'Ein Werkzeug! Halte den Knopf unten rechts und ziehe auf ein Werkzeug (oder tippe ihn zum Auswählen und wieder Ablegen). Der große Knopf benutzt es.'
+            : 'Ein Werkzeug! Taste T oder der Knopf unten rechts wählt es; der Aktionsknopf oder E benutzt es, Esc oder nochmal Tippen legt es weg.',
           ttlMs: 14_000,
         });
       } else if (itemId === 'pocket-workbench') {

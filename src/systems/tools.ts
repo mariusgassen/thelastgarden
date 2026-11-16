@@ -19,7 +19,8 @@ import { content } from '../content';
 import type { ToolDef, ToolKind } from '../content/types';
 import { allPlantingBeds } from '../world';
 import { TILE_SIZE } from '../world/tiles';
-import { setBuildMode } from './building';
+import { collectProduce, getHomes, readyProduce, type Home } from './animals';
+import { getBuildMode, setBuildMode } from './building';
 import { bus } from './events';
 import {
   bedAccepts,
@@ -31,6 +32,7 @@ import {
   uprootBed,
   type UprootedPlant,
 } from './plants';
+import { collectNode, getResourceNodes, isNodeAvailable, isNodeBlighted, type ResourceNodeWithMap } from './resources';
 import { gameState } from './state';
 
 interface ToolsExt {
@@ -66,6 +68,8 @@ export function getOwnedTools(): ToolDef[] {
 
 /** Pseudo tool id of the all-round hand: it picks sickle, satchel or spade by what the spot needs. */
 export const AUTO_TOOL = 'auto';
+/** Pseudo tool id of the deselect slot in the tool picker. */
+export const DESELECT_TOOL = 'none';
 
 /** Tools that work on beds (everything but the lantern). */
 function getWorkTools(): ToolDef[] {
@@ -103,18 +107,15 @@ export function setToolMode(open: boolean): void {
   if (open && getOwnedTools().length === 0) return;
   if (mode.open === open) return;
   mode.open = open;
-  if (open) {
-    setBuildMode(false);
-    // Nothing in hand yet: start with the hand that picks the right tool by itself.
-    if (!readState().equipped && canUseAutoTool()) equipTool(AUTO_TOOL);
-  }
+  if (open) setBuildMode(false);
   announce();
 }
 
-/** While the tool bar is open and a tool that works on the world is in hand, E and taps use it instead of interacting. */
+/** While a tool that works on the world is in hand (and build mode is off), E, taps and the action button use it instead of interacting. */
 export function isToolActing(): boolean {
+  if (getBuildMode().active) return false;
   const tool = getEquippedTool();
-  return mode.open && (isAutoTool() || (tool !== undefined && tool.kind !== 'light'));
+  return isAutoTool() || (tool !== undefined && tool.kind !== 'light');
 }
 
 /** Puts a tool in hand (`null` = hands free). The lantern needs no tool mode: it just shines. */
@@ -189,8 +190,11 @@ export function getCarriedPlant(): UprootedPlant | undefined {
 }
 
 export function describeTool(toolId: string): { title: string; hint: string } {
+  if (toolId === DESELECT_TOOL) {
+    return { title: 'Ablegen', hint: 'Legt das Werkzeug weg, damit E und der Knopf wieder normal wirken.' };
+  }
   if (toolId === AUTO_TOOL) {
-    return { title: 'Gärtnerhand', hint: 'Wählt selbst: Reifes ernten, freie Beete säen, eine getragene Pflanze einsetzen. Ausgraben geht nur mit dem Spaten.' };
+    return { title: 'Gärtnerhand', hint: 'Wählt selbst: Reifes und Funde einsammeln, freie Beete säen, eine getragene Pflanze einsetzen. Ausgraben geht nur mit dem Spaten.' };
   }
   const tool = content.tools.get(toolId);
   const name = itemName(tool.id);
@@ -236,10 +240,51 @@ function bedsNear(mapId: string, at: { x: number; y: number }, reachTiles: numbe
     .sort((a, b) => a.dist - b.dist);
 }
 
+interface NodeSpot {
+  node: ResourceNodeWithMap;
+  x: number;
+  y: number;
+  dist: number;
+}
+
+/** Available, unblighted pickups of a map within `reachTiles` of a point (px), nearest first. */
+function nodesNear(mapId: string, at: { x: number; y: number }, reachTiles: number): NodeSpot[] {
+  return getResourceNodes(mapId)
+    .filter((n) => isNodeAvailable(n) && !isNodeBlighted(n))
+    .map((node) => {
+      const x = node.at.x * TILE_SIZE;
+      const y = node.at.y * TILE_SIZE;
+      return { node, x, y, dist: Math.hypot(x - at.x, y - at.y) / TILE_SIZE };
+    })
+    .filter((n) => n.dist <= reachTiles)
+    .sort((a, b) => a.dist - b.dist);
+}
+
+interface HomeSpot {
+  home: Home;
+  x: number;
+  y: number;
+  dist: number;
+}
+
+/** Animal homes with produce (hens, bees) within `reachTiles` of a point (px), nearest first. */
+function homesNear(mapId: string, at: { x: number; y: number }, reachTiles: number): HomeSpot[] {
+  return getHomes()
+    .filter((h) => h.mapId === mapId && (h.animal === 'hens' || h.animal === 'bees'))
+    .map((home) => {
+      const x = (home.x + 0.5) * TILE_SIZE;
+      const y = (home.y + 1) * TILE_SIZE - 14;
+      return { home, x, y, dist: Math.hypot(x - at.x, y - at.y) / TILE_SIZE };
+    })
+    .filter((h) => h.dist <= reachTiles)
+    .sort((a, b) => a.dist - b.dist);
+}
+
 const fail = (text: string): ToolResult => ({ ok: false, text, spots: [] });
 
 function useSickle(tool: ToolDef, mapId: string, at: { x: number; y: number }): ToolResult {
-  const beds = bedsNear(mapId, at, tool.reachTiles as number);
+  const reach = tool.reachTiles as number;
+  const beds = bedsNear(mapId, at, reach);
   const gained = new Map<string, number>();
   const spots: ToolResult['spots'] = [];
   for (const bed of beds) {
@@ -247,6 +292,17 @@ function useSickle(tool: ToolDef, mapId: string, at: { x: number; y: number }): 
     if (!got) continue;
     spots.push({ x: bed.x, y: bed.y });
     for (const id of [got.itemId, got.seedItemId]) if (id) gained.set(id, (gained.get(id) ?? 0) + 1);
+  }
+  for (const entry of nodesNear(mapId, at, reach)) {
+    if (!collectNode(entry.node.id)) continue;
+    spots.push({ x: entry.x, y: entry.y });
+    gained.set(entry.node.itemId, (gained.get(entry.node.itemId) ?? 0) + (entry.node.count ?? 1));
+  }
+  for (const entry of homesNear(mapId, at, reach)) {
+    const got = collectProduce(entry.home);
+    if (!got) continue;
+    spots.push({ x: entry.x, y: entry.y });
+    gained.set(got.itemId, (gained.get(got.itemId) ?? 0) + got.count);
   }
   if (spots.length === 0) {
     return fail(beds.some((b) => isBedPlanted(b.bedId)) ? 'Hier ist noch nichts reif.' : 'Hier gibt es nichts zu ernten.');
@@ -352,7 +408,15 @@ export function peekTool(mapId: string, at: { x: number; y: number }): ToolKind 
   if (shovel && may('shovel')) {
     if (carried ? canPlace(shovel, mapId, at) : !auto && bedsNear(mapId, at, reachOf(shovel)).some((b) => isBedPlanted(b.bedId))) return 'shovel';
   }
-  if (sickle && may('sickle') && bedsNear(mapId, at, reachOf(sickle)).some((b) => isProduceReady(b.bedId))) return 'sickle';
+  if (
+    sickle &&
+    may('sickle') &&
+    (bedsNear(mapId, at, reachOf(sickle)).some((b) => isProduceReady(b.bedId)) ||
+      nodesNear(mapId, at, reachOf(sickle)).length > 0 ||
+      homesNear(mapId, at, reachOf(sickle)).some((h) => (readyProduce(h.home)?.count ?? 0) > 0))
+  ) {
+    return 'sickle';
+  }
   const seed = getSowSeed();
   if (
     satchel &&
