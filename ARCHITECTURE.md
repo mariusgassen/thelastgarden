@@ -444,6 +444,46 @@ push back a grey wilt that creeps in at night. No money, no chores, no fail stat
 - **New outdoor map?** Optionally add `blightHearts`; a unit test checks hearts sit on open
   ground, away from spawns and beds.
 
+## Tools and gadgets
+
+Four craftable tools make the garden work easier. None is used up, nothing is sold.
+
+- **Tools.** `content/tools.ts` → `content.tools` (`ToolDef { id, kind, hint, reachTiles?,
+  lightRadius?, pushBackTiles? }`, `id` = the item id). Each is an ordinary non-stackable
+  `category: 'tool'` item with a workbench recipe, unlocked by playing instead of by a journal page:
+
+  | Tool | Cost | Unlocked by | Does |
+  |---|---|---|---|
+  | Sichel | 2 Holz, 1 Schrott | `harvested-once` | harvests every ripe bed within 3.2 tiles at once |
+  | Spaten | 2 Holz, 1 Feldstein | `gathered-material` | digs a plant out with its growth and sets it into a free bed it accepts |
+  | Saatbeutel | 1 Brombeertrieb, 1 Duftbündel, 1 Schrott | `harvested-once` | sows the picked species into every free bed within 4 tiles |
+  | Stablaterne | 1 Holz, 1 Schrott, 2 Lichtpollen | `built:lantern` | carried light: opens the night veil, dries up blight within 2.4 tiles |
+
+  A tool already carried drops out of `getUnlockedRecipes()` (and `craft` refuses it), so nobody
+  makes two. The first tool made goes into the hand.
+- **System.** `systems/tools.ts` (no Phaser): `getOwnedTools`, `getEquippedTool`, `equipTool`,
+  `getToolMode` / `setToolMode` / `isToolActing`, `useTool(mapId, at)` → `{ ok, text, spots }`,
+  `getSowSeed` / `cycleSeed`, `getCarriedPlant`, `getCarriedLight`, `describeTool`. Emits
+  `tool-changed`. Plant moving is two small functions in `systems/plants.ts`: `uprootBed`
+  (emits `plant-removed`, which `PlantLayer` turns into the sprite going away) and
+  `transplantInto`; `bedAccepts` is the species rule of a bed. The blight side is
+  `pushBackBlight(mapId, px, py, radiusTiles)` in `systems/blight.ts`: it only clears what is
+  there, it is not a ward, so it never seals a heart and the blight may creep back at night.
+- **Tool mode.** The tool button (**T**) opens `ui/ToolBar.ts` (tap a slot or 1–4; tools not made
+  yet stay dim; picking the satchel again switches the seed). While it is open with a sickle,
+  spade or satchel in hand, E and any tap use the tool around the player instead of
+  interacting, like build mode, and the two modes close each other. The lantern needs no mode:
+  picking it closes the bar and it just shines.
+- **World.** `systems/toolLayer.ts` (`ToolLayer`): the lantern on its pole beside the player, puffs
+  where a tool worked, a sickle sweep, and the blight push-back every 250 ms. `AtmosphereLayer`
+  takes a `carriedLight` callback and punches the player's light into the night veil (redrawn at
+  most every 70 ms while the player moves). Reduced motion shortens the effects.
+- **Save.** Only `ext.tools = { equipped?, seed?, carried? }`; `carried` is the plant in the
+  shovel (`plantId`, `progressMs`, optional `sinceHarvestMs`, `harvests`), so it survives a
+  reload. Old saves have no tools and need no migration. Flags: `moved-plant`,
+  `used-tool:<kind>`.
+- **Debug.** `__tlg.equipTool`, `setToolMode`, `useTool(mapId, { x, y })`, `getCarriedPlant`.
+
 ## Wave boundaries
 
 - **Wave 2 (plant abilities):** done — see "Plant Abilities" above.

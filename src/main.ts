@@ -8,6 +8,7 @@ import { blightNightfall, getBlightTiles, refreshBlight } from './systems/blight
 import { getPieces, placePiece, removePiece, setBuildMode } from './systems/building';
 import { bus } from './systems/events';
 import { getDayTime, setDayTimeHour } from './systems/dayClock';
+import { equipTool, getCarriedPlant, setToolMode, useTool } from './systems/tools';
 import { stopNightScheduler, triggerNightEvent } from './systems/nightEvents';
 import { getObstacles, isBlocked, unblockPath } from './systems/obstacles';
 import {
@@ -118,6 +119,11 @@ if (import.meta.env.DEV) {
       blightNightfall,
       refreshBlight,
       getBlightTiles,
+      // Tools:
+      equipTool,
+      setToolMode,
+      useTool,
+      getCarriedPlant,
       resetSave: () => {
         gameState.reset();
         location.reload();

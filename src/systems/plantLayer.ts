@@ -62,6 +62,7 @@ export class PlantLayer {
     bus.onScene(scene, 'plant-planted', ({ bedId }) => this.render(bedId));
     bus.onScene(scene, 'plant-matured', ({ bedId }) => this.render(bedId));
     bus.onScene(scene, 'plant-harvested', ({ bedId }) => this.render(bedId));
+    bus.onScene(scene, 'plant-removed', ({ bedId }) => this.clearBed(bedId));
     bus.onScene(scene, 'dialogue-choice', ({ dialogueId, choiceId }) => {
       if (!dialogueId.startsWith(SEED_PICKER_PREFIX)) return;
       const bedId = dialogueId.slice(SEED_PICKER_PREFIX.length);
@@ -69,6 +70,17 @@ export class PlantLayer {
       this.render(bedId);
     });
     scene.time.addEvent({ delay: 1000, loop: true, callback: () => this.pollAll() });
+  }
+
+  /** A plant was dug up (shovel): the bed stays, its sprite and effects go. */
+  private clearBed(bedId: string): void {
+    const entry = this.live.get(bedId);
+    if (!entry) return;
+    for (const part of [entry.sprite, entry.glow, entry.fireflies, entry.scent, entry.produce]) part?.destroy();
+    entry.sprite = entry.glow = entry.fireflies = entry.scent = entry.produce = undefined;
+    entry.lastRenderedStage = -1;
+    entry.plantId = undefined;
+    this.render(bedId);
   }
 
   private syncBeds(): void {

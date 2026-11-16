@@ -47,7 +47,11 @@ describe('content registries', () => {
         expect(content.items.has(entry.itemId), `${recipe.id}: ${entry.itemId}`).toBe(true);
         expect(entry.count).toBeGreaterThan(0);
       }
-      // Every recipe is taught by a journal page that exists somewhere in the world.
+      // Tool recipes are unlocked by playing (a flag), every other recipe is taught by a journal page in the world.
+      if (content.tools.has(recipe.id)) {
+        expect(recipe.requiresFlag, recipe.id).toBeTruthy();
+        continue;
+      }
       const pageId = recipe.requiresFlag?.replace('journal-read:', '');
       expect(allJournalPages().some((p) => p.id === pageId), `${recipe.id}: ${recipe.requiresFlag}`).toBe(true);
     }

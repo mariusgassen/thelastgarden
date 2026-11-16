@@ -1980,6 +1980,70 @@ const ITEM_ICON_DRAWERS: Record<string, (g: G) => void> = {
     g.fillStyle(0xd96045, 0.85);
     g.fillCircle(28, 8.5, 1.8);
   },
+  'tool-sickle': (g) => {
+    g.fillStyle(0x000000, 0.18);
+    g.fillEllipse(18, 32, 22, 4);
+    g.lineStyle(4.5, 0x8a603d, 1);
+    g.lineBetween(9, 30, 18, 17);
+    g.lineStyle(4, 0xc9d1d8, 1);
+    g.beginPath();
+    g.arc(21, 17, 11, Phaser.Math.DegToRad(180), Phaser.Math.DegToRad(300), false);
+    g.strokePath();
+    g.lineStyle(1.4, 0xffffff, 0.8);
+    g.beginPath();
+    g.arc(21, 16, 10.5, Phaser.Math.DegToRad(190), Phaser.Math.DegToRad(290), false);
+    g.strokePath();
+    g.fillStyle(0x6e4529, 1);
+    g.fillCircle(17, 19, 2.4);
+  },
+  'tool-shovel': (g) => {
+    g.fillStyle(0x000000, 0.18);
+    g.fillEllipse(18, 33, 14, 3.5);
+    g.lineStyle(3.6, 0x8a603d, 1);
+    g.lineBetween(18, 4, 18, 22);
+    g.fillStyle(0x8a603d, 1);
+    g.fillRoundedRect(13, 3, 10, 3.5, 1.5);
+    g.fillStyle(0xaeb4ba, 1);
+    g.fillRoundedRect(11, 19, 14, 12, { tl: 2, tr: 2, bl: 7, br: 7 });
+    g.fillStyle(0xd6dbe0, 0.9);
+    g.fillRect(13, 21, 3, 7);
+    g.lineStyle(1.3, 0x5c636b, 1);
+    g.strokeRoundedRect(11, 19, 14, 12, { tl: 2, tr: 2, bl: 7, br: 7 });
+  },
+  'tool-satchel': (g) => {
+    g.fillStyle(0x000000, 0.18);
+    g.fillEllipse(18, 32, 22, 4);
+    g.fillStyle(0xc9a56b, 1);
+    g.fillRoundedRect(8, 14, 20, 17, 6);
+    g.fillStyle(0xb48b52, 1);
+    g.fillRoundedRect(8, 14, 20, 7, { tl: 6, tr: 6, bl: 0, br: 0 });
+    g.lineStyle(1.4, 0x6e4529, 0.9);
+    g.strokeRoundedRect(8, 14, 20, 17, 6);
+    g.lineStyle(2.4, 0x6e4529, 1);
+    g.beginPath();
+    g.arc(18, 12, 7, Phaser.Math.DegToRad(200), Phaser.Math.DegToRad(340), false);
+    g.strokePath();
+    g.fillStyle(0x6e4529, 1);
+    g.fillCircle(18, 21, 1.8);
+    g.fillStyle(0x6b9a52, 1);
+    g.fillEllipse(14, 11, 5, 3);
+    g.fillEllipse(22, 10, 5, 3);
+  },
+  'tool-pole-lantern': (g) => {
+    g.fillStyle(0xf3e38a, 0.28);
+    g.fillCircle(18, 11, 11);
+    g.lineStyle(3.2, 0x8a603d, 1);
+    g.lineBetween(18, 19, 18, 34);
+    g.fillStyle(0x5c636b, 1);
+    g.fillTriangle(10, 6, 18, 0.5, 26, 6);
+    g.fillRect(11, 17.5, 14, 2.5);
+    g.fillStyle(0xf9e8a3, 1);
+    g.fillRoundedRect(12, 6, 12, 12, 2);
+    g.fillStyle(0xfffbe0, 1);
+    g.fillEllipse(18, 12.5, 6, 8);
+    g.lineStyle(1.2, 0x4a4a46, 1);
+    g.strokeRoundedRect(12, 6, 12, 12, 2);
+  },
   'craft-bramble-cutting': (g) => {
     g.fillStyle(0x4f7a3f, 1);
     g.fillEllipse(18, 25, 18, 11);

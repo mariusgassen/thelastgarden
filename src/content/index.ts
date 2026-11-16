@@ -5,7 +5,8 @@ import { NPCS } from './npcs';
 import { PLANTS } from './plants';
 import { QUESTS } from './quests';
 import { RECIPES } from './recipes';
-import type { BuildableDef, DialogueDef, ItemDef, NpcDef, PlantDef, QuestDef, RecipeDef } from './types';
+import { TOOLS } from './tools';
+import type { BuildableDef, DialogueDef, ItemDef, NpcDef, PlantDef, QuestDef, RecipeDef, ToolDef } from './types';
 
 export * from './types';
 
@@ -52,4 +53,5 @@ export const content = {
   npcs: new Registry<NpcDef>('npc', NPCS),
   recipes: new Registry<RecipeDef>('recipe', RECIPES),
   buildables: new Registry<BuildableDef>('buildable', BUILDABLES),
+  tools: new Registry<ToolDef>('tool', TOOLS),
 };

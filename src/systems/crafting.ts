@@ -5,7 +5,7 @@
  * the menu as an ad-hoc dialogue whose choices carry the recipe id; the UI reports the pick
  * through `dialogue-choice`, and the listener below crafts it.
  *
- *   getUnlockedRecipes()      recipes whose `requiresFlag` is set
+ *   getUnlockedRecipes()      recipes whose `requiresFlag` is set (a tool already carried is left out)
  *   getMissing(recipe)        ingredients still short (count = shortfall)
  *   craft(recipeId)           spends the cost, adds the result, sets `crafted:<recipeId>`;
  *                             false if locked or short
@@ -29,8 +29,13 @@ export function isRecipeUnlocked(recipe: RecipeDef): boolean {
   return !recipe.requiresFlag || gameState.hasFlag(recipe.requiresFlag);
 }
 
+/** A one-off result (a tool) the player already carries: there is nothing left to make. */
+function isAlreadyOwned(recipe: RecipeDef): boolean {
+  return recipe.result.every((r) => !content.items.get(r.itemId).stackable && gameState.getItemCount(r.itemId) > 0);
+}
+
 export function getUnlockedRecipes(): RecipeDef[] {
-  return content.recipes.all().filter(isRecipeUnlocked);
+  return content.recipes.all().filter((r) => isRecipeUnlocked(r) && !isAlreadyOwned(r));
 }
 
 export function getMissing(recipe: RecipeDef): { itemId: string; count: number }[] {
@@ -41,7 +46,7 @@ export function getMissing(recipe: RecipeDef): { itemId: string; count: number }
 
 export function craft(recipeId: string): boolean {
   const recipe = content.recipes.find(recipeId);
-  if (!recipe || !isRecipeUnlocked(recipe) || getMissing(recipe).length > 0) return false;
+  if (!recipe || !isRecipeUnlocked(recipe) || isAlreadyOwned(recipe) || getMissing(recipe).length > 0) return false;
   for (const c of recipe.cost) gameState.removeItem(c.itemId, c.count);
   for (const r of recipe.result) gameState.addItem(r.itemId, r.count);
   gameState.setFlag(`crafted:${recipe.id}`);

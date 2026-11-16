@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import type { ToolKind } from '../content/types';
 import { THEME } from './theme';
 
 const RADIUS = 23;
@@ -57,6 +58,11 @@ export class HudButton {
     this.redraw();
   }
 
+  /** Redraws the icon (for buttons whose drawIcon depends on game state). */
+  refresh(): void {
+    this.redraw();
+  }
+
   /** True if (x, y) in CSS px hits the visible button. */
   contains(x: number, y: number): boolean {
     return this.shown && Math.hypot(x - this.container.x, y - this.container.y) <= RADIUS + 6;
@@ -110,4 +116,48 @@ export function drawHammerIcon(g: Phaser.GameObjects.Graphics, color: number): v
   g.fillRoundedRect(-3, -12, 15, 8, 2);
   g.fillStyle(THEME.sun, 1);
   g.fillRect(-3, -12, 4, 8);
+}
+
+/** The icon of a tool (tool button): sickle, spade, seed satchel or lantern on a pole. */
+export function drawToolIcon(g: Phaser.GameObjects.Graphics, color: number, kind: ToolKind): void {
+  switch (kind) {
+    case 'sickle':
+      g.lineStyle(4, 0x8a603d, 1);
+      g.lineBetween(-8, 11, -2, 3);
+      g.lineStyle(3.5, color, 1);
+      g.beginPath();
+      g.arc(1, 2, 10, Phaser.Math.DegToRad(185), Phaser.Math.DegToRad(305), false);
+      g.strokePath();
+      break;
+    case 'shovel':
+      g.lineStyle(3.4, 0x8a603d, 1);
+      g.lineBetween(0, -12, 0, 2);
+      g.fillStyle(0x8a603d, 1);
+      g.fillRoundedRect(-4.5, -13, 9, 3, 1);
+      g.fillStyle(color, 1);
+      g.fillRoundedRect(-6, 1, 12, 11, { tl: 2, tr: 2, bl: 6, br: 6 });
+      break;
+    case 'satchel':
+      g.fillStyle(0xc9a56b, 1);
+      g.fillEllipse(0, 4, 20, 16);
+      g.lineStyle(1.6, color, 1);
+      g.strokeEllipse(0, 4, 20, 16);
+      g.fillStyle(0xc9a56b, 1);
+      g.fillRoundedRect(-4, -6, 8, 6, 2);
+      g.lineStyle(2.2, color, 1);
+      g.lineBetween(-5, -2, 5, -2);
+      g.fillStyle(THEME.sun, 1);
+      g.fillCircle(-3, -9, 1.8);
+      g.fillCircle(1, -11, 1.8);
+      g.fillCircle(4, -8.5, 1.8);
+      break;
+    case 'light':
+      g.lineStyle(3, 0x8a603d, 1);
+      g.lineBetween(0, 0, 0, 13);
+      g.fillStyle(color, 1);
+      g.fillTriangle(-6, -7, 0, -12, 6, -7);
+      g.fillStyle(THEME.sun, 1);
+      g.fillRoundedRect(-5, -7, 10, 9, 2);
+      break;
+  }
 }

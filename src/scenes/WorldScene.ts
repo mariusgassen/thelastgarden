@@ -14,6 +14,8 @@ import { NightEventLayer } from '../systems/nightEvents';
 import { NpcLayer } from '../systems/npcs';
 import { ObstacleLayer } from '../systems/obstacles';
 import { PlantLayer } from '../systems/plantLayer';
+import { ToolLayer } from '../systems/toolLayer';
+import { isToolActing } from '../systems/tools';
 import { PlayerController } from '../systems/player';
 import { QuestMarkerLayer } from '../systems/questMarkers';
 import { ResourceLayer } from '../systems/resources';
@@ -50,6 +52,7 @@ export class WorldScene extends Phaser.Scene implements WorldApi {
   plants!: PlantLayer;
   resources!: ResourceLayer;
   atmosphere!: AtmosphereLayer;
+  tools!: ToolLayer;
   npcs!: NpcLayer;
   journal!: JournalLayer;
   questMarkers!: QuestMarkerLayer;
@@ -122,7 +125,8 @@ export class WorldScene extends Phaser.Scene implements WorldApi {
     this.blight = new BlightLayer(this, this.map.id, this.interaction);
     this.plants = new PlantLayer(this, this.map.id, this.interaction);
     this.resources = new ResourceLayer(this, this.map.id, this.interaction);
-    this.atmosphere = new AtmosphereLayer(this, this.map);
+    this.tools = new ToolLayer(this, this.map.id, () => ({ x: this.player.feetX, y: this.player.feetY, facing: this.player.facing }));
+    this.atmosphere = new AtmosphereLayer(this, this.map, () => this.tools.getLight());
     this.npcs = new NpcLayer(this, this.map, this.interaction, () => this.player.feetX);
     this.journal = new JournalLayer(this, this.map.id, this.interaction);
     this.questMarkers = new QuestMarkerLayer(this, this.interaction);
@@ -169,6 +173,7 @@ export class WorldScene extends Phaser.Scene implements WorldApi {
       if (inputState.modal || this.transitioning) return;
       const p = this.cameras.main.getWorldPoint(x, y);
       if (getBuildMode().active) this.building.tap(p.x, p.y);
+      else if (isToolActing()) this.tools.tap();
       else this.interaction.interactAt(p.x, p.y);
     });
 
@@ -186,18 +191,20 @@ export class WorldScene extends Phaser.Scene implements WorldApi {
       if (inputState.modal) bus.emit('dialogue-advance', undefined);
       else if (!this.transitioning) {
         if (getBuildMode().active) this.building.confirm();
+        else if (isToolActing()) this.tools.confirm();
         else this.interaction.interactFocused();
       }
     }
 
     const frozen = inputState.modal || this.transitioning;
-    const building = getBuildMode().active;
+    const building = getBuildMode().active || isToolActing();
     const onBlight = isBlightedPx(this.map.id, this.player.feetX, this.player.feetY);
     this.player.update(delta, frozen, onBlight ? BLIGHT_SPEED_FACTOR : 1);
     this.building.update(!frozen);
+    this.tools.update(delta);
     this.horse.update(this.player.feetX, this.player.feetY, delta, frozen);
     this.atmosphere.update(delta);
-    // While building, E and taps place pieces, so nothing else takes the focus.
+    // While building (or working with a tool), E and taps act on the world, so nothing else takes the focus.
     this.interaction.update(!frozen && !building);
     this.updateMarker();
     this.updateZone();
