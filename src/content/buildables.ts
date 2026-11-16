@@ -7,6 +7,13 @@ import type { BuildableDef } from './types';
  */
 export const BUILDABLES: BuildableDef[] = [
   {
+    id: 'clearing',
+    name: 'Roden',
+    description: 'Fällt Bäume und räumt Gestrüpp auf einem Feld von 3×3 Kacheln. Fang am Rand der freien Fläche an: So wächst der Garten.',
+    cost: [{ itemId: 'mat-wood', count: 2 }],
+    on: 'forest',
+  },
+  {
     id: 'fence',
     name: 'Zaun',
     description: 'Hält die Welke auf: Sie wächst nicht durch einen Zaun.',

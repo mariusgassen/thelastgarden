@@ -2666,6 +2666,24 @@ function generateBuildAndBlightTextures(make: MakeFn): void {
   });
 
   // ── Built pieces ──
+  make('build-clearing', 32, 32, (g) => {
+    // An axe sunk into a stump.
+    g.fillStyle(0x6d4a30, 1);
+    g.fillEllipse(16, 27, 26, 9);
+    g.fillStyle(0xd9b98a, 1);
+    g.fillEllipse(16, 25, 22, 7);
+    g.lineStyle(1, 0x8a603d, 1);
+    g.strokeEllipse(16, 25, 12, 3.5);
+    g.fillStyle(0x8a603d, 1);
+    g.fillRoundedRect(14.5, 3, 3.5, 24, 1.5);
+    g.fillStyle(0x9aa3ad, 1);
+    g.fillTriangle(17, 2, 31, 6, 31, 16);
+    g.fillTriangle(17, 2, 31, 16, 17, 17);
+    g.fillStyle(0xcfd6dc, 1);
+    g.fillTriangle(17, 2, 28, 5, 17, 8);
+    g.lineStyle(1, 0x5c636b, 1);
+    g.lineBetween(31, 6, 31, 16);
+  });
   make('build-fence', 32, 34, (g) => {
     g.fillStyle(0x000000, 0.18);
     g.fillEllipse(16, 31, 30, 5);

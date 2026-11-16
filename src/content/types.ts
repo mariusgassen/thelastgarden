@@ -77,8 +77,9 @@ export interface BuildableDef {
   name: string;
   description: string;
   cost: { itemId: string; count: number }[];
-  /** `water` pieces (the footbridge) go on water tiles and make them walkable; everything else needs open ground. */
-  on: 'ground' | 'water';
+  /** `water` pieces (the footbridge) go on water tiles and make them walkable; `forest` (Roden) cuts a 3×3 patch of
+   * the map's `clearable` forest into open ground and leaves no piece behind; everything else needs open ground. */
+  on: 'ground' | 'water' | 'forest';
   /** Collision box inside the tile, in tile fractions; omit for walkable pieces. */
   solid?: { x: number; y: number; w: number; h: number };
   /** Tiles (from the piece's centre) kept free of blight (systems/blight.ts). */
