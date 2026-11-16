@@ -66,6 +66,17 @@ export const RECIPES: RecipeDef[] = [
     requiresFlag: 'journal-read:page-orchard',
   },
   {
+    id: 'horse-treat',
+    name: 'Kräuterleckerli',
+    result: [{ itemId: 'craft-horse-treat', count: 1 }],
+    cost: [
+      { itemId: 'produce-tendril', count: 1 },
+      { itemId: 'produce-scent-bundle', count: 1 },
+      { itemId: 'resource-dew', count: 1 },
+    ],
+    requiresFlag: 'journal-read:page-mohn',
+  },
+  {
     id: 'seed-mix',
     name: 'Saattütchen',
     result: [

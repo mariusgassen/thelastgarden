@@ -23,24 +23,29 @@ export function generateTextures(scene: Phaser.Scene): void {
     g.fillEllipse(16, 6, 30, 10);
   });
 
-  make('player', 28, 40, (g) => {
-    g.fillStyle(0x3f5f3a, 1); // trousers
-    g.fillRoundedRect(8, 26, 5, 12, 2);
-    g.fillRoundedRect(15, 26, 5, 12, 2);
-    g.fillStyle(0xd98f4e, 1); // jacket
-    g.fillRoundedRect(5, 15, 18, 15, 6);
-    g.fillStyle(0x5d7f45, 1); // satchel strap + bag
-    g.fillRect(16, 16, 3, 13);
-    g.fillRoundedRect(18, 22, 7, 7, 2);
-    g.fillStyle(0xf2c9a0, 1); // face
-    g.fillCircle(14, 11, 7);
-    g.fillStyle(0xe8cf7a, 1); // straw hat
-    g.fillEllipse(14, 7, 24, 8);
-    g.fillRoundedRect(8, 0, 12, 8, 4);
-    g.fillStyle(0xb5533c, 1);
-    g.fillRect(8, 5, 12, 2);
-    g.fillStyle(0x3a2a1e, 1); // eye (facing right)
-    g.fillCircle(17, 12, 1.2);
+  make('player', 28, 40, (g) => drawGardener(g, 0, 0, true));
+
+  // Mohn, the garden's mare (NPC id `mohn`), and the gardener on her back (systems/player.ts).
+  make('mohn', 66, 52, (g) => {
+    g.fillStyle(0x000000, 0.2);
+    g.fillEllipse(31, 49, 50, 6);
+    drawHorse(g, 0, 2);
+  });
+  make('player-riding', 66, 70, (g) => {
+    drawHorse(g, 0, 20);
+    drawGardener(g, 15, 5, false);
+    g.fillStyle(0x3f5f3a, 1); // near leg over the saddle blanket
+    g.fillRoundedRect(27, 33, 6, 14, 3);
+    g.fillStyle(0x3a2a1e, 1);
+    g.fillRoundedRect(27, 44, 8, 4, 2);
+  });
+  make('fence-post', 14, 36, (g) => {
+    g.fillStyle(0x000000, 0.2);
+    g.fillEllipse(7, 33, 12, 5);
+    g.fillStyle(0x6d4a30, 1);
+    g.fillRoundedRect(4, 2, 6, 31, 2);
+    g.fillStyle(0x8a603d, 1);
+    g.fillRect(5, 3, 2, 29);
   });
 
   make('marker', 22, 22, (g) => {
@@ -1581,6 +1586,68 @@ export function generateTextures(scene: Phaser.Scene): void {
   });
 
   g.destroy();
+}
+
+/** The player figure, facing right, in a 28 × 40 box at (ox, oy). */
+function drawGardener(g: G, ox: number, oy: number, legs: boolean): void {
+  if (legs) {
+    g.fillStyle(0x3f5f3a, 1); // trousers
+    g.fillRoundedRect(ox + 8, oy + 26, 5, 12, 2);
+    g.fillRoundedRect(ox + 15, oy + 26, 5, 12, 2);
+  }
+  g.fillStyle(0xd98f4e, 1); // jacket
+  g.fillRoundedRect(ox + 5, oy + 15, 18, 15, 6);
+  g.fillStyle(0x5d7f45, 1); // satchel strap + bag
+  g.fillRect(ox + 16, oy + 16, 3, 13);
+  g.fillRoundedRect(ox + 18, oy + 22, 7, 7, 2);
+  g.fillStyle(0xf2c9a0, 1); // face
+  g.fillCircle(ox + 14, oy + 11, 7);
+  g.fillStyle(0xe8cf7a, 1); // straw hat
+  g.fillEllipse(ox + 14, oy + 7, 24, 8);
+  g.fillRoundedRect(ox + 8, oy, 12, 8, 4);
+  g.fillStyle(0xb5533c, 1);
+  g.fillRect(ox + 8, oy + 5, 12, 2);
+  g.fillStyle(0x3a2a1e, 1); // eye (facing right)
+  g.fillCircle(ox + 17, oy + 12, 1.2);
+}
+
+/** A chestnut mare, facing right, in a 66 × 48 box at (ox, oy); hooves touch the bottom edge. */
+function drawHorse(g: G, ox: number, oy: number): void {
+  const coat = 0x9a6a42;
+  const shade = 0x7d5434;
+  const hair = 0x4a3424;
+  g.fillStyle(hair, 1); // tail
+  g.fillEllipse(ox + 7, oy + 26, 9, 22);
+  g.fillStyle(shade, 1); // far legs
+  g.fillRoundedRect(ox + 19, oy + 28, 5, 18, 2);
+  g.fillRoundedRect(ox + 39, oy + 28, 5, 18, 2);
+  g.fillStyle(coat, 1); // near legs
+  g.fillRoundedRect(ox + 12, oy + 27, 6, 19, 2);
+  g.fillRoundedRect(ox + 45, oy + 27, 6, 19, 2);
+  g.fillStyle(0x2c2018, 1); // hooves
+  g.fillRect(ox + 12, oy + 44, 6, 4);
+  g.fillRect(ox + 19, oy + 44, 5, 4);
+  g.fillRect(ox + 39, oy + 44, 5, 4);
+  g.fillRect(ox + 45, oy + 44, 6, 4);
+  g.fillStyle(coat, 1); // body, neck, head
+  g.fillEllipse(ox + 30, oy + 24, 44, 20);
+  g.fillTriangle(ox + 38, oy + 18, ox + 52, oy + 28, ox + 56, oy + 6);
+  g.fillTriangle(ox + 38, oy + 18, ox + 56, oy + 6, ox + 46, oy + 6);
+  g.fillEllipse(ox + 56, oy + 10, 17, 11);
+  g.fillTriangle(ox + 49, oy + 6, ox + 54, oy + 6, ox + 50, oy);
+  g.fillStyle(0xd9b48a, 1); // muzzle
+  g.fillEllipse(ox + 62, oy + 12, 7, 7);
+  g.fillStyle(hair, 1); // mane
+  g.fillEllipse(ox + 44, oy + 13, 6, 17);
+  g.fillStyle(0x3a2a1e, 1); // eye, nostril
+  g.fillCircle(ox + 56, oy + 9, 1.3);
+  g.fillCircle(ox + 63, oy + 12, 0.8);
+  g.fillStyle(0xd84a3a, 1); // the faded cloth poppy that gave her the name
+  g.fillCircle(ox + 46, oy + 8, 3);
+  g.fillStyle(0x2c2018, 1);
+  g.fillCircle(ox + 46, oy + 8, 1.1);
+  g.fillStyle(0x5d7f45, 1); // saddle blanket
+  g.fillRoundedRect(ox + 23, oy + 14, 15, 12, 4);
 }
 
 function drawTree(g: G, w: number, h: number, dark: number, mid: number, light: number): void {

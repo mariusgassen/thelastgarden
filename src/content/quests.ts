@@ -206,6 +206,39 @@ export const QUESTS: QuestDef[] = [
       { itemId: 'seed-glow-lily', count: 1 },
     ],
   },
+  // Optional: the horse. Placed before q-tramline so the HUD tracker keeps the main journey.
+  {
+    id: 'q-horse',
+    title: 'Die Stute an der alten Trasse',
+    summary: 'Auf der Lichtung an der alten Trasse grast ein Pferd. Wer sein Vertrauen gewinnt, ist draußen viel schneller unterwegs.',
+    startsWhen: ['episode-1-complete'],
+    objectives: [
+      {
+        type: 'flag',
+        flag: 'horse-met',
+        description: 'Sieh nach, wer auf der Lichtung südlich der Gleise an der alten Trasse grast.',
+        markers: ['tramline-exit', 'npc:mohn'],
+      },
+      {
+        type: 'flag',
+        flag: 'journal-read:page-mohn',
+        description: 'Lies den Zettel am Zaunpfahl neben der Stute.',
+        markers: ['journal:page-mohn'],
+      },
+      {
+        type: 'flag',
+        flag: 'crafted:horse-treat',
+        description: 'Stelle Kräuterleckerli her (1 Brombeertrieb, 1 Duftbündel, 1 Tau).',
+        markers: ['workshop-door', 'workbench'],
+      },
+      {
+        type: 'flag',
+        flag: 'horse-tamed',
+        description: 'Bring Mohn die Kräuterleckerli.',
+        markers: ['tramline-exit', 'npc:mohn'],
+      },
+    ],
+  },
   {
     id: 'q-tramline',
     title: 'Linie 3',

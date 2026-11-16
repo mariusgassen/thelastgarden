@@ -212,4 +212,6 @@ export interface MapDef {
   decorate?: { trees?: boolean; flowers?: boolean; seed: number };
   /** Camera background color outside the map. */
   backgroundColor: number;
+  /** Interior room: the horse waits outside (systems/horse.ts) and it is no fast-travel stop. */
+  indoor?: boolean;
 }

@@ -50,6 +50,7 @@ export const TRAMLINE_MAP: MapDef = {
     { texture: 'signal-box', at: { x: 23.5, y: 6.5 }, solid: { x: 22.1, y: 5, w: 2.8, h: 1.4 } },
     { texture: 'bench', at: { x: 38, y: 8.6 }, solid: { x: 36.9, y: 7.8, w: 2.2, h: 0.7 } },
     { texture: 'signpost-east', at: { x: 47.5, y: 9.2 } },
+    { texture: 'fence-post', at: { x: 24.4, y: 15.3 } },
   ],
   interactables: [
     {
@@ -76,6 +77,17 @@ export const TRAMLINE_MAP: MapDef = {
     { id: 'sun-tram-1', itemId: 'resource-sunlight', at: { x: 21, y: 16 }, label: 'Sonnenlicht sammeln', respawnMs: 45_000 },
     { id: 'dew-tram-1', itemId: 'resource-dew', at: { x: 36, y: 13.5 }, label: 'Tau sammeln', respawnMs: 45_000 },
     { id: 'curio-tram-1', itemId: 'resource-curio', at: { x: 26, y: 6.8 }, label: 'Aufheben' },
+  ],
+  // Mohn grazes here until she is befriended; afterwards she travels with the player (systems/horse.ts).
+  npcs: [{ npcId: 'mohn', at: { x: 23, y: 16.9 }, radius: 72, hideWhenFlag: 'horse-tamed' }],
+  journalPages: [
+    {
+      id: 'page-mohn',
+      at: { x: 24.4, y: 15.4 },
+      dialogueId: 'journal-page-mohn',
+      appearsWhenFlag: 'horse-met',
+      itemId: 'journal-page-mohn',
+    },
   ],
   spawns: {
     default: { x: 3, y: 10.5 },

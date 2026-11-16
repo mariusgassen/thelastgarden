@@ -3,8 +3,11 @@ import { inputState } from './input';
 import type { Facing } from './save';
 
 const SPEED = 140;
-/** Feet (collision circle center) offset from the sprite center, in px. */
+const RIDE_SPEED = 245;
+/** Feet (collision circle center) offset from the sprite's origin, in px. */
 export const FEET_OFFSET_Y = 12;
+/** `player-riding` texture: its hoof line, in px from the top (see world/textures.ts). */
+const RIDING_HOOF_Y = 68;
 
 type Keys = Record<'up' | 'down' | 'left' | 'right' | 'w' | 'a' | 's' | 'd', Phaser.Input.Keyboard.Key>;
 
@@ -14,6 +17,7 @@ export class PlayerController {
   private readonly shadow: Phaser.GameObjects.Image;
   private readonly keys: Keys | null;
   private walkTime = 0;
+  private riding = false;
   facing: Facing;
 
   /** x/y = feet position in px. */
@@ -39,6 +43,30 @@ export class PlayerController {
           d: Phaser.Input.Keyboard.KeyCodes.D,
         }) as Keys)
       : null;
+  }
+
+  get isRiding(): boolean {
+    return this.riding;
+  }
+
+  /**
+   * Swaps between walking and riding Mohn. The sprite's origin stays FEET_OFFSET_Y above the
+   * feet (or hooves) and the collision circle stays the same, so every path stays passable.
+   */
+  setRiding(riding: boolean): void {
+    if (this.riding === riding) return;
+    this.riding = riding;
+    const body = this.sprite.body as Phaser.Physics.Arcade.Body;
+    if (riding) {
+      this.sprite.setTexture('player-riding');
+      const originY = RIDING_HOOF_Y - FEET_OFFSET_Y;
+      this.sprite.setOrigin(0.5, originY / this.sprite.height);
+      body.setCircle(8, this.sprite.width / 2 - 8, originY + FEET_OFFSET_Y - 8);
+    } else {
+      this.sprite.setTexture('player').setOrigin(0.5, 0.5);
+      body.setCircle(8, 6, 24);
+    }
+    this.shadow.setScale(riding ? 1.7 : 0.75, riding ? 1 : 0.75);
   }
 
   get feetX(): number {
@@ -68,7 +96,8 @@ export class PlayerController {
       }
     }
 
-    this.sprite.setVelocity(dx * SPEED, dy * SPEED);
+    const speed = this.riding ? RIDE_SPEED : SPEED;
+    this.sprite.setVelocity(dx * speed, dy * speed);
     const moving = Math.hypot(dx, dy) > 0.05;
     if (dx < -0.1) this.facing = 'left';
     else if (dx > 0.1) this.facing = 'right';
@@ -76,7 +105,7 @@ export class PlayerController {
 
     if (moving) {
       this.walkTime += deltaMs * (0.012 + Math.hypot(dx, dy) * 0.006);
-      this.sprite.setAngle(Math.sin(this.walkTime) * 5);
+      this.sprite.setAngle(Math.sin(this.walkTime) * (this.riding ? 2.5 : 5));
       this.sprite.setScale(1, 1 + Math.abs(Math.sin(this.walkTime)) * 0.05);
     } else {
       this.walkTime = 0;

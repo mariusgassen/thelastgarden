@@ -8,6 +8,7 @@ export const WORKSHOP_MAP: MapDef = {
   height: 10,
   baseTile: 'woodWall',
   backgroundColor: 0x16110d,
+  indoor: true,
   layout: [
     { op: 'rect', tile: 'floor', rect: { x: 1, y: 2, w: 10, h: 7 } },
     { op: 'rect', tile: 'floor', rect: { x: 5, y: 9, w: 2, h: 1 } },

@@ -11,6 +11,7 @@ export const GREENHOUSE_HEART_MAP: MapDef = {
   height: 16,
   baseTile: 'greenhouse',
   backgroundColor: 0x10211c,
+  indoor: true,
   layout: [
     { op: 'rect', tile: 'paving', rect: { x: 2, y: 2, w: 16, h: 12 } },
     { op: 'rect', tile: 'grass', rect: { x: 6, y: 5, w: 8, h: 6 } },

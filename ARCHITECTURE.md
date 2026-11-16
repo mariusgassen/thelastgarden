@@ -168,7 +168,7 @@ interface SaveGame {
 ## Input
 
 - **Desktop:** WASD or the arrow keys to move. E, Space or Enter to interact or advance dialogue.
-- **Inventory:** I opens the bag, C the pocket workbench (once owned), Q or Tab the quest log.
+- **Inventory:** I opens the bag, C the pocket workbench (once owned), Q or Tab the quest log, M the town map and R mounts or dismounts the horse (each once unlocked).
 - **Touch:** a floating joystick that appears wherever the finger goes down. The context button sits bottom-right and is only visible while something is in range. A short tap on an object that is in range interacts with it. Up to 3 pointers are tracked, so you can move and press the button at the same time.
 - **Safe areas:** `env(safe-area-inset-*)` is read through `#safe-area-probe` in `index.html`. The HUD re-runs its layout on resize.
 
@@ -358,6 +358,30 @@ Produce is spent at a workbench. Recipes are content, crafting is a Phaser-free 
   The repair and bramble objectives of the main quests name their ingredients too.
 - **Hints.** `TutorialHints` explains the bag on the first harvest and the pocket workbench
   when it is received.
+
+## Horse and town map
+
+- **Mohn, the horse.** NPC `mohn` grazes on the tramline clearing. `q-horse` (starts with
+  `episode-1-complete`): meet her (`horse-met`), read `page-mohn` (teaches the recipe
+  `horse-treat`), craft it, hand it over (`horse-tamed`). The hand-over uses two new optional
+  `NpcDialogueRule` fields, `requiresItems` and `takeItems`.
+- **Riding.** `systems/horse.ts` (no Phaser): `hasHorse()`, `isRiding()`, `isRidingHere()`,
+  `toggleRiding()`; emits `riding-changed`. `PlayerController.setRiding` swaps the texture to
+  `player-riding` and the speed from 140 to 245 px/s; the collision circle stays the same, so
+  no path gets narrower. Maps with `MapDef.indoor` cannot be ridden on: the choice is kept and
+  resumes outside. Toggle with **R** or the horseshoe button.
+- **Town map.** `world/travel.ts` lists one `TravelStopDef` per outdoor map (map, entry spawn,
+  position on the sheet). `systems/travel.ts`: `hasTravelMap()` (flag `greenhouse-hint-read`,
+  the map board in the vestibule), `getTravelStops()`, `travelTo(mapId)` → emits `fast-travel`,
+  which `WorldScene` turns into `changeMap`. A stop is known once any zone of its map was
+  visited, and its spawn is the one the player first arrives by, so travel never skips an
+  obstacle. `ui/MapPanel.ts` is the modal sheet (**M** or the map button; arrows + E, or tap).
+- **HUD.** `ui/HudButton.ts`: two small round buttons above the context button, shown once
+  unlocked and hidden while a modal is open.
+- **Save.** Only `ext.horse = { riding }`. Everything else derives from flags and visited
+  zones that older saves already have, so they get the map at once and `q-horse` on load.
+- **New outdoor map?** Add a `TravelStopDef` (a unit test checks every outdoor map has one);
+  mark interiors `indoor: true`.
 
 ## Wave boundaries
 

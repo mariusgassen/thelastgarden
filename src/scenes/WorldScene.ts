@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { content, type DialogueLine } from '../content';
 import { bus } from '../systems/events';
+import { isRidingHere } from '../systems/horse';
 import { inputState } from '../systems/input';
 import { createSpecInteractable, InteractionSystem, type WorldApi } from '../systems/interaction';
 import { JournalLayer } from '../systems/journal';
@@ -47,6 +48,8 @@ export class WorldScene extends Phaser.Scene implements WorldApi {
   /** Static colliders (props, obstacles). Add your own solid bodies here. */
   solids!: Phaser.Physics.Arcade.StaticGroup;
   private marker!: Phaser.GameObjects.Image;
+  /** Mohn grazing where the player got off; scenery only, gone on the next mount or map change. */
+  private idleHorse: Phaser.GameObjects.Image | null = null;
   private flagProps: { image: Phaser.GameObjects.Image; showWhenFlag?: string; hideWhenFlag?: string }[] = [];
   private currentZone: ZoneDef | null = null;
   private transitioning = false;
@@ -64,6 +67,7 @@ export class WorldScene extends Phaser.Scene implements WorldApi {
     this.map = MAPS[mapId] ?? getMap(START_MAP_ID);
     this.currentZone = null;
     this.transitioning = false;
+    this.idleHorse = null;
 
     const widthPx = this.map.width * TILE_SIZE;
     const heightPx = this.map.height * TILE_SIZE;
@@ -102,6 +106,9 @@ export class WorldScene extends Phaser.Scene implements WorldApi {
 
     const spawn = this.resolveSpawn(data.spawn);
     this.player = new PlayerController(this, spawn.x, spawn.y, gameState.data.player.facing);
+    this.player.setRiding(isRidingHere());
+    bus.onScene(this, 'riding-changed', () => this.applyRiding());
+    bus.onScene(this, 'fast-travel', ({ mapId, spawn: stopSpawn }) => this.changeMap(mapId, stopSpawn));
     this.physics.add.collider(this.player.sprite, ground);
     this.physics.add.collider(this.player.sprite, this.solids);
 
@@ -187,6 +194,33 @@ export class WorldScene extends Phaser.Scene implements WorldApi {
   }
 
   // ── internals ─────────────────────────────────────────────
+  private applyRiding(): void {
+    const riding = isRidingHere();
+    if (riding === this.player.isRiding) return;
+    const { feetX: x, feetY: y } = this.player;
+    this.idleHorse?.destroy();
+    this.idleHorse = null;
+    this.player.setRiding(riding);
+    if (!riding) {
+      // The player steps down beside her head.
+      const left = this.player.facing === 'left';
+      this.idleHorse = this.add
+        .image(x + (left ? 26 : -26), y, 'mohn')
+        .setOrigin(0.5, 1)
+        .setFlipX(left)
+        .setDepth(y - 2);
+    }
+    const puff = this.add.particles(x, y - 6, 'sparkle', {
+      angle: { min: 180, max: 360 },
+      speed: { min: 20, max: 60 },
+      lifespan: 450,
+      scale: { start: 0.9, end: 0 },
+      emitting: false,
+    });
+    puff.setDepth(y + 1).explode(8);
+    this.time.delayedCall(600, () => puff.destroy());
+  }
+
   private resolveSpawn(spawnName?: string): { x: number; y: number } {
     const saved = gameState.data.player;
     if (!spawnName && saved.mapId === this.map.id && saved.x >= 0 && saved.y >= 0) {

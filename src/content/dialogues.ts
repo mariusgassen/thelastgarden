@@ -150,6 +150,7 @@ export const DIALOGUES: DialogueDef[] = [
       { text: 'Ein Stadtplan von Erlenbrück, mit Bleistift überarbeitet. Eine Linie führt vom Garten über die alte Straßenbahntrasse hinaus — bis zum Wasserturm am Stadtrand.' },
       { text: 'Daneben, in ihrer Schrift: „Linie 3. Die Gleise sind noch da, nur zugewachsen. Wenn du das liest: Die Krähe kennt den Weg. — M.“' },
       { text: 'Eine zweite Notiz, kleiner: „Dort, wo die Stadt endet, fängt der Garten erst richtig an.“' },
+      { text: 'Du zeichnest den Plan in dein Notizheft ab. Orte, an denen du schon warst, findest du damit jederzeit wieder.' },
     ],
   },
   {
@@ -277,6 +278,41 @@ export const DIALOGUES: DialogueDef[] = [
     lines: [
       { text: 'Das alte Stellwerk steht halb offen, doch drinnen wächst nur Farn aus den Hebelschlitzen.' },
       { text: 'Auf dem Fensterbrett glänzt noch der Messingrahmen einer alten Weichenlampe.' },
+    ],
+  },
+  // ── Mohn, the garden's old mare (systems/horse.ts) ──────────────────────
+  {
+    id: 'mohn-intro',
+    lines: [
+      { text: 'Auf der Lichtung grast eine kastanienbraune Stute. In ihrer Mähne steckt eine verblichene rote Stoffblüte.' },
+      { text: 'Sie hebt den Kopf, schnaubt leise und weicht einen Schritt zurück. Zutraulich ist sie nicht — aber neugierig.' },
+      { text: 'Am Zaunpfahl neben ihr flattert ein Zettel im Wind.' },
+    ],
+  },
+  {
+    id: 'mohn-waiting',
+    lines: [
+      { text: 'Die Stute beobachtet dich aus sicherem Abstand und zupft weiter am Gras.' },
+      { text: 'Mit leeren Händen kommst du ihr nicht näher. Auf dem Zettel am Zaunpfahl steht, was sie mag.' },
+    ],
+  },
+  {
+    id: 'mohn-tamed',
+    lines: [
+      { text: 'Du hältst ihr das Kräuterleckerli auf der flachen Hand hin. Mohn bläht die Nüstern, macht einen Schritt, dann noch einen.' },
+      { text: 'Weiche Lippen sammeln den Riegel von deiner Hand. Dann stupst sie dich so fest gegen die Schulter, dass du beinahe umfällst.' },
+      { text: 'Mohn kommt von nun an mit dir. Auf ihrem Rücken bist du draußen viel schneller unterwegs.' },
+    ],
+  },
+  {
+    id: 'journal-page-mohn',
+    style: 'page',
+    title: 'Zettel · Am Zaunpfahl',
+    lines: [
+      { text: 'Das ist Mohn. Sie hat früher den Gartenkarren gezogen: Erde, Setzlinge, Gießkannen, einmal sogar ein Klavier.' },
+      { text: 'Ich kann sie nicht mitnehmen, wohin ich gehe. Hier auf der Trasse hat sie Gras, Schatten und ihre Ruhe.' },
+      { text: 'Wer ihr Vertrauen will, bringt Kräuterleckerli mit. An der Werkbank: ein Brombeertrieb, ein Duftbündel, ein Tropfen Tau.' },
+      { text: 'Sei gut zu ihr. Sie kennt jeden Weg in Erlenbrück besser als ich. — M.' },
     ],
   },
   {
