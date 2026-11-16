@@ -14,14 +14,19 @@ import {
   whyNotRemove,
   type PlacedPiece,
 } from './building';
+import { prefersReducedMotion } from '../ui/viewport';
 import { bus } from './events';
 import type { InteractionSystem } from './interaction';
+import { machineAction } from './machines';
 import type { Facing } from './save';
+import { gameState } from './state';
 
 interface LivePiece {
   piece: PlacedPiece;
   sprite: Phaser.GameObjects.Image;
   body?: Phaser.GameObjects.Zone;
+  /** Moving parts drawn on top of the sprite (the windmill's sails). */
+  extra?: Phaser.GameObjects.Image;
 }
 
 const OK_COLOR = 0x9be26a;
@@ -105,9 +110,15 @@ export class BuildLayer {
       else bus.emit('toast', { text: `${content.buildables.get(existing.id).name} abgebaut.` });
       return;
     }
-    const reason = placePiece(this.map.id, getBuildMode().pieceId, x, y, player);
+    const pieceId = getBuildMode().pieceId;
+    const first = !gameState.hasFlag(`built:${pieceId}`);
+    const reason = placePiece(this.map.id, pieceId, x, y, player);
     if (reason) this.refuse(x, y, reason);
-    else this.puff((x + 0.5) * TILE_SIZE, (y + 0.8) * TILE_SIZE);
+    else {
+      this.puff((x + 0.5) * TILE_SIZE, (y + 0.8) * TILE_SIZE);
+      const def = content.buildables.get(pieceId);
+      if (first && def.machine) bus.emit('toast', { text: def.description });
+    }
   }
 
   private refuse(x: number, y: number, reason: string): void {
@@ -204,12 +215,45 @@ export class BuildLayer {
         },
       });
     }
+    if (def.machine) this.registerMachine(piece);
+    if (def.machine === 'windmill') entry.extra = this.addSails(pos);
     this.live.set(pieceKey(piece), entry);
+  }
+
+  /** Rack, windmill and compost heap: one interactable whose label follows the machine's state. */
+  private registerMachine(piece: PlacedPiece): void {
+    const at = { x: (piece.x + 0.5) * TILE_SIZE, y: (piece.y + 0.8) * TILE_SIZE };
+    const mapId = this.map.id;
+    const action = () => machineAction(mapId, piece.x, piece.y);
+    if (!action()) return;
+    this.interaction.register({
+      id: `build:${pieceKey(piece)}`,
+      get label() {
+        return action()?.label ?? '';
+      },
+      radius: 56,
+      markerOffset: 64,
+      getPosition: () => at,
+      onInteract: (ctx) => {
+        const act = action();
+        if (act) ctx.world.toast(act.act());
+      },
+    });
+  }
+
+  private addSails(pos: { x: number; y: number; depth: number }): Phaser.GameObjects.Image {
+    const sails = this.scene.add.image(pos.x, pos.y - 64 + 17, 'build-windmill-sails').setDepth(pos.depth + 1);
+    if (!prefersReducedMotion()) this.scene.tweens.add({ targets: sails, angle: 360, duration: 14_000, repeat: -1 });
+    return sails;
   }
 
   private despawn(k: string, entry: LivePiece): void {
     this.live.delete(k);
     entry.sprite.destroy();
+    if (entry.extra) {
+      this.scene.tweens.killTweensOf(entry.extra);
+      entry.extra.destroy();
+    }
     if (entry.body) this.solids.remove(entry.body, true, true);
     if (content.buildables.get(entry.piece.id).on === 'water') {
       this.ground.getTileAt(entry.piece.x, entry.piece.y)?.setCollision(true);

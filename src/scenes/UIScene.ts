@@ -5,6 +5,7 @@ import { craftWithToast, getUnlockedRecipes, hasPocketWorkbench } from '../syste
 import { bus } from '../systems/events';
 import { canRideHere, hasHorse, isRiding, toggleRiding } from '../systems/horse';
 import { inputState } from '../systems/input';
+import { eatMeal } from '../systems/meals';
 import { gameState } from '../systems/state';
 import { hasTravelMap, travelTo } from '../systems/travel';
 import { cycleSeed, equipTool, getEquippedTool, getOwnedTools, getToolMode, setToolMode } from '../systems/tools';
@@ -102,6 +103,9 @@ export class UIScene extends Phaser.Scene {
       },
       hasPocketWorkbench,
       () => this.openPocketWorkbench(),
+      (itemId) => {
+        if (eatMeal(itemId)) this.enqueueToast(`${content.items.get(itemId).name} gegessen.`);
+      },
     );
     this.crafting = new CraftingPanel(
       this,

@@ -1,6 +1,8 @@
 import Phaser from 'phaser';
 // Importing this registers its module-level obstacle-interact handler exactly once.
+import { startAnimals } from '../systems/animals';
 import { startBlightScheduler } from '../systems/blight';
+import { startMachineTicker } from '../systems/machines';
 import { startGrowthTicker } from '../systems/plants';
 import { hideAppLoader, showBootError } from '../systems/pwa';
 import { startNightScheduler } from '../systems/nightEvents';
@@ -23,6 +25,8 @@ export class BootScene extends Phaser.Scene {
       startQuestRuntime();
       startNightScheduler();
       startBlightScheduler();
+      startAnimals();
+      startMachineTicker();
       this.scene.start(SCENES.world);
       this.scene.launch(SCENES.ui);
       hideAppLoader();

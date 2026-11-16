@@ -31,14 +31,14 @@ import type { BlightHeartDef } from '../world/types';
 import { addPlacementBlocker, getPieceAt, getPieces, isTileWalkable } from './building';
 import { getDayTime, setDayTimeHour } from './dayClock';
 import { bus } from './events';
-import { isBedMature } from './plants';
+import { getBedState, isBedMature } from './plants';
 import { gameState } from './state';
 
 /** The blight wakes once the garden's first chapter is done; older saves that are past it get it on load. */
 export const BLIGHT_FLAG = 'episode-1-complete';
 /** New tiles per living heart and night. */
 export const GROWTH_PER_NIGHT = 6;
-/** A mature plant wards this many tiles around its bed (plus a little for wide beds). */
+/** A mature plant wards this many tiles around its bed (plus a little for wide beds), unless its species says otherwise (`PlantDef.wardRadius`). */
 const PLANT_WARD_TILES = 3;
 
 export type HeartWithMap = BlightHeartDef & { mapId: string };
@@ -91,6 +91,18 @@ export function getBlightTiles(mapId: string): { x: number; y: number }[] {
   });
 }
 
+/** Removes the given blighted tiles (a grazing goat); returns how many were actually blighted. */
+export function clearBlightTiles(mapId: string, tiles: { x: number; y: number }[]): number {
+  const set = new Set(tileSet(mapId));
+  let cleared = 0;
+  for (const t of tiles) if (set.delete(key(t.x, t.y))) cleared++;
+  if (cleared > 0) {
+    writeTiles(mapId, [...set]);
+    gameState.setFlag('blight-pushed-back');
+  }
+  return cleared;
+}
+
 export function isBlighted(mapId: string, x: number, y: number): boolean {
   return tileSet(mapId).has(key(x, y));
 }
@@ -112,10 +124,11 @@ export function getWards(mapId: string): Ward[] {
   }
   for (const bed of allPlantingBeds()) {
     if (bed.mapId !== mapId || !isBedMature(bed.id)) continue;
+    const species = content.plants.get(getBedState(bed.id)!.plantId);
     wards.push({
       x: bed.rect.x + bed.rect.w / 2,
       y: bed.rect.y + bed.rect.h / 2,
-      radius: PLANT_WARD_TILES + Math.max(bed.rect.w, bed.rect.h) / 4,
+      radius: (species.wardRadius ?? PLANT_WARD_TILES) + Math.max(bed.rect.w, bed.rect.h) / 4,
     });
   }
   return wards;
@@ -253,8 +266,17 @@ bus.on('save-loaded', () => {
 /** True once this night's growth has happened; reset when the day comes. */
 let nightDone = false;
 
+type NightfallHandler = () => void;
+const nightfallHandlers: NightfallHandler[] = [];
+
+/** Runs after the blight has grown each night, including a shelter's rest (helper animals graze here). */
+export function onNightfall(handler: NightfallHandler): void {
+  nightfallHandlers.push(handler);
+}
+
 function nightfallWithToast(): void {
   if (blightNightfall() > 0) bus.emit('toast', { text: 'Die Welke kriecht in der Dunkelheit näher.' });
+  for (const handler of nightfallHandlers) handler();
 }
 
 /** A shelter's rest: the night passes (the blight grows as on any night) and it is morning. */

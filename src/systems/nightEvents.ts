@@ -20,6 +20,7 @@ import Phaser from 'phaser';
 import { content } from '../content';
 import { allPlantingBeds } from '../world';
 import { TILE_SIZE } from '../world/tiles';
+import { isCoveredByHens } from './animals';
 import { bus, type NightEventKind, type NightOutcome } from './events';
 import { inputState } from './input';
 import type { WorldApi } from './interaction';
@@ -95,8 +96,11 @@ const resolvers: Record<NightEventKind, Resolver> = {
   snails: (mapId) => {
     const tender = tenderBeds(mapId);
     if (tender.length === 0) return null;
-    const harmed = tender.filter((b) => !protectedByLavender(b));
+    const harmed = tender.filter((b) => !protectedByLavender(b) && !isCoveredByHens(mapId, b.x, b.y));
     if (harmed.length === 0) {
+      if (tender.some((b) => !protectedByLavender(b))) {
+        return { kind: 'snails', dialogueId: 'night-snails-hens', affectedBedIds: [], remnants: [], protectedBy: 'hens' };
+      }
       return { kind: 'snails', dialogueId: 'night-snails-safe', affectedBedIds: [], remnants: [], protectedBy: 'lavender' };
     }
     // A carried lavender sachet covers the beds no lavender reaches; it is used up by the night.

@@ -13,7 +13,7 @@ export interface NightOutcome {
   /** Decoration left behind in the world (px), e.g. snails next to a nibbled bed. */
   remnants: { texture: 'snail' | 'mole-mound' | 'feather' | 'puddle'; x: number; y: number }[];
   /** Set when the player's garden design (plants) or ally (crow) prevented harm. */
-  protectedBy?: 'lavender' | 'glow-lily' | 'crow' | 'sachet' | 'lantern';
+  protectedBy?: 'lavender' | 'glow-lily' | 'crow' | 'sachet' | 'lantern' | 'hens';
 }
 
 /**
@@ -61,6 +61,7 @@ export interface GameEvents {
   'dialogue-choice': { dialogueId: string; choiceId: string };
   /** A workbench recipe was crafted (see systems/crafting.ts). */
   'item-crafted': { recipeId: string };
+  'meal-eaten': { itemId: string };
   /** Ask the UI to open the visual crafting panel (from a workbench). */
   'crafting-open': undefined;
   /** The player mounted or dismounted the horse (see systems/horse.ts). */

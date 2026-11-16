@@ -93,6 +93,7 @@ export const HILL_PATH_MAP: MapDef = {
   npcs: [{ npcId: 'crow', at: { x: 13.8, y: 13.9 }, radius: 70, showWhenFlag: 'episode-2-complete', hideWhenFlag: 'crow-orchard-talked' }],
   plantingBeds: [{ id: 'bed-hill-extra', rect: { x: 25, y: 12, w: 4, h: 2 } }],
   resourceNodes: [
+    { id: 'hill-seed-thornroot', itemId: 'seed-thornroot', at: { x: 14.5, y: 14 }, label: 'Samen einsammeln' },
     { id: 'sun-hill-1', itemId: 'resource-sunlight', at: { x: 8, y: 16 }, label: 'Sonnenlicht sammeln', respawnMs: 45_000 },
     { id: 'dew-hill-1', itemId: 'resource-dew', at: { x: 23, y: 10 }, label: 'Tau sammeln', respawnMs: 45_000 },
     { id: 'curio-hill-1', itemId: 'resource-curio', at: { x: 10, y: 5.8 }, label: 'Aufheben' },

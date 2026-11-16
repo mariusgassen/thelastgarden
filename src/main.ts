@@ -4,7 +4,8 @@ import { SCENES } from './scenes/keys';
 import { BootScene } from './scenes/BootScene';
 import { UIScene } from './scenes/UIScene';
 import { WorldScene } from './scenes/WorldScene';
-import { blightNightfall, getBlightTiles, refreshBlight } from './systems/blight';
+import { collectProduce, feedHorse, getHomes, isHorseRested, readyProduce } from './systems/animals';
+import { blightNightfall, getBlightTiles, refreshBlight, restUntilMorning } from './systems/blight';
 import { getPieces, placePiece, removePiece, setBuildMode } from './systems/building';
 import { bus } from './systems/events';
 import { getDayTime, setDayTimeHour } from './systems/dayClock';
@@ -117,6 +118,9 @@ if (import.meta.env.DEV) {
       getPieces,
       setBuildMode,
       blightNightfall,
+      // Helper animals: restUntilMorning() also runs the night routines (goat, stable).
+      restUntilMorning,
+      animals: { getHomes, readyProduce, collectProduce, isHorseRested, feedHorse },
       refreshBlight,
       getBlightTiles,
       // Tools:
