@@ -2,8 +2,11 @@ import { GARDEN_MAP } from './maps/garden';
 import { GREENHOUSE_HEART_MAP } from './maps/greenhouseHeart';
 import { GREENHOUSE_VESTIBULE_MAP } from './maps/greenhouseVestibule';
 import { HILL_PATH_MAP } from './maps/hillPath';
+import { MILL_INTERIOR_MAP } from './maps/millInterior';
+import { OLD_MILL_MAP } from './maps/oldMill';
 import { ORCHARD_MAP } from './maps/orchard';
 import { ORCHARD_COTTAGE_MAP } from './maps/orchardCottage';
+import { RIVER_FARMS_MAP } from './maps/riverFarms';
 import { TRAMLINE_MAP } from './maps/tramline';
 import { WATER_TOWER_MAP } from './maps/waterTower';
 import { WORKSHOP_MAP } from './maps/workshop';
@@ -23,6 +26,9 @@ export const MAPS: Record<string, MapDef> = {
   [HILL_PATH_MAP.id]: HILL_PATH_MAP,
   [ORCHARD_MAP.id]: ORCHARD_MAP,
   [ORCHARD_COTTAGE_MAP.id]: ORCHARD_COTTAGE_MAP,
+  [OLD_MILL_MAP.id]: OLD_MILL_MAP,
+  [MILL_INTERIOR_MAP.id]: MILL_INTERIOR_MAP,
+  [RIVER_FARMS_MAP.id]: RIVER_FARMS_MAP,
 };
 
 export const START_MAP_ID = GARDEN_MAP.id;

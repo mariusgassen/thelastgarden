@@ -9,6 +9,8 @@ export const NPCS: NpcDef[] = [
     interactLabel: 'Ansprechen',
     color: 0x2b2b33,
     dialogues: [
+      { dialogueId: 'crow-garden-gathering', mapId: 'garden', requires: ['episode-4-complete'] },
+      { dialogueId: 'crow-garden-gathering-wait', mapId: 'garden', requires: ['jakob-ready-to-return'] },
       { dialogueId: 'crow-orchard-after', mapId: 'orchard', requires: ['episode-3-complete'] },
       { dialogueId: 'crow-orchard-waiting', mapId: 'orchard', requires: ['crow-orchard-talked'] },
       {
@@ -65,6 +67,7 @@ export const NPCS: NpcDef[] = [
     interactLabel: 'Ansprechen',
     color: 0xb9946b,
     dialogues: [
+      { dialogueId: 'owl-episode4-after', requires: ['episode-4-complete'] },
       { dialogueId: 'owl-episode3-after', requires: ['episode-3-complete'] },
       { dialogueId: 'owl-hill-hint', requires: ['episode-2-complete'], forbids: ['episode-3-complete'] },
       { dialogueId: 'owl-after-vial', requires: ['owl-gave-vial'] },
@@ -87,6 +90,14 @@ export const NPCS: NpcDef[] = [
     interactLabel: 'Sprechen',
     color: 0x5d8a45,
     dialogues: [
+      { dialogueId: 'm-garden-after', mapId: 'garden', requires: ['episode-4-complete'] },
+      {
+        dialogueId: 'm-gathering-finale',
+        mapId: 'garden',
+        requires: ['jakob-ready-to-return'],
+        forbids: ['garden-gathering-celebrated'],
+        setFlags: ['garden-gathering-celebrated'],
+      },
       { dialogueId: 'm-after', requires: ['episode-3-complete'] },
       {
         dialogueId: 'm-orchard-awakened',
@@ -103,5 +114,32 @@ export const NPCS: NpcDef[] = [
       },
     ],
     dialogueId: 'm-waiting',
+  },
+  {
+    id: 'jakob',
+    name: 'Jakob',
+    description: 'Der alte Müller von Erlenbrück. Auf seinem grauen Bart klebt noch ein Hauch von Mehlstaub und Bachmoos.',
+    interactLabel: 'Sprechen',
+    color: 0x7a6552,
+    dialogues: [
+      { dialogueId: 'jakob-garden-after', mapId: 'garden', requires: ['episode-4-complete'] },
+      { dialogueId: 'jakob-garden-arrival', mapId: 'garden', requires: ['jakob-ready-to-return'] },
+      {
+        dialogueId: 'jakob-return-finale',
+        mapId: 'old-mill',
+        requires: ['quest-completed:q-mill-and-farms'],
+        forbids: ['jakob-ready-to-return'],
+        setFlags: ['jakob-ready-to-return'],
+      },
+      { dialogueId: 'jakob-waiting', mapId: 'old-mill', requires: ['jakob-met'] },
+      {
+        dialogueId: 'jakob-intro',
+        mapId: 'old-mill',
+        forbids: ['jakob-met'],
+        setFlags: ['jakob-met'],
+        giveItems: [{ itemId: 'seed-hollyhock', count: 2 }],
+      },
+    ],
+    dialogueId: 'jakob-waiting',
   },
 ];

@@ -41,6 +41,9 @@ export const ORCHARD_MAP: MapDef = {
     // Northeast Sun Terrace & Mother Apple Tree clearing
     { op: 'rect', tile: 'orchardGrass', rect: { x: 26, y: 3, w: 19, h: 8 } },
     { op: 'ellipse', tile: 'grass', cx: 36, cy: 7, rx: 5, ry: 3 },
+
+    // East path leading to the Old Mill (Episode 4)
+    { op: 'rect', tile: 'overgrownPath', rect: { x: 43, y: 20, w: 5, h: 3 } },
   ],
   zones: [
     { id: 'orchard-entrance', name: 'Alte Obstwiesen', rect: { x: 0, y: 15, w: 20, h: 17 } },
@@ -64,6 +67,7 @@ export const ORCHARD_MAP: MapDef = {
     { texture: 'pots', at: { x: 6.4, y: 9.2 }, solid: { x: 5.7, y: 8.5, w: 1.4, h: 0.7 } },
     { texture: 'bench', at: { x: 14.5, y: 8.8 }, solid: { x: 13.4, y: 8, w: 2.2, h: 0.8 } },
     { texture: 'stump', at: { x: 13.2, y: 25.5 }, solid: { x: 12.7, y: 24.9, w: 1, h: 0.6 } },
+    { texture: 'signpost-east', at: { x: 44.5, y: 19.6 } },
 
     {
       texture: 'orchard-sluice',
@@ -126,6 +130,24 @@ export const ORCHARD_MAP: MapDef = {
       target: { mapId: 'orchard-cottage', spawn: 'entrance' },
     },
     {
+      id: 'orchard-sign-east',
+      type: 'dialogue',
+      at: { x: 44.5, y: 19.9 },
+      label: 'Lesen',
+      dialogueId: 'orchard-sign-east',
+    },
+    {
+      id: 'orchard-to-mill',
+      type: 'door',
+      at: { x: 46.8, y: 21.5 },
+      label: 'Zur Alten Mühle',
+      locked: true,
+      unlockFlag: 'episode-3-complete',
+      lockedDialogueId: 'mill-path-locked',
+      target: { mapId: 'old-mill', spawn: 'west' },
+      radius: 64,
+    },
+    {
       id: 'orchard-sluice',
       type: 'repair',
       at: { x: 24.5, y: 17.7 },
@@ -167,8 +189,8 @@ export const ORCHARD_MAP: MapDef = {
     },
   ],
   npcs: [
-    { npcId: 'crow', at: { x: 13.2, y: 24.9 }, radius: 70, showWhenFlag: 'episode-2-complete' },
-    { npcId: 'm', at: { x: 38.2, y: 8.4 }, radius: 74 },
+    { npcId: 'crow', at: { x: 13.2, y: 24.9 }, radius: 70, showWhenFlag: 'episode-2-complete', hideWhenFlag: 'jakob-ready-to-return' },
+    { npcId: 'm', at: { x: 38.2, y: 8.4 }, radius: 74, hideWhenFlag: 'jakob-ready-to-return' },
   ],
   plantingBeds: [
     { id: 'bed-orchard-extra', rect: { x: 10, y: 20, w: 4, h: 2 } },
@@ -187,5 +209,6 @@ export const ORCHARD_MAP: MapDef = {
     default: { x: 9.5, y: 28.8 },
     south: { x: 9.5, y: 28.8 },
     cottage: { x: 10, y: 9.4 },
+    east: { x: 45.2, y: 21.5 },
   },
 };

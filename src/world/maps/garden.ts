@@ -199,8 +199,13 @@ export const GARDEN_MAP: MapDef = {
     { id: 'seed-lavender-1', itemId: 'seed-lavender', at: { x: 9, y: 33 }, label: 'Samen einsammeln' },
     { id: 'seed-lavender-2', itemId: 'seed-lavender', at: { x: 3, y: 36 }, label: 'Samen einsammeln' },
   ],
-  // The crow perches on the stump at the hut-yard entrance until flying ahead at the end of Episode 1.
-  npcs: [{ npcId: 'crow', at: { x: 11.5, y: 34.3 }, radius: 70, hideWhenFlag: 'episode-1-complete' }],
+  // The crow perches on the stump until Episode 1 completes; in Episode 4 all friends gather on the central plaza.
+  npcs: [
+    { npcId: 'crow', at: { x: 11.5, y: 34.3 }, radius: 70, hideWhenFlag: 'episode-1-complete' },
+    { npcId: 'crow', at: { x: 22.5, y: 35.2 }, radius: 64, showWhenFlag: 'jakob-ready-to-return' },
+    { npcId: 'm', at: { x: 24.8, y: 36.2 }, radius: 70, showWhenFlag: 'jakob-ready-to-return' },
+    { npcId: 'jakob', at: { x: 27.6, y: 36.2 }, radius: 70, showWhenFlag: 'jakob-ready-to-return' },
+  ],
   // One journal page per restored bed, lying right next to it (see systems/journal.ts).
   journalPages: [
     {

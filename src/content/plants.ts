@@ -53,4 +53,14 @@ export const PLANTS: PlantDef[] = [
     color: 0x6f7bf7,
     lightRadius: 130,
   },
+  {
+    id: 'hollyhock',
+    name: 'Stockrose',
+    description: 'Eine stolze Bauerngartenblume aus dem alten Erlenbrück. Ihre rosafarbenen Blüten leuchten wie kleine Laternen entlang der Dorfwege.',
+    seedItemId: 'seed-hollyhock',
+    growthStages: 3,
+    abilityId: 'tower-bloom',
+    color: 0xe8739c,
+    lightRadius: 90,
+  },
 ];

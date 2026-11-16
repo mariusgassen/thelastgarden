@@ -112,6 +112,7 @@ describe('plants and obstacles systems', () => {
       'bramble-greenhouse-yard',
       'bramble-tram-switch',
       'bramble-orchard-terrace',
+      'bramble-farm-gate',
     ]);
 
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});

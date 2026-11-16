@@ -1311,6 +1311,275 @@ export function generateTextures(scene: Phaser.Scene): void {
     g.fillRect(14, 8, 10, 6);
   });
 
+  // Episode 4: Hollyhock, Jakob, Old Mill, Mill Interior & River Farms
+  make('plant-hollyhock-sprout', 18, 20, (g) => {
+    g.fillStyle(0x3f6b35, 1);
+    g.fillRect(8, 7, 2, 11);
+    g.fillStyle(0x5b8a45, 1);
+    g.fillCircle(6, 13, 3);
+    g.fillCircle(12, 12, 3);
+    g.fillStyle(0xe8739c, 1);
+    g.fillCircle(9, 6, 2.4);
+  });
+  make('plant-hollyhock-growing', 26, 38, (g) => {
+    g.fillStyle(0x4c7a3d, 1);
+    g.fillEllipse(13, 31, 16, 8);
+    g.fillStyle(0x3f6b35, 1);
+    g.fillRect(12, 9, 2.5, 22);
+    g.fillStyle(0xe8739c, 1);
+    g.fillCircle(10, 17, 3.2);
+    g.fillCircle(16, 14, 3.2);
+    g.fillCircle(13, 9, 3.5);
+    g.fillStyle(0xf9d8e2, 1);
+    g.fillCircle(13, 9, 1.3);
+  });
+  make('plant-hollyhock-mature', 34, 54, (g) => {
+    g.fillStyle(0x000000, 0.18);
+    g.fillEllipse(17, 50, 22, 6);
+    g.fillStyle(0x4c7a3d, 1);
+    g.fillEllipse(17, 42, 22, 10);
+    g.fillStyle(0x3f6b35, 1);
+    g.fillRect(15.5, 8, 3, 35);
+    g.fillRect(9.5, 18, 2, 24);
+    g.fillRect(22.5, 20, 2, 22);
+    for (const [fx, fy] of [
+      [17, 8],
+      [14, 15],
+      [20, 19],
+      [16, 25],
+      [10, 20],
+      [11, 28],
+      [23, 22],
+      [23, 30],
+    ]) {
+      g.fillStyle(0xe8739c, 1);
+      g.fillCircle(fx, fy, 4.2);
+      g.fillStyle(0xf7b2cb, 1);
+      g.fillCircle(fx - 0.6, fy - 0.6, 2.3);
+      g.fillStyle(0xf6d878, 1);
+      g.fillCircle(fx, fy, 1.3);
+    }
+  });
+  make('jakob', 28, 40, (g) => {
+    g.fillStyle(0x4a3b2e, 1); // work boots & trousers
+    g.fillRoundedRect(8, 26, 5, 12, 2);
+    g.fillRoundedRect(15, 26, 5, 12, 2);
+    g.fillStyle(0x7c6f65, 1); // sturdy slate-grey vest
+    g.fillRoundedRect(5, 15, 18, 15, 5);
+    g.fillStyle(0xe8dec8, 1); // flour-dusted miller's apron
+    g.fillRoundedRect(8, 16, 12, 16, 3);
+    g.fillStyle(0xf0c29a, 1); // face
+    g.fillCircle(14, 11, 6.8);
+    g.fillStyle(0xd8d2c7, 1); // neat silver beard & brows
+    g.fillEllipse(14, 15, 10, 6);
+    g.fillStyle(0x52575b, 1); // flat baker/miller cap
+    g.fillRoundedRect(7, 2, 14, 6, 3);
+    g.fillRect(10, 6, 11, 2.5);
+    g.fillStyle(0x3a2a1e, 1);
+    g.fillCircle(17, 11, 1.2);
+  });
+  make('portrait-jakob', 64, 64, (g) => {
+    g.fillStyle(0x2f3b40, 1); // riverside backdrop
+    g.fillRoundedRect(0, 0, 64, 64, 10);
+    g.fillStyle(0x64b5d1, 0.2); // millstream sheen
+    g.fillCircle(48, 16, 16);
+    g.fillStyle(0x7c6f65, 1); // shoulders
+    g.fillEllipse(32, 56, 46, 24);
+    g.fillStyle(0xe8dec8, 1); // flour-dusted apron front
+    g.fillRoundedRect(21, 43, 22, 18, 5);
+    g.fillStyle(0xf0c29a, 1); // weathered warm face
+    g.fillCircle(32, 31, 13);
+    g.fillStyle(0xd8d2c7, 1); // silver hair & full tidy beard
+    g.fillCircle(20, 31, 5);
+    g.fillCircle(44, 31, 5);
+    g.fillEllipse(32, 40, 22, 13);
+    g.fillStyle(0x3a2a1e, 1); // kind crinkled eyes
+    g.fillCircle(27, 29, 2);
+    g.fillCircle(37, 29, 2);
+    g.fillStyle(0xd8d2c7, 1); // bushy brows
+    g.fillRect(24, 24, 6, 2.2);
+    g.fillRect(34, 24, 6, 2.2);
+    g.fillStyle(0x52575b, 1); // miller cap
+    g.fillRoundedRect(16, 10, 32, 12, 5);
+    g.fillRoundedRect(19, 19, 28, 5, 2);
+  });
+  make('mill-roof', 236, 124, (g) => {
+    g.fillStyle(0x000000, 0.2);
+    g.fillRect(10, 108, 216, 14);
+    g.fillStyle(0x63483b, 1); // weathered timber & slate roof
+    g.fillRoundedRect(4, 0, 228, 112, 8);
+    g.fillStyle(0x785a4a, 1);
+    for (let row = 0; row < 7; row++) {
+      for (let col = 0; col < 12; col++) {
+        const x = 6 + col * 19 + (row % 2) * 9;
+        if (x > 216) continue;
+        g.fillRoundedRect(x, 4 + row * 15, 16, 12, 3);
+      }
+    }
+    g.fillStyle(0x4a342a, 1);
+    g.fillRect(4, 52, 228, 6);
+    g.fillStyle(0x6a9a4e, 0.85); // moss tufts
+    g.fillCircle(34, 90, 7);
+    g.fillCircle(198, 24, 6);
+    g.fillStyle(0x7d4537, 1); // brick chimney
+    g.fillRect(172, 12, 18, 24);
+  });
+  make('mill-wheel', 64, 72, (g) => {
+    g.fillStyle(0x000000, 0.22);
+    g.fillEllipse(32, 66, 48, 10);
+    g.fillStyle(0x5c3b25, 1); // wooden rim & spokes
+    g.lineStyle(5, 0x5c3b25, 1);
+    g.strokeCircle(32, 36, 26);
+    for (let i = 0; i < 8; i++) {
+      const a = (i / 8) * Math.PI * 2;
+      g.lineStyle(3, 0x6e4529, 1);
+      g.lineBetween(32, 36, 32 + Math.cos(a) * 26, 36 + Math.sin(a) * 26);
+      g.fillStyle(0x4a2e1c, 1); // paddles
+      g.fillCircle(32 + Math.cos(a) * 27, 36 + Math.sin(a) * 27, 4);
+    }
+    g.fillStyle(0x52575b, 1); // jammed iron axle
+    g.fillCircle(32, 36, 7);
+    g.fillStyle(0x8a4836, 1); // rust spot
+    g.fillCircle(34, 36, 3.5);
+  });
+  make('mill-wheel-turning', 64, 72, (g) => {
+    g.fillStyle(0x000000, 0.22);
+    g.fillEllipse(32, 66, 48, 10);
+    g.fillStyle(0x4ca3b8, 0.45); // flowing millstream splash underneath
+    g.fillEllipse(32, 62, 54, 14);
+    g.lineStyle(5, 0x8a603d, 1);
+    g.strokeCircle(32, 36, 26);
+    for (let i = 0; i < 8; i++) {
+      const a = (i / 8) * Math.PI * 2 + 0.22;
+      g.lineStyle(3, 0xa8753f, 1);
+      g.lineBetween(32, 36, 32 + Math.cos(a) * 26, 36 + Math.sin(a) * 26);
+      g.fillStyle(0x6e4529, 1);
+      g.fillCircle(32 + Math.cos(a) * 27, 36 + Math.sin(a) * 27, 4);
+    }
+    g.fillStyle(0xe6c34a, 1); // oiled gleaming axle
+    g.fillCircle(32, 36, 7);
+    g.fillStyle(0xdff6ff, 0.9); // water spray droplets
+    for (const [dx, dy] of [
+      [14, 52],
+      [26, 58],
+      [42, 56],
+      [50, 48],
+    ])
+      g.fillCircle(dx, dy, 2.4);
+  });
+  make('apple-rootstock', 72, 76, (g) => {
+    g.fillStyle(0x000000, 0.2);
+    g.fillEllipse(36, 70, 46, 10);
+    g.fillStyle(0x5c3b25, 1); // pruned old trunk
+    g.fillRect(30, 32, 12, 38);
+    g.fillTriangle(24, 70, 32, 70, 32, 56);
+    g.fillTriangle(48, 70, 40, 70, 40, 56);
+    g.lineStyle(4, 0x6e4529, 1);
+    g.lineBetween(34, 42, 20, 26);
+    g.lineBetween(38, 38, 52, 24);
+    g.fillStyle(0xc9a47a, 1); // fresh grafting cut
+    g.fillEllipse(36, 32, 12, 5);
+    g.fillStyle(0x6a9a4e, 1); // just a few basal leaves
+    g.fillCircle(20, 25, 5);
+    g.fillCircle(52, 23, 4);
+  });
+  make('apple-grafted-tree', 92, 100, (g) => {
+    drawTree(g, 92, 100, 0x4b773c, 0x6a9a4e, 0x87b863);
+    const rnd = seededRandom(4092);
+    for (let i = 0; i < 16; i++) {
+      g.fillStyle(i % 2 === 0 ? 0xf9d8e2 : 0xf6d878, 0.95);
+      g.fillCircle(24 + rnd() * 44, 14 + rnd() * 42, 3);
+    }
+  });
+  make('flour-barrels', 60, 44, (g) => {
+    g.fillStyle(0x000000, 0.2);
+    g.fillEllipse(30, 39, 54, 9);
+    for (const bx of [16, 40]) {
+      g.fillStyle(0x8a603d, 1);
+      g.fillRoundedRect(bx - 12, 10, 24, 28, 6);
+      g.fillStyle(0x52575b, 1); // iron hoops
+      g.fillRect(bx - 12, 16, 24, 3);
+      g.fillRect(bx - 12, 28, 24, 3);
+      g.fillStyle(0xc9a47a, 1); // lid
+      g.fillEllipse(bx, 11, 20, 6);
+    }
+    g.fillStyle(0xe8739c, 1); // dried hollyhock tucked on barrel
+    g.fillCircle(44, 10, 3);
+  });
+  make('millstone', 80, 64, (g) => {
+    g.fillStyle(0x000000, 0.22);
+    g.fillEllipse(40, 56, 72, 14);
+    g.fillStyle(0x5e3d29, 1); // timber base
+    g.fillRoundedRect(10, 24, 60, 30, 6);
+    g.fillStyle(0x7c8280, 1); // basalt millstone
+    g.fillEllipse(40, 26, 56, 30);
+    g.lineStyle(1.5, 0x4c5250, 1);
+    g.strokeEllipse(40, 26, 42, 22);
+    g.fillStyle(0x3a2a1e, 1); // center eye
+    g.fillEllipse(40, 26, 12, 7);
+    g.fillStyle(0xe8dec8, 0.8); // dusted flour
+    g.fillCircle(22, 29, 4);
+    g.fillCircle(56, 24, 3);
+  });
+  make('flour-sacks', 76, 54, (g) => {
+    g.fillStyle(0x000000, 0.2);
+    g.fillRect(4, 46, 68, 7);
+    g.fillStyle(0x6e4529, 1); // low wooden pallet
+    g.fillRect(6, 40, 64, 8);
+    for (const [sx, sy] of [
+      [20, 24],
+      [42, 22],
+      [56, 28],
+    ]) {
+      g.fillStyle(0xd8cfb8, 1);
+      g.fillRoundedRect(sx - 10, sy - 8, 20, 24, 6);
+      g.fillStyle(0x4a6984, 1); // blue mill stamp
+      g.fillRect(sx - 5, sy, 10, 4);
+      g.fillStyle(0xb8ad94, 1); // tied neck
+      g.fillRect(sx - 4, sy - 11, 8, 4);
+    }
+  });
+  make('mill-ledger', 76, 48, (g) => {
+    g.fillStyle(0x000000, 0.2);
+    g.fillRect(6, 41, 64, 6);
+    g.fillStyle(0x5e3d29, 1); // desk legs
+    g.fillRect(10, 24, 7, 19);
+    g.fillRect(59, 24, 7, 19);
+    g.fillStyle(0x8f6239, 1); // desk top
+    g.fillRoundedRect(4, 12, 68, 15, 3);
+    g.fillStyle(0xf1e6c8, 1); // open mill ledger
+    g.fillRect(20, 14, 34, 11);
+    g.lineStyle(1, 0x6e4529, 1);
+    g.lineBetween(37, 14, 37, 25);
+    g.fillStyle(0x3a2a1e, 1); // inkwell
+    g.fillCircle(59, 17, 3);
+  });
+  make('farm-bell', 40, 56, (g) => {
+    g.fillStyle(0x000000, 0.2);
+    g.fillEllipse(20, 52, 26, 7);
+    g.fillStyle(0x5c3b25, 1); // oak post & crossbar
+    g.fillRect(17, 10, 6, 42);
+    g.fillRect(10, 10, 20, 5);
+    g.fillStyle(0xc9a227, 1); // brass bell
+    g.fillTriangle(14, 28, 26, 28, 20, 14);
+    g.fillRect(13, 26, 14, 4);
+    g.fillStyle(0x8a6a18, 1);
+    g.fillCircle(20, 31, 2.2);
+  });
+  make('river-boat', 88, 42, (g) => {
+    g.fillStyle(0x000000, 0.18);
+    g.fillEllipse(44, 34, 82, 14);
+    g.fillStyle(0x6e4529, 1); // wooden hull
+    g.fillEllipse(44, 22, 82, 26);
+    g.fillStyle(0x8f6239, 1); // inside deck
+    g.fillEllipse(44, 21, 68, 17);
+    g.fillStyle(0xa8753f, 1); // thwarts (benches)
+    g.fillRect(26, 13, 6, 16);
+    g.fillRect(54, 13, 6, 16);
+    g.fillStyle(0xc9a47a, 1); // oars
+    g.fillRect(16, 18, 48, 2.5);
+  });
+
   g.destroy();
 }
 
