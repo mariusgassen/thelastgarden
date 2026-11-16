@@ -142,7 +142,7 @@ To add an entry, append it to the array in the matching file. The interfaces liv
 - `items.ts`: `ItemDef`. The categories are `seed | tool | key | material | note`.
 - `quests.ts`: `QuestDef`. Objectives are a union of `flag | item | unblock | visitZone`. Wave 1 has no quest runtime yet; progress goes in `SaveGame.quests`.
 - `dialogues.ts`: `DialogueDef`, a list of lines `{ speaker?, text }`. The UI shows them in order. Choices and branching are Wave 3 work: extend `DialogueLine` and `DialogueBox`.
-- `npcs.ts`: `NpcDef`. Contains only the crow stub; there is no NPC behavior yet.
+- `npcs.ts`: `NpcDef`. NPC behavior lives in `systems/npcs.ts`: placements with `wander` (tiles) stroll around their home spot by day, walk home at dusk and rest there; `nocturnal` ones (the owl) do the reverse. They never step on beds, solid props, obstacles, built pieces or doorways, pause when the player is near, stay still with reduced motion, and the builder refuses the tile an NPC stands on.
 
 All player-facing text is German.
 

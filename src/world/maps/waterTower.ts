@@ -105,8 +105,8 @@ export const WATER_TOWER_MAP: MapDef = {
     },
   ],
   npcs: [
-    { npcId: 'crow', at: { x: 8.5, y: 14 }, radius: 70, showWhenFlag: 'episode-1-complete', hideWhenFlag: 'greenhouse-inner-unlocked' },
-    { npcId: 'owl', at: { x: 16, y: 10.5 }, radius: 72 },
+    { npcId: 'crow', at: { x: 8.5, y: 14 }, radius: 70, wander: 2, showWhenFlag: 'episode-1-complete', hideWhenFlag: 'greenhouse-inner-unlocked' },
+    { npcId: 'owl', at: { x: 16, y: 10.5 }, radius: 72, wander: 2, nocturnal: true },
   ],
   journalPages: [
     {

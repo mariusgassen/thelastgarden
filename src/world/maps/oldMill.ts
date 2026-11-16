@@ -139,7 +139,7 @@ export const OLD_MILL_MAP: MapDef = {
       radius: 64,
     },
   ],
-  npcs: [{ npcId: 'jakob', at: { x: 13.0, y: 13.6 }, radius: 72, hideWhenFlag: 'jakob-ready-to-return' }],
+  npcs: [{ npcId: 'jakob', at: { x: 13.0, y: 13.6 }, radius: 72, wander: 2.5, hideWhenFlag: 'jakob-ready-to-return' }],
   plantingBeds: [
     { id: 'bed-mill-hollyhock', rect: { x: 7, y: 15, w: 4, h: 2 }, plantId: 'hollyhock' },
     { id: 'bed-mill-extra', rect: { x: 34, y: 11, w: 4, h: 2 } },
