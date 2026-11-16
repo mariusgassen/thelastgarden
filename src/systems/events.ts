@@ -57,6 +57,8 @@ export interface GameEvents {
   'dialogue-choice': { dialogueId: string; choiceId: string };
   /** A workbench recipe was crafted (see systems/crafting.ts). */
   'item-crafted': { recipeId: string };
+  /** Ask the UI to open the visual crafting panel (from a workbench). */
+  'crafting-open': undefined;
   /** The player mounted or dismounted the horse (see systems/horse.ts). */
   'riding-changed': { riding: boolean };
   /** The player picked a stop on the town map (see systems/travel.ts); WorldScene changes the map. */

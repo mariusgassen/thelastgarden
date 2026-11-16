@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { content, type DialogueChoice } from '../content';
-import { CRAFTING_DIALOGUE_ID, craftingMenuLines, hasPocketWorkbench } from '../systems/crafting';
+import { craftWithToast, getUnlockedRecipes, hasPocketWorkbench } from '../systems/crafting';
 import { bus } from '../systems/events';
 import { canRideHere, hasHorse, isRiding, toggleRiding } from '../systems/horse';
 import { inputState } from '../systems/input';
@@ -8,6 +8,7 @@ import { gameState } from '../systems/state';
 import { hasTravelMap, travelTo } from '../systems/travel';
 import { Banner } from '../ui/Banner';
 import { ContextButton } from '../ui/ContextButton';
+import { CraftingPanel } from '../ui/CraftingPanel';
 import { DayClock } from '../ui/DayClock';
 import { DialoguePanel } from '../ui/DialoguePanel';
 import { drawHorseIcon, drawMapIcon, HudButton } from '../ui/HudButton';
@@ -38,6 +39,7 @@ export class UIScene extends Phaser.Scene {
   private resourceBar!: ResourceBar;
   private questLog!: QuestLog;
   private inventory!: InventoryPanel;
+  private crafting!: CraftingPanel;
   private mapPanel!: MapPanel;
   private mapButton!: HudButton;
   private rideButton!: HudButton;
@@ -72,6 +74,7 @@ export class UIScene extends Phaser.Scene {
     this.questLog = new QuestLog(this, (open) => {
       if (open) {
         this.inventory.setOpen(false);
+        this.crafting.setOpen(false);
         this.mapPanel.setOpen(false);
       }
       this.syncModal();
@@ -83,6 +86,7 @@ export class UIScene extends Phaser.Scene {
       (open) => {
         if (open) {
           this.questLog.setOpen(false);
+          this.crafting.setOpen(false);
           this.mapPanel.setOpen(false);
         }
         this.syncModal();
@@ -91,6 +95,20 @@ export class UIScene extends Phaser.Scene {
       hasPocketWorkbench,
       () => this.openPocketWorkbench(),
     );
+    this.crafting = new CraftingPanel(
+      this,
+      touch,
+      (open) => {
+        if (open) {
+          this.questLog.setOpen(false);
+          this.inventory.setOpen(false);
+          this.mapPanel.setOpen(false);
+        }
+        this.syncModal();
+        if (open) this.releaseJoystick();
+      },
+      (recipeId) => craftWithToast(recipeId),
+    );
     this.mapPanel = new MapPanel(
       this,
       touch,
@@ -98,6 +116,7 @@ export class UIScene extends Phaser.Scene {
         if (open) {
           this.questLog.setOpen(false);
           this.inventory.setOpen(false);
+          this.crafting.setOpen(false);
         }
         this.syncModal();
         if (open) this.releaseJoystick();
@@ -117,6 +136,7 @@ export class UIScene extends Phaser.Scene {
     this.input.on(Phaser.Input.Events.POINTER_UP_OUTSIDE, this.onPointerUp, this);
     this.input.on('wheel', (_p: Phaser.Input.Pointer, _o: unknown, _dx: number, dy: number) => {
       if (this.inventory.isOpen) this.inventory.scrollBy(dy * 0.5);
+      else if (this.crafting.isOpen) this.crafting.scrollBy(dy * 0.5);
       else this.questLog.scrollBy(dy * 0.5);
     });
 
@@ -130,28 +150,39 @@ export class UIScene extends Phaser.Scene {
       if (!this.dialogue.isOpen) this.inventory.toggle();
     });
     kb?.on('keydown-C', () => {
-      if (!this.dialogue.isOpen && hasPocketWorkbench()) this.openPocketWorkbench();
+      if (!this.dialogue.isOpen && !this.crafting.isOpen && hasPocketWorkbench()) this.openPocketWorkbench();
     });
     kb?.on('keydown-M', () => this.toggleMap());
     kb?.on('keydown-R', () => this.toggleRide());
     kb?.on('keydown-ESC', () => {
       this.questLog.setOpen(false);
       this.inventory.setOpen(false);
+      this.crafting.setOpen(false);
       this.mapPanel.setOpen(false);
     });
-    const step = (dir: 1 | -1) => () => {
+    const stepY = (dir: 1 | -1) => () => {
       if (this.dialogue.isOpen && this.dialogue.hasChoices) this.dialogue.moveChoice(dir);
+      else if (this.crafting.isOpen) this.crafting.moveSelection(0, dir);
+      else if (this.inventory.isOpen) this.inventory.moveSelection(0, dir);
       else this.mapPanel.moveSelection(dir);
     };
-    for (const key of ['UP', 'W']) kb?.on(`keydown-${key}`, step(-1));
-    for (const key of ['DOWN', 'S']) kb?.on(`keydown-${key}`, step(1));
-    for (const key of ['LEFT', 'A']) kb?.on(`keydown-${key}`, () => this.mapPanel.moveSelection(-1));
-    for (const key of ['RIGHT', 'D']) kb?.on(`keydown-${key}`, () => this.mapPanel.moveSelection(1));
+    const stepX = (dir: 1 | -1) => () => {
+      if (this.crafting.isOpen) this.crafting.moveSelection(dir, 0);
+      else if (this.inventory.isOpen) this.inventory.moveSelection(dir, 0);
+      else this.mapPanel.moveSelection(dir);
+    };
+    for (const key of ['UP', 'W']) kb?.on(`keydown-${key}`, stepY(-1));
+    for (const key of ['DOWN', 'S']) kb?.on(`keydown-${key}`, stepY(1));
+    for (const key of ['LEFT', 'A']) kb?.on(`keydown-${key}`, stepX(-1));
+    for (const key of ['RIGHT', 'D']) kb?.on(`keydown-${key}`, stepX(1));
     ['ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX', 'SEVEN', 'EIGHT', 'NINE'].forEach((key, idx) => {
       kb?.on(`keydown-${key}`, () => {
-        if (!this.dialogue.isOpen || !this.dialogue.hasChoices) return;
-        const picked = this.dialogue.pickChoiceIndex(idx);
-        if (picked) this.applyDialogueChoice(picked);
+        if (this.dialogue.isOpen && this.dialogue.hasChoices) {
+          const picked = this.dialogue.pickChoiceIndex(idx);
+          if (picked) this.applyDialogueChoice(picked);
+        } else if (this.crafting.isOpen) {
+          this.crafting.craftIndex(idx);
+        }
       });
     });
 
@@ -161,14 +192,20 @@ export class UIScene extends Phaser.Scene {
     bus.onScene(this, 'dialogue-show', ({ id, lines, style, title }) => {
       this.questLog.setOpen(false);
       this.inventory.setOpen(false);
+      this.crafting.setOpen(false);
       this.mapPanel.setOpen(false);
       this.dialogue.open(id, lines, style, title);
       inputState.modal = this.dialogue.isOpen;
       if (inputState.modal) this.releaseJoystick();
     });
+    bus.onScene(this, 'crafting-open', () => {
+      this.dialogue.close();
+      this.crafting.setOpen(true);
+    });
     bus.onScene(this, 'dialogue-advance', () => {
       if (this.questLog.isOpen) this.questLog.setOpen(false);
       else if (this.inventory.isOpen) this.inventory.setOpen(false);
+      else if (this.crafting.isOpen) this.crafting.confirm();
       else if (this.mapPanel.isOpen) this.mapPanel.confirm();
       else if (this.dialogue.isOpen && this.dialogue.hasChoices) {
         const picked = this.dialogue.pickSelectedChoice();
@@ -178,11 +215,17 @@ export class UIScene extends Phaser.Scene {
     bus.onScene(this, 'inventory-changed', () => {
       this.resourceBar.refresh();
       this.inventory.refresh();
+      this.crafting.refresh();
       this.layoutTopStack();
+    });
+    bus.onScene(this, 'flag-changed', () => {
+      this.crafting.refresh();
     });
     bus.onScene(this, 'save-loaded', () => {
       this.resourceBar.refresh();
       this.questLog.refresh();
+      this.inventory.refresh();
+      this.crafting.refresh();
       this.layoutTopStack();
     });
     bus.onScene(this, 'quest-updated', () => {
@@ -229,6 +272,7 @@ export class UIScene extends Phaser.Scene {
     this.questLog.layout(w, h, safe, topRowY, this.dayClock.width);
     this.dayClock.setPosition(w - safe.right - 18, this.questLog.topBarBottom + 8 + this.dayClock.height / 2);
     this.inventory.layout(w, h, safe);
+    this.crafting.layout(w, h, safe);
     this.mapPanel.layout(w, h, safe);
     this.areaBanner.setMaxWidth(maxBannerW);
     this.toast.setMaxWidth(maxBannerW);
@@ -272,7 +316,12 @@ export class UIScene extends Phaser.Scene {
   }
 
   private syncModal(): void {
-    inputState.modal = this.dialogue.isOpen || this.questLog.isOpen || this.inventory.isOpen || this.mapPanel.isOpen;
+    inputState.modal =
+      this.dialogue.isOpen ||
+      this.questLog.isOpen ||
+      this.inventory.isOpen ||
+      this.crafting.isOpen ||
+      this.mapPanel.isOpen;
   }
 
   /** Map and horse buttons: a column above the context button, shown once unlocked. */
@@ -299,11 +348,10 @@ export class UIScene extends Phaser.Scene {
     if (!inputState.modal) toggleRiding();
   }
 
-  /** The pocket workbench: the same crafting menu a workbench opens, from anywhere. */
+  /** The pocket workbench: the same crafting panel a workbench opens, from anywhere. */
   private openPocketWorkbench(): void {
     this.inventory.setOpen(false);
-    const lines = craftingMenuLines();
-    if (lines) bus.emit('dialogue-show', { id: CRAFTING_DIALOGUE_ID, lines });
+    if (getUnlockedRecipes().length > 0) this.crafting.setOpen(true);
     else this.enqueueToast('Du kennst noch kein Rezept.');
   }
 
@@ -364,6 +412,7 @@ export class UIScene extends Phaser.Scene {
       return;
     }
     if (this.mapPanel.pointerDown(p.x, p.y)) return;
+    if (this.crafting.pointerDown(p.x, p.y)) return;
     if (this.inventory.pointerDown(p.x, p.y)) return;
     if (this.questLog.pointerDown(p.x, p.y)) return;
     if (this.mapButton.contains(p.x, p.y)) {
@@ -391,6 +440,10 @@ export class UIScene extends Phaser.Scene {
     if (!pointer.isDown) return;
     const p = this.toCss(pointer);
     if (this.mapPanel.isOpen) return;
+    if (this.crafting.isOpen) {
+      this.crafting.pointerMove(p.y);
+      return;
+    }
     if (this.inventory.isOpen) {
       this.inventory.pointerMove(p.y);
       return;
@@ -403,13 +456,14 @@ export class UIScene extends Phaser.Scene {
   }
 
   private onPointerUp(pointer: Phaser.Input.Pointer): void {
+    const p = this.toCss(pointer);
     this.questLog.pointerUp();
-    this.inventory.pointerUp();
+    this.inventory.pointerUp(p.x, p.y);
+    this.crafting.pointerUp(p.x, p.y);
     const down = this.downAt.get(pointer.id);
     this.downAt.delete(pointer.id);
     this.joystick.end(pointer.id);
     if (!down) return;
-    const p = this.toCss(pointer);
     const isTap = this.time.now - down.t <= TAP_MAX_MS && Math.hypot(p.x - down.x, p.y - down.y) <= TAP_MAX_MOVE;
     if (isTap) bus.emit('tap', { x: pointer.x, y: pointer.y });
   }

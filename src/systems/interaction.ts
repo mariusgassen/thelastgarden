@@ -2,7 +2,7 @@ import { content } from '../content';
 import type { DialogueLine } from '../content/types';
 import type { DialogueVariant, InteractableSpec } from '../world/types';
 import { TILE_SIZE } from '../world/tiles';
-import { CRAFTING_DIALOGUE_ID, craftingMenuLines } from './crafting';
+import { getUnlockedRecipes } from './crafting';
 import { bus } from './events';
 import { gameState } from './state';
 
@@ -231,8 +231,7 @@ const specHandlers: { [K in InteractableSpec['type']]: SpecHandler<K> } = {
   },
   craft: (spec, ctx) => {
     if (showVariant(spec.variants, ctx)) return;
-    const lines = craftingMenuLines();
-    if (lines) ctx.world.showLines(CRAFTING_DIALOGUE_ID, lines);
+    if (getUnlockedRecipes().length > 0) bus.emit('crafting-open', undefined);
     else ctx.world.showDialogue(spec.emptyDialogueId);
   },
 };

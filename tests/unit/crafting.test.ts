@@ -3,6 +3,7 @@ import {
   craft,
   CRAFTING_DIALOGUE_ID,
   craftingMenuLines,
+  craftWithToast,
   getMissing,
   getUnlockedRecipes,
   hasPocketWorkbench,
@@ -11,6 +12,7 @@ import { getInventoryGroups } from '../../src/systems/inventory';
 import { content } from '../../src/content';
 import { bus } from '../../src/systems/events';
 import { gameState } from '../../src/systems/state';
+import { ITEM_ICON_IDS } from '../../src/world/textures';
 
 describe('crafting system', () => {
   let toasts: string[] = [];
@@ -112,5 +114,25 @@ describe('crafting system', () => {
     expect(gameState.getItemCount('seed-glow-lily')).toBe(1);
     expect(gameState.getItemCount('seed-lavender')).toBe(1);
     expect(gameState.getItemCount('produce-seed-pod')).toBe(0);
+  });
+
+  it('crafts with toast feedback directly and ensures every item has a drawn icon', () => {
+    gameState.setFlag('journal-read:page-bramble');
+    toasts = [];
+
+    expect(craftWithToast('unknown')).toBe(false);
+    expect(craftWithToast('bramble-cutting')).toBe(false);
+    expect(toasts).toEqual(['Dafür fehlt noch: 2 Brombeertrieb, 1 Tau.']);
+
+    gameState.addItem('produce-tendril', 2);
+    gameState.addItem('resource-dew', 1);
+    toasts = [];
+    expect(craftWithToast('bramble-cutting')).toBe(true);
+    expect(toasts).toEqual(['+1 Brombeer-Steckling']);
+
+    const iconSet = new Set(ITEM_ICON_IDS);
+    for (const item of content.items.all()) {
+      expect(iconSet.has(item.id), `Missing item icon for "${item.id}"`).toBe(true);
+    }
   });
 });
