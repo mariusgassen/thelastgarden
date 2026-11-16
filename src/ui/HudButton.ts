@@ -161,3 +161,20 @@ export function drawToolIcon(g: Phaser.GameObjects.Graphics, color: number, kind
       break;
   }
 }
+
+/** A drawstring pouch: the Beutel. */
+export function drawBagIcon(g: Phaser.GameObjects.Graphics, color: number): void {
+  g.fillStyle(color, 1);
+  g.fillEllipse(0, 4, 26, 18);
+  g.fillTriangle(-6, -5, 6, -5, 0, 4);
+  g.fillStyle(THEME.sun, 1);
+  g.fillRoundedRect(-8, -9, 16, 5, 2);
+  g.fillStyle(THEME.cream, 0.85);
+  g.fillCircle(-5, 7, 2);
+}
+
+/** Three bars: the menu. */
+export function drawMenuIcon(g: Phaser.GameObjects.Graphics, color: number): void {
+  g.fillStyle(color, 1);
+  for (const y of [-7, -1, 5]) g.fillRoundedRect(-9, y, 18, 3.5, 1.7);
+}
