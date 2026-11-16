@@ -128,7 +128,7 @@ export function getWards(mapId: string): Ward[] {
     wards.push({
       x: bed.rect.x + bed.rect.w / 2,
       y: bed.rect.y + bed.rect.h / 2,
-      radius: (species.wardRadius ?? PLANT_WARD_TILES) + Math.max(bed.rect.w, bed.rect.h) / 4,
+      radius: (species.wardRadius ?? PLANT_WARD_TILES) + Math.max((bed.bounds ?? bed.rect).w, (bed.bounds ?? bed.rect).h) / 4,
     });
   }
   return wards;

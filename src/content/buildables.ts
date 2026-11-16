@@ -41,15 +41,15 @@ export const BUILDABLES: BuildableDef[] = [
   },
   {
     id: 'planter',
-    name: 'Pflanzkübel',
-    description: 'Ein Beet zum Mitnehmen. Was darin ausgewachsen ist, hält die Welke weit auf Abstand.',
+    name: 'Beet',
+    description: 'Ein Beet für vier Pflanzen, wo immer du es haben willst. Was darin ausgewachsen ist, hält die Welke weit auf Abstand.',
     cost: [
       { itemId: 'mat-wood', count: 2 },
       { itemId: 'mat-stone', count: 1 },
     ],
     on: 'ground',
     solid: { x: 0.08, y: 0.5, w: 0.84, h: 0.45 },
-    planter: true,
+    planter: { cols: 2, rows: 2 },
   },
   {
     id: 'bridge',

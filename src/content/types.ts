@@ -85,8 +85,8 @@ export interface BuildableDef {
   wardRadius?: number;
   /** Light radius in px that opens the night veil (systems/atmosphere.ts). */
   lightRadius?: number;
-  /** Holds one plant: the piece doubles as a planting bed (systems/plants.ts). */
-  planter?: boolean;
+  /** The piece doubles as a planting bed with a `cols` × `rows` grid of plant slots (systems/plants.ts). */
+  planter?: { cols: number; rows: number };
   /** Resting here skips to the next morning. */
   rest?: boolean;
   /** A home for helper animals (systems/animals.ts); the animals move in on their own. */

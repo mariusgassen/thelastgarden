@@ -34,6 +34,8 @@ function textureFor(plantId: string, stage: 'sprout' | 'growing' | 'mature'): st
 interface LiveBed {
   cx: number;
   cy: number;
+  /** Plant size relative to a full-size one (small slots of a shared bed). */
+  scale: number;
   sprite?: Phaser.GameObjects.Image;
   glow?: Phaser.GameObjects.Image;
   fireflies?: Phaser.GameObjects.Particles.ParticleEmitter;
@@ -96,18 +98,19 @@ export class PlantLayer {
       if (this.live.has(bed.id)) continue;
       const cx = (bed.rect.x + bed.rect.w / 2) * TILE_SIZE;
       const cy = (bed.rect.y + bed.rect.h) * TILE_SIZE;
-      this.live.set(bed.id, { cx, cy, lastRenderedStage: -1 });
-      this.registerInteractable(bed.id, cx, cy);
+      const scale = bed.plantScale ?? 1;
+      this.live.set(bed.id, { cx, cy, scale, lastRenderedStage: -1 });
+      this.registerInteractable(bed.id, cx, cy, scale);
       this.render(bed.id);
     }
   }
 
-  private registerInteractable(bedId: string, cx: number, cy: number): void {
+  private registerInteractable(bedId: string, cx: number, cy: number, scale: number): void {
     this.interaction.register({
       id: `bed:${bedId}`,
       label: labelFor(bedId),
-      radius: 54,
-      markerOffset: 46,
+      radius: Math.round(54 * scale),
+      markerOffset: Math.round(46 * scale),
       getPosition: () => ({ x: cx, y: cy }),
       onInteract: (ctx) => {
         if (!isBedPlanted(bedId)) {
@@ -179,7 +182,7 @@ export class PlantLayer {
         sprite.setTexture(tex);
       }
       sprite.setScale(0.001);
-      this.scene.tweens.add({ targets: sprite, scale: 1, duration: 320, ease: 'Back.easeOut' });
+      this.scene.tweens.add({ targets: sprite, scale: entry.scale, duration: 320, ease: 'Back.easeOut' });
       if (entry.lastRenderedStage >= 0 && stage > entry.lastRenderedStage) this.burst(entry.cx, entry.cy);
       entry.lastRenderedStage = stage;
       entry.plantId = bed.plantId;
@@ -196,11 +199,11 @@ export class PlantLayer {
       return;
     }
     if (entry.produce) return;
-    const y = entry.cy - 44;
+    const y = entry.cy - 44 * entry.scale;
     entry.produce = this.scene.add
       .image(entry.cx + 16, y, 'pickup-orb')
       .setTint(content.items.get(def.produceItemId as string).color)
-      .setScale(0.6)
+      .setScale(0.6 * Math.max(entry.scale, 0.7))
       .setDepth(entry.cy + 1);
     this.scene.tweens.add({ targets: entry.produce, y: y - 4, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
   }

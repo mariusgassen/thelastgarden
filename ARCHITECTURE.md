@@ -411,7 +411,7 @@ push back a grey wilt that creeps in at night. No money, no chores, no fail stat
   | Zaun | 1 Holz | wall; the blight never grows through a piece |
   | Hecke | 1 Holz, 1 Brombeertrieb | wall, wards 1.5 tiles |
   | Laterne | 1 Schrott, 1 Lichtpollen | wards 2.5 tiles, lights the night veil |
-  | Pflanzkübel | 2 Holz, 1 Feldstein | a planting bed; a mature plant in it wards like any bed |
+  | Beet (`planter`) | 2 Holz, 1 Feldstein | a planting bed with 2×2 plant slots; a mature plant in it wards like any bed |
   | Steg | 2 Holz | on water next to the bank or another plank; makes it walkable |
   | Unterstand | 4 Holz, 2 Feldstein, 1 Schrott | wards 3.5 tiles; *Rasten* skips to 07:00 |
   | Dornenhecke | 2 Dornenranke | wall, wards 2.5 tiles (see "Guarding, building and food plants") |
@@ -426,7 +426,10 @@ push back a grey wilt that creeps in at night. No money, no chores, no fail stat
   spawn (so nothing important can be walled off), the player's own tile for solid pieces, and
   anything beyond 3.5 tiles. Other systems can veto tiles with `addPlacementBlocker`.
   Planters reach `allPlantingBeds()` through `setDynamicBedProvider` in `world/index.ts`, so
-  plants, wards and nights treat them like any bed (id `planter:<mapId>:<x>:<y>`).
+  plants, wards and nights treat them like any bed (slot 0 has id `planter:<mapId>:<x>:<y>`, slots 1–3 add `#<n>`). A `PlantingBedDef` with `slots`
+  `{ cols, rows }` is split by `splitBed` (`world/index.ts`) into one bed per cell, so harvest, tools,
+  machines, animals and wards all keep working per plant; cell 0 keeps the bed's id (old saves and
+  quest markers). The garden's four 4×2 beds are split into eight plants each.
 - **Rendering.** `systems/buildLayer.ts` (`BuildLayer`): sprites `build-<id>`, colliders,
   bridges switch the ground tile's collision off, a cursor (ghost + green/red/orange outline) on
   desktop, and a shelter's *Rasten* interactable. While build mode is on, E and taps place or

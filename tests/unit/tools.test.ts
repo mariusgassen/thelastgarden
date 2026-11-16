@@ -38,6 +38,9 @@ const give = (items: Record<string, number>): void => {
 /** Open grass in the main garden, away from beds, props and the spawn (the building tests use it too). */
 const SPOT = { x: 22, y: 37 };
 const planter = (dx: number): string => planterBedId('garden', SPOT.x + dx, SPOT.y);
+/** The planting slots of the planter on tile `dx`: four per tile, slot 0 keeps the single-plant id. */
+const slotsOf = (dx: number): string[] => [0, 1, 2, 3].map((n) => (n === 0 ? planter(dx) : `${planter(dx)}#${n}`));
+const plantedIn = (dx: number): string[] => slotsOf(dx).filter((id) => isBedPlanted(id));
 const feet = (dx = 0): { x: number; y: number } => ({ x: (SPOT.x + dx + 0.5) * TILE_SIZE, y: (SPOT.y + 1) * TILE_SIZE });
 
 /** Builds planters in a row on the spot, from dx = 0. */
@@ -147,12 +150,14 @@ describe('tools', () => {
     // The plant is in the shovel: it only goes into a free bed.
     const placed = useTool('garden', feet(1));
     expect(placed.ok).toBe(true);
-    expect(isBedPlanted(planter(1))).toBe(true);
+    // It takes the nearest free slot, on either planter.
+    const planted = [...plantedIn(0), ...plantedIn(1)];
+    expect(planted).toHaveLength(1);
     expect(getCarriedPlant()).toBeUndefined();
-    const after = getBedState(planter(1))!;
+    const after = getBedState(planted[0])!;
     expect(Date.now() - after.plantedAt).toBeGreaterThanOrEqual(grown);
     debugRewindGrowth(STAGE_DURATION_MS);
-    expect(isBedMature(planter(1))).toBe(true);
+    expect(isBedMature(planted[0])).toBe(true);
   });
 
   it('keeps a carried plant out of beds that only take another species', () => {
@@ -175,7 +180,7 @@ describe('tools', () => {
 
   it('lets the satchel sow the chosen seed into every free bed in reach', () => {
     buildPlanters(3);
-    give({ 'seed-lavender': 2, 'seed-glow-lily': 5, 'tool-satchel': 1 });
+    give({ 'seed-lavender': 2, 'seed-glow-lily': 11, 'tool-satchel': 1 });
     equipTool('tool-satchel');
     expect(getSowSeed()).toBe('glow-lily'); // the first kind in the pocket
     expect(cycleSeed()).toBe('lavender');
@@ -184,10 +189,11 @@ describe('tools', () => {
     expect(result.ok).toBe(true);
     expect(result.spots).toHaveLength(2); // only two seeds
     expect(gameState.getItemCount('seed-lavender')).toBe(0);
-    expect([0, 1, 2].filter((i) => isBedPlanted(planter(i)))).toHaveLength(2);
+    const planted = (): number => [0, 1, 2].reduce((n, dx) => n + plantedIn(dx).length, 0);
+    expect(planted()).toBe(2);
     expect(getSowSeed()).toBe('glow-lily'); // the picked kind ran out
     expect(useTool('garden', feet(1)).ok).toBe(true);
-    expect([0, 1, 2].every((i) => isBedPlanted(planter(i)))).toBe(true);
+    expect(planted()).toBe(12); // three planters, four slots each
     expect(useTool('garden', feet(1)).text).toMatch(/kein freies Beet/);
   });
 

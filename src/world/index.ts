@@ -59,7 +59,30 @@ export function setDynamicBedProvider(provider: () => BedWithMap[]): void {
 
 /** Every planting bed across all maps (map data plus built planters), with the map it lives on. */
 export function allPlantingBeds(): BedWithMap[] {
-  return [...Object.values(MAPS).flatMap((m) => (m.plantingBeds ?? []).map((b) => ({ ...b, mapId: m.id }))), ...dynamicBeds()];
+  return [...Object.values(MAPS).flatMap((m) => (m.plantingBeds ?? []).map((b) => ({ ...b, mapId: m.id }))), ...dynamicBeds()].flatMap(
+    splitBed,
+  );
+}
+
+/** A bed with `slots` becomes one planting bed per cell (the plants share the bed's area); any other bed is returned as it is. */
+export function splitBed(bed: BedWithMap): BedWithMap[] {
+  const { slots } = bed;
+  if (!slots || slots.cols * slots.rows <= 1) return [bed];
+  const w = bed.rect.w / slots.cols;
+  const h = bed.rect.h / slots.rows;
+  const cells: BedWithMap[] = [];
+  for (let r = 0; r < slots.rows; r++)
+    for (let c = 0; c < slots.cols; c++) {
+      const n = r * slots.cols + c;
+      cells.push({
+        ...bed,
+        id: n === 0 ? bed.id : `${bed.id}#${n}`,
+        rect: { x: bed.rect.x + c * w, y: bed.rect.y + r * h, w, h },
+        slots: undefined,
+        bounds: bed.rect,
+      });
+    }
+  return cells;
 }
 
 export function findPlantingBed(id: string): (PlantingBedDef & { mapId: string }) | undefined {
