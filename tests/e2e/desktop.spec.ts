@@ -1527,5 +1527,87 @@ test.describe('Desktop gameplay and PWA', () => {
     expect(save.inventory.items['tool-sickle']).toBeUndefined();
     expect(errors).toEqual([]);
   });
+
+  test('enters signal-box-interior from tramline and frees the railway lever', async ({ page }) => {
+    const errors = trackErrors(page);
+
+    await seedSave(page, {
+      player: { mapId: 'tramline', x: 23.5 * 32, y: 7.2 * 32, facing: 'up' },
+      world: { visitedZones: ['garden', 'tram-tracks'], flags: { 'crow-met': true, 'episode-1-complete': true } },
+    });
+
+    await page.goto('/');
+    await waitForGameBoot(page);
+
+    await triggerAndWaitForMap(page, 'signal-box-interior', () => page.keyboard.press('KeyE'));
+
+    // Walk up-left toward signal-box-levers at (4.5, 4.0)
+    await page.keyboard.down('KeyW');
+    await page.keyboard.down('KeyA');
+    await expect
+      .poll(
+        async () => {
+          const p = (await flushAndReadSave(page))?.player;
+          return p && p.x < 5.2 * 32 && p.y < 5.0 * 32;
+        },
+        { timeout: 10_000, intervals: [100] },
+      )
+      .toBe(true);
+    await page.keyboard.up('KeyW');
+    await page.keyboard.up('KeyA');
+
+    // Pull lever & advance dialogue lines -> mat-scrap 2, resource-curio 1, flag signal-lever-freed
+    await triggerUntil(
+      page,
+      async () => Boolean((await flushAndReadSave(page))?.world.flags['signal-lever-freed']),
+      () => page.keyboard.press('KeyE'),
+      { timeout: 10_000, attemptWaitMs: 300, label: 'pull signal box levers' },
+    );
+
+    const save = (await flushAndReadSave(page))!;
+    expect(save.inventory.items['mat-scrap']).toBe(2);
+    expect(save.inventory.items['resource-curio']).toBe(1);
+    expect(save.world.visitedZones).toContain('signal-box-interior');
+    expect(errors).toEqual([]);
+  });
+
+  test('enters farms-house-interior from river-farms and collects pantry honey', async ({ page }) => {
+    const errors = trackErrors(page);
+
+    await seedSave(page, {
+      player: { mapId: 'river-farms', x: 7.5 * 32, y: 10.0 * 32, facing: 'up' },
+      world: { visitedZones: ['garden', 'river-farms-yard'], flags: { 'crow-met': true } },
+    });
+
+    await page.goto('/');
+    await waitForGameBoot(page);
+
+    await triggerAndWaitForMap(page, 'farms-house-interior', () => page.keyboard.press('KeyE'));
+
+    // Walk west past tea-table, then north straight to flour-barrels (farms-pantry at 6.2, 3.8)
+    await page.keyboard.down('KeyA');
+    await expect
+      .poll(async () => (await flushAndReadSave(page))?.player.x ?? 999, { timeout: 10_000, intervals: [80] })
+      .toBeLessThan(6.4 * 32);
+    await page.keyboard.up('KeyA');
+
+    await page.keyboard.down('KeyW');
+    await expect
+      .poll(async () => (await flushAndReadSave(page))?.player.y ?? 999, { timeout: 10_000, intervals: [80] })
+      .toBeLessThan(4.5 * 32);
+    await page.keyboard.up('KeyW');
+
+    await triggerUntil(
+      page,
+      async () => Boolean((await flushAndReadSave(page))?.world.flags['farms-pantry-taken']),
+      () => page.keyboard.press('KeyE'),
+      { timeout: 10_000, attemptWaitMs: 300, label: 'collect honey from farmhouse pantry' },
+    );
+
+    const save = (await flushAndReadSave(page))!;
+    expect(save.inventory.items['produce-honey']).toBe(1);
+    expect(save.world.visitedZones).toContain('farms-house-interior');
+    expect(errors).toEqual([]);
+  });
 });
 

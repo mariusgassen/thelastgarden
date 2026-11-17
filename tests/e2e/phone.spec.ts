@@ -710,4 +710,22 @@ test.describe('Phone touch controls', () => {
 
     expect(errors).toEqual([]);
   });
+
+  test('enters water-tower-interior via touch context button on phone', async ({ page }) => {
+    const errors = trackErrors(page);
+
+    await seedSave(page, {
+      player: { mapId: 'water-tower', x: 16 * 32, y: 10.6 * 32, facing: 'up' },
+      world: { visitedZones: ['garden', 'water-tower-plaza'], flags: { 'crow-met': true, 'episode-1-complete': true } },
+    });
+
+    await page.goto('/');
+    await waitForGameBoot(page);
+
+    await triggerAndWaitForMap(page, 'water-tower-interior', () => page.touchscreen.tap(326, 768));
+
+    const towerSave = (await flushAndReadSave(page))!;
+    expect(towerSave.world.visitedZones).toContain('water-tower-interior');
+    expect(errors).toEqual([]);
+  });
 });
