@@ -150,15 +150,36 @@ export function getNodeSpot(id: string): { x: number; y: number } | undefined {
   return def ? place(def, readState()).at : undefined;
 }
 
-// Nothing may be built on the tile a pickup currently occupies.
+// Nothing may be built on the tile a visible pickup currently occupies.
 addPlacementBlocker((mapId, x, y) => {
   const state = readState();
   const hit = allResourceNodes().some((n) => {
-    if (n.mapId !== mapId || (n.giftFlag && !gameState.hasFlag(n.giftFlag))) return false;
-    const at = place(n, state).at;
-    return Math.floor(at.x) === x && Math.floor(at.y) === y;
+    if (n.mapId !== mapId) return false;
+    const placed = place(n, state);
+    if (!isNodeAvailable(placed) || isNodeBlighted(placed)) return false;
+    return Math.floor(placed.at.x) === x && Math.floor(placed.at.y) === y;
   });
   return hit ? 'Hier liegt etwas.' : null;
+});
+
+// If a player builds on a tile queued for a respawning pickup, move the pickup's next spot.
+bus.on('build-changed', ({ mapId }) => {
+  const raw = gameState.getExt<ResourceExt | undefined>('resources', undefined);
+  if (!raw?.spots) return;
+  const state = readState();
+  let changed = false;
+  for (const base of allResourceNodes()) {
+    if (base.mapId !== mapId || base.respawnMs === undefined) continue;
+    const placed = place(base, state);
+    if (isNodeAvailable(placed) && !isNodeBlighted(placed)) continue;
+    if (!getPieceAt(mapId, Math.floor(placed.at.x), Math.floor(placed.at.y))) continue;
+    reroll(placed, state);
+    changed = true;
+  }
+  if (changed) {
+    writeState(state);
+    gameState.save();
+  }
 });
 
 function writeState(state: ResourceExt): void {
