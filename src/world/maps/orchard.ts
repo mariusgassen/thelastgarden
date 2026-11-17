@@ -179,8 +179,29 @@ export const ORCHARD_MAP: MapDef = {
       id: 'orchard-cider-press',
       type: 'dialogue',
       at: { x: 40.5, y: 24.8 },
-      label: 'Ansehen',
+      label: 'Pressen',
       dialogueId: 'orchard-cider-press',
+      variants: [
+        {
+          dialogueId: 'orchard-cider-press-use',
+          requiresItems: [
+            { itemId: 'produce-honeyberry', count: 2 },
+            { itemId: 'resource-dew', count: 1 },
+          ],
+          takeItems: [
+            { itemId: 'produce-honeyberry', count: 2 },
+            { itemId: 'resource-dew', count: 1 },
+          ],
+          giveItems: [{ itemId: 'meal-berry-mash', count: 1 }],
+        },
+      ],
+    },
+    {
+      id: 'bench-orchard',
+      type: 'rest',
+      at: { x: 14.5, y: 9.0 },
+      label: 'Ausruhen',
+      message: 'Du ruhst dich auf der Bank vor M.s Gartenhaus aus, bis der Morgen anbricht.',
     },
     {
       id: 'orchard-mother-tree',
@@ -195,9 +216,17 @@ export const ORCHARD_MAP: MapDef = {
       id: 'village-orchard-press',
       type: 'dialogue',
       at: { x: 31.2, y: 27.9 },
-      label: 'Ansehen',
+      label: 'Besuchen',
       dialogueId: 'village-orchard-press',
       showWhenFlag: 'village-restored:orchard',
+      variants: [
+        {
+          dialogueId: 'village-orchard-press-gift',
+          giveItems: [{ itemId: 'produce-honey', count: 1 }],
+          cooldownKey: 'village-orchard-press',
+          cooldownMs: 180_000,
+        },
+      ],
     },
   ],
   npcs: [

@@ -62,6 +62,13 @@ export const TRAMLINE_MAP: MapDef = {
     },
     { id: 'tram-stop-sign', type: 'dialogue', at: { x: 15, y: 8.9 }, label: 'Lesen', dialogueId: 'tram-stop-sign' },
     { id: 'signal-box-door', type: 'dialogue', at: { x: 23.5, y: 6.8 }, label: 'Ansehen', dialogueId: 'signal-box-door' },
+    {
+      id: 'bench-tramline',
+      type: 'rest',
+      at: { x: 38, y: 8.8 },
+      label: 'Ausruhen',
+      message: 'Du ruhst dich auf der Bank an der alten Bahntrasse aus, bis der Morgen anbricht.',
+    },
     { id: 'tramline-sign-east', type: 'dialogue', at: { x: 47.5, y: 9.5 }, label: 'Lesen', dialogueId: 'tramline-sign-east' },
     {
       id: 'tramline-to-tower',

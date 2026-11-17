@@ -62,8 +62,8 @@ export interface GameEvents {
   /** A workbench recipe was crafted (see systems/crafting.ts). */
   'item-crafted': { recipeId: string };
   'meal-eaten': { itemId: string };
-  /** Ask the UI to open the visual crafting panel (from a workbench). */
-  'crafting-open': undefined;
+  /** Ask the UI to open the visual crafting panel (from a workbench or stove). */
+  'crafting-open': { recipeIds?: string[]; title?: string } | undefined;
   /** The player mounted or dismounted the horse (see systems/horse.ts). */
   'riding-changed': { riding: boolean };
   /** The player boarded or disembarked a rowboat (see systems/boat.ts). */

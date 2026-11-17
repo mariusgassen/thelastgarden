@@ -9,6 +9,8 @@ export interface WikiTopicDef {
   title: string;
   /** One paragraph per line. */
   lines: string[];
+  /** Clue shown when this topic is still unknown ("???"). */
+  hint?: string;
   /** The topic is listed once this flag is set; omit for always known. */
   requiresFlag?: string;
   /** Alternative to `requiresFlag`: listed once ANY of these is set. */
@@ -88,13 +90,14 @@ export const WIKI_TOPICS: WikiTopicDef[] = [
     id: 'crafting',
     title: 'Werkbank und Rezepte',
     lines: [
-      'An einer Werkbank (Werkstatt, Kräuterregal, Mühle) baust du aus Ernte und Rohstoffen neue Dinge. Rezepte lernst du, indem du Seiten aus M.s Tagebuch liest.',
+      'An einer Werkbank (Werkstatt, Kräuterregal, Mühle) baust du aus Ernte und Rohstoffen neue Dinge. Rezepte lernst du aus M.s und Jakobs Seiten, durch neue Werkzeuge sowie bei der ersten Ernte von essbaren Pflanzen wie Honigbeeren oder Goldrüben.',
       'Wer die Werkzeugrolle trägt, kann die Werkbank auch unterwegs öffnen (Taste C oder im Beutel).',
     ],
   },
   {
     id: 'building',
     title: 'Bauen',
+    hint: 'Wird freigeschaltet, sobald du zum ersten Mal Holz, Feldstein oder Schrott draußen aufsammelst.',
     requiresFlag: 'gathered-material',
     lines: [
       'Sammle Holz, Feldstein und Schrott von den Haufen draußen. Danach schaltest du den Baumodus mit B oder dem Hammerknopf ein.',
@@ -104,6 +107,7 @@ export const WIKI_TOPICS: WikiTopicDef[] = [
   {
     id: 'blight',
     title: 'Die Welke',
+    hint: 'Wird bekannt, sobald du das Gewächshaus geöffnet und den Plan darin gelesen hast (Ende Episode 1).',
     requiresFlag: 'episode-1-complete',
     lines: [
       'Seit der Gewächshaus-Geschichte kriecht jede Nacht grauer Welkenbelag von seinen Herzen aus über das Land. Sechs Felder pro Herz und Nacht, nie weiter als bis zur Reichweite des Herzens.',
@@ -114,6 +118,7 @@ export const WIKI_TOPICS: WikiTopicDef[] = [
   {
     id: 'horse',
     title: 'Mohn, das Pferd',
+    hint: 'Östlich der alten Bushaltestelle grast auf der Lichtung an der alten Trasse ein Pferd (Aufgabe „Die Stute an der alten Trasse“).',
     requiresFlag: 'horse-tamed',
     lines: [
       'Draußen reitest du mit R oder dem Hufeisenknopf, fast doppelt so schnell wie zu Fuß. Drinnen steigst du automatisch ab.',
@@ -122,6 +127,7 @@ export const WIKI_TOPICS: WikiTopicDef[] = [
   {
     id: 'town-map',
     title: 'Stadtkarte',
+    hint: 'Öffne das Gewächshaus und sieh dir dort den Stadtplan an der Wand an.',
     requiresFlag: 'greenhouse-hint-read',
     lines: [
       'Die Karte öffnest du mit M oder dem Kartenknopf. Sie zeigt jede Gegend, die du schon besucht hast; ein Tipp darauf bringt dich sofort dorthin. Das ist kostenlos und geht auch ohne Pferd.',
@@ -130,6 +136,7 @@ export const WIKI_TOPICS: WikiTopicDef[] = [
   {
     id: 'tools',
     title: 'Werkzeuge',
+    hint: 'Wird bekannt, sobald du dein erstes reifes Beet geerntet hast.',
     requiresFlag: 'harvested-once',
     lines: [
       'Werkzeuge baust du an der Werkbank. Sie werden nie verbraucht, und jedes gibt es nur einmal. Mit T, einem Tipp oder Halten auf den Werkzeugknopf öffnest du die Leiste und wählst eines.',
@@ -140,6 +147,7 @@ export const WIKI_TOPICS: WikiTopicDef[] = [
   {
     id: 'animals',
     title: 'Helfende Tiere',
+    hint: 'Baue im Baumodus ein Tier-Zuhause wie Bienenstock, Hühnerstall, Ziegengehege, Entenhaus oder Pferdestall.',
     requiresAnyFlag: ['built:beehive', 'built:henhouse', 'built:goatpen', 'built:stable', 'built:duckhouse'],
     lines: [
       'Tiere ziehen von selbst in ein Zuhause, das du baust. Du musst sie nicht füttern, und nichts geht verloren, wenn du sie alleinlässt.',
@@ -149,6 +157,7 @@ export const WIKI_TOPICS: WikiTopicDef[] = [
   {
     id: 'machines',
     title: 'Arbeitende Bauten',
+    hint: 'Baue im Baumodus eine Regentonne, einen Komposthaufen, ein Trockengestell, eine Windmühle oder ein Treibgut-Netz.',
     requiresAnyFlag: ['built:rain-barrel', 'built:compost', 'built:drying-rack', 'built:windmill', 'built:drift-net'],
     lines: [
       'Regentonne und Komposthaufen lassen Beete in der Nähe schneller wachsen. Das Trockengestell macht aus einer Ernte Samen, die Windmühle aus Ernte Blütenmehl, und das Treibgut-Netz fängt Holz, Schrott, Tau und Fundstücke aus dem Wasser.',
@@ -158,6 +167,7 @@ export const WIKI_TOPICS: WikiTopicDef[] = [
   {
     id: 'water-boating',
     title: 'Wasser und Boote',
+    hint: 'Baue einen Steg oder ein Ruderboot ans Wasser, oder steige am Steg der Alten Mühle oder der Drei Höfe ins Boot.',
     requiresAnyFlag: ['built:bridge', 'built:reed-bridge', 'built:boat-dock', 'built:floating-bed', 'boated-once'],
     lines: [
       'Am Steg der Drei Höfe, der Alten Mühle oder an einem eigenen Ruderboot kannst du ins Boot steigen und frei über Teich, Kanal und Fluss rudern. Am Ufer oder an einem Steg legst du wieder an.',
@@ -167,9 +177,10 @@ export const WIKI_TOPICS: WikiTopicDef[] = [
   {
     id: 'meals',
     title: 'Essen',
-    requiresAnyFlag: ['harvested:produce-honeyberry', 'harvested:produce-gold-turnip'],
+    hint: 'Pflanze und ernte Honigbeeren (beim Teich) oder Goldrüben (im Südwesten des Gartens), oder mahle in einer Mühle Blütenmehl.',
+    requiresAnyFlag: ['harvested:produce-honeyberry', 'harvested:produce-gold-turnip', 'collected-flour'],
     lines: [
-      'Nahrhafte Ernte wird an der Werkbank zu Mahlzeiten. Du isst sie im Beutel mit dem Essen-Knopf; ihre Wirkung hält ein paar Minuten.',
+      'Nahrhafte Ernte und Blütenmehl werden am Herd in M.s Gartenhaus oder an einer Werkbank zu Mahlzeiten. Du isst sie im Beutel mit dem Essen-Knopf; ihre Wirkung hält ein paar Minuten.',
       'Hunger gibt es nicht. Essen ist eine kleine Hilfe, keine Pflicht.',
     ],
   },

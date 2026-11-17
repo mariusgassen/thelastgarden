@@ -25,7 +25,15 @@ export const ORCHARD_COTTAGE_MAP: MapDef = {
     { texture: 'rug', at: { x: 8, y: 9.2 }, ground: true },
   ],
   interactables: [
-    { id: 'cottage-stove', type: 'dialogue', at: { x: 2.8, y: 4.4 }, label: 'Ansehen', dialogueId: 'cottage-stove' },
+    {
+      id: 'cottage-stove',
+      type: 'craft',
+      at: { x: 2.8, y: 4.4 },
+      label: 'Kochen',
+      title: 'Herd',
+      recipeIds: ['berry-mash', 'turnip-stew', 'honey-cake', 'turnip-bread'],
+      emptyDialogueId: 'cottage-stove',
+    },
     {
       id: 'cottage-valley-map',
       type: 'dialogue',

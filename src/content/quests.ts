@@ -64,6 +64,21 @@ export const QUESTS: QuestDef[] = [
     rewardItems: [{ itemId: 'resource-dew', count: 1 }],
   },
   {
+    id: 'q-old-trowel',
+    title: 'Das erste Werkzeug',
+    summary: 'In der Werkstatt der Gartenhütte soll noch M.s älteste Pflanzkelle im Regal liegen — und daneben ein paar Notizen für später.',
+    startsWhen: ['bed-restored:bed-bramble', 'bed-restored:bed-lily', 'bed-restored:bed-lavender'],
+    objectives: [
+      {
+        type: 'flag',
+        flag: 'trowel-found',
+        description: 'Sieh dir das Regal in der Gartenhütte an.',
+        markers: ['workshop-door', 'workshop-shelf'],
+      },
+    ],
+    rewardItems: [{ itemId: 'resource-sunlight', count: 1 }],
+  },
+  {
     id: 'q-journal-pages',
     title: 'Seiten eines Tagebuchs',
     summary: 'Zwischen den wiederhergestellten Beeten tauchen vergilbte Seiten auf — in der Handschrift der früheren Gärtnerin.',
@@ -278,6 +293,111 @@ export const QUESTS: QuestDef[] = [
     ],
   },
   {
+    id: 'q-honeyberry-mash',
+    title: 'Süße Beeren vom Teich',
+    summary:
+      'Östlich des Hauptgartens wachsen wilde Honigbeeren. Wer essbare Früchte erntet, entdeckt an der Werkbank ganz von selbst wärmende Rezepte.',
+    startsWhen: ['episode-1-complete'],
+    objectives: [
+      {
+        type: 'flag',
+        flag: 'harvested:produce-honeyberry',
+        description: 'Finde Honigbeeren-Samen beim Teich, pflanze sie in ein Beet und ernte die Beeren.',
+        markers: ['resource:garden-seed-honeyberry', 'bed:bed-extra'],
+      },
+      {
+        type: 'flag',
+        flag: 'crafted:berry-mash',
+        description: 'Stelle an der Werkbank Beerenmus her (2 Honigbeeren, 1 Sonnenlicht).',
+        markers: ['workshop-door', 'workbench'],
+      },
+      {
+        type: 'flag',
+        flag: 'ate-meal',
+        description: 'Öffne den Beutel (I) und iss dein Beerenmus über „Essen“.',
+      },
+    ],
+    rewardItems: [{ itemId: 'resource-sunlight', count: 1 }],
+  },
+  {
+    id: 'q-bees-and-hens',
+    title: 'Bienen und Hühner im Garten',
+    summary: 'Wo Beete blühen, lassen sich bald auch Bienen und Hühner nieder — sie schenken Honig, frische Eier und halten Schnecken fern.',
+    startsWhen: ['quest-completed:q-blight'],
+    objectives: [
+      {
+        type: 'flag',
+        flag: 'built:beehive',
+        description: 'Baue im Baumodus einen Bienenstock (3 Holz, 1 Lichtpollen) neben einem bepflanzten Beet.',
+      },
+      {
+        type: 'flag',
+        flag: 'animal-produce:produce-honey',
+        description: 'Hol Honig am Bienenstock ab, sobald Beete daneben blühen.',
+      },
+      {
+        type: 'flag',
+        flag: 'built:henhouse',
+        description: 'Baue im Baumodus einen Hühnerstall (4 Holz, 1 Schrott).',
+      },
+      {
+        type: 'flag',
+        flag: 'animal-produce:produce-egg',
+        description: 'Sammle frische Eier am Hühnerstall ein.',
+      },
+    ],
+    rewardItems: [
+      { itemId: 'mat-stone', count: 3 },
+      { itemId: 'mat-wood', count: 2 },
+    ],
+  },
+  {
+    id: 'q-tools-field',
+    title: 'Werkzeuge für das Tagwerk',
+    summary: 'Sichel, Spaten und Saatbeutel werden nicht verbraucht und erleichtern die Arbeit im wachsenden Garten.',
+    startsWhen: ['quest-completed:q-blight'],
+    objectives: [
+      {
+        type: 'flag',
+        flag: 'crafted:tool-sickle',
+        description: 'Stelle an der Werkbank eine Sichel her (2 Holz, 1 Schrott).',
+        markers: ['workshop-door', 'workbench'],
+      },
+      {
+        type: 'flag',
+        flag: 'crafted:tool-shovel',
+        description: 'Stelle einen Spaten her (2 Holz, 1 Feldstein), um Pflanzen samt Samen umzusetzen.',
+        markers: ['workshop-door', 'workbench'],
+      },
+      {
+        type: 'flag',
+        flag: 'crafted:tool-satchel',
+        description: 'Stelle einen Saatbeutel her (1 Brombeertrieb, 1 Duftbündel, 1 Schrott).',
+        markers: ['workshop-door', 'workbench'],
+      },
+    ],
+  },
+  {
+    id: 'q-tool-pole-lantern',
+    title: 'Licht an langer Stange',
+    summary: 'Wer einmal eine Laterne gebaut hat, versteht auch, wie man ihr Licht auf den eigenen Wegen gegen die Welke trägt.',
+    startsWhen: ['quest-completed:q-blight'],
+    objectives: [
+      {
+        type: 'flag',
+        flag: 'built:lantern',
+        description: 'Stelle im Baumodus eine Laterne auf (1 Schrott, 1 Lichtpollen).',
+      },
+      {
+        type: 'flag',
+        flag: 'crafted:tool-pole-lantern',
+        description: 'Stelle an der Werkbank eine Stablaterne her (1 Holz, 1 Schrott, 2 Lichtpollen).',
+        markers: ['workshop-door', 'workbench'],
+      },
+    ],
+    rewardItems: [{ itemId: 'resource-sunlight', count: 2 }],
+  },
+  {
     id: 'q-tramline',
     title: 'Linie 3',
     summary: 'Die Spur auf dem Stadtplan führt nach Osten: über die alte Straßenbahntrasse bis zum Wasserturm. Die Krähe ist schon vorausgeflogen.',
@@ -302,6 +422,42 @@ export const QUESTS: QuestDef[] = [
         markers: ['tramline-to-tower'],
       },
     ],
+  },
+  {
+    id: 'q-glowcap',
+    title: 'Leuchtkappen auf den Gleisen',
+    summary: 'Hinter dem Gestrüpp an der Weiche schimmern grüne Sporen. Leuchtkappen halten die Welke fern und bereichern spätere Mahlzeiten.',
+    startsWhen: ['quest-completed:q-tramline'],
+    objectives: [
+      {
+        type: 'flag',
+        flag: 'harvested:produce-glowcap',
+        description: 'Sammle Leuchtkappen-Sporen bei der alten Weiche auf Linie 3, pflanze sie ein und ernte Leuchtkappen.',
+        markers: ['resource:tram-seed-glowcap', 'bed:bed-tram-bramble', 'bed:bed-tower-lily'],
+      },
+    ],
+  },
+  {
+    id: 'q-turnip-stew',
+    title: 'Goldrüben & Rübeneintopf',
+    summary:
+      'Im Südwesten des Hauptgartens liegen Goldrüben-Samen. Mit einer Leuchtkappe gekocht, lässt dich ihr Eintopf ungebremst über die Welke laufen.',
+    startsWhen: ['quest-completed:q-glowcap'],
+    objectives: [
+      {
+        type: 'flag',
+        flag: 'harvested:produce-gold-turnip',
+        description: 'Finde Goldrüben-Samen im Südwesten des Hauptgartens, pflanze sie ein und ernte Goldrüben.',
+        markers: ['resource:garden-seed-gold-turnip', 'bed:bed-extra'],
+      },
+      {
+        type: 'flag',
+        flag: 'crafted:turnip-stew',
+        description: 'Stelle an der Werkbank einen Rübeneintopf her (2 Goldrüben, 1 Leuchtkappe).',
+        markers: ['workshop-door', 'workbench'],
+      },
+    ],
+    rewardItems: [{ itemId: 'resource-dew', count: 2 }],
   },
   {
     id: 'q-water-tower',
@@ -401,6 +557,26 @@ export const QUESTS: QuestDef[] = [
     ],
   },
   {
+    id: 'q-thornroot',
+    title: 'Lebende Dornenhecke',
+    summary: 'Am Südhang des Hügelpfads wachsen stachelige Knollen. Als Hecke gepflanzt, hält ihre Dornenranke die Welke weit auf Abstand.',
+    startsWhen: ['episode-2-complete'],
+    objectives: [
+      {
+        type: 'flag',
+        flag: 'harvested:produce-thorn-cane',
+        description: 'Sammle Dornwurz-Knollen am Südhang des Hügelpfads, pflanze sie ein und ernte Dornenranken.',
+        markers: ['tower-to-hill', 'resource:hill-seed-thornroot', 'bed:bed-extra', 'bed:bed-hill-extra'],
+      },
+      {
+        type: 'flag',
+        flag: 'built:thorn-hedge',
+        description: 'Baue im Baumodus eine Dornenhecke (2 Dornenranken), um die Welke weit zurückzudrängen.',
+      },
+    ],
+    rewardItems: [{ itemId: 'resource-sunlight', count: 1 }],
+  },
+  {
     id: 'q-hill-mist',
     title: 'Über den Hügel im Nebel',
     summary: 'Hinter dem Wasserturm führt ein alter Pfad über den Hügelkamm zu den Obstwiesen. Mit dem Licht des Mondfarns solltest du den Nebel teilen können.',
@@ -487,7 +663,7 @@ export const QUESTS: QuestDef[] = [
     rewardItems: [{ itemId: 'orchard-apple-graft', count: 1 }],
   },
   // ── Episode 4: Die alte Mühle am Fluss & Rückkehr nach Erlenbrück ─────────
-  // Optional side quest placed before q-valley-mill so the HUD tracker highlights the main journey first.
+  // Optional side quests placed before q-valley-mill so the HUD tracker highlights the main journey first.
   {
     id: 'q-orchard-meadow-bed',
     title: 'Ein Beet für die untere Wiese',
@@ -504,6 +680,25 @@ export const QUESTS: QuestDef[] = [
     rewardItems: [
       { itemId: 'resource-curio', count: 1 },
       { itemId: 'seed-hollyhock', count: 1 },
+    ],
+  },
+  {
+    id: 'q-reed',
+    title: 'Schilf für Steg und Floß',
+    summary: 'An der Steinbrücke bei der Alten Mühle wachsen kräftige Schilfhalme — zu Bündeln geschnürt tragen sie dich übers Wasser.',
+    startsWhen: ['episode-3-complete'],
+    objectives: [
+      {
+        type: 'flag',
+        flag: 'harvested:produce-reed-bundle',
+        description: 'Sammle Schilfrhizome an der Brücke der Alten Mühle, pflanze sie ein und ernte Schilfbündel.',
+        markers: ['orchard-to-mill', 'resource:mill-seed-reed', 'bed:bed-mill-extra'],
+      },
+      {
+        type: 'flag',
+        flag: 'built:reed-bridge',
+        description: 'Baue im Baumodus am Ufer einen Schilfsteg über das Wasser (2 Schilfbündel).',
+      },
     ],
   },
   {
@@ -525,6 +720,25 @@ export const QUESTS: QuestDef[] = [
         markers: ['npc:jakob'],
       },
     ],
+  },
+  {
+    id: 'q-windmill-flour',
+    title: 'Blütenmehl aus eigener Mühle',
+    summary: 'Jakob erzählt gern von früheren Backtagen: Mit einer eigenen Windmühle mahlst du aus deiner Ernte feines Blütenmehl.',
+    startsWhen: ['quest-completed:q-valley-mill'],
+    objectives: [
+      {
+        type: 'flag',
+        flag: 'built:windmill',
+        description: 'Baue im Baumodus eine Windmühle (4 Holz, 3 Feldstein, 2 Schrott).',
+      },
+      {
+        type: 'flag',
+        flag: 'collected-flour',
+        description: 'Lege 2 Ernten an der Windmühle ein („Mahlen“) und hol anschließend dein Blütenmehl ab.',
+      },
+    ],
+    rewardItems: [{ itemId: 'resource-dew', count: 2 }],
   },
   {
     id: 'q-mill-and-farms',
@@ -602,6 +816,25 @@ export const QUESTS: QuestDef[] = [
       },
     ],
     rewardItems: [{ itemId: 'resource-dew', count: 1 }],
+  },
+  {
+    id: 'q-willow',
+    title: 'Geflochtener Schutz',
+    summary: 'Bei den drei Höfen liegen Weidenstecklinge. Aus ihren biegsamen Ruten entsteht im Handumdrehen ein dichter Flechtzaun gegen die Welke.',
+    startsWhen: ['journal-read:page-mill'],
+    objectives: [
+      {
+        type: 'flag',
+        flag: 'harvested:produce-willow-switch',
+        description: 'Sammle Weidenstecklinge am östlichen Rand des Hofplatzes, pflanze sie ein und ernte Weidenruten.',
+        markers: ['mill-to-farms', 'resource:farms-seed-willow', 'bed:bed-mill-extra'],
+      },
+      {
+        type: 'flag',
+        flag: 'built:wattle',
+        description: 'Baue im Baumodus einen Flechtzaun (2 Weidenruten).',
+      },
+    ],
   },
   {
     id: 'q-erlenbrueck-awakens',

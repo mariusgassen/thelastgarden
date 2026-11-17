@@ -154,4 +154,26 @@ export const RECIPES: RecipeDef[] = [
     ],
     requiresFlag: 'harvested:produce-gold-turnip',
   },
+  {
+    id: 'honey-cake',
+    name: 'Honigkuchen',
+    result: [{ itemId: 'meal-honey-cake', count: 1 }],
+    cost: [
+      { itemId: 'craft-flour', count: 1 },
+      { itemId: 'produce-honey', count: 1 },
+      { itemId: 'produce-egg', count: 1 },
+    ],
+    requiresFlag: 'collected-flour',
+  },
+  {
+    id: 'turnip-bread',
+    name: 'Rübenbrot',
+    result: [{ itemId: 'meal-turnip-bread', count: 1 }],
+    cost: [
+      { itemId: 'craft-flour', count: 1 },
+      { itemId: 'produce-gold-turnip', count: 2 },
+      { itemId: 'resource-dew', count: 1 },
+    ],
+    requiresFlag: 'collected-flour',
+  },
 ];

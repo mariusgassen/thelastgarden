@@ -23,11 +23,18 @@ export const DIALOGUES: DialogueDef[] = [
   },
   {
     id: 'pond-edge',
-    lines: [{ text: 'Das Wasser ist erstaunlich klar. Ein paar Seerosen treiben am Rand.' }],
+    lines: [
+      { text: 'Das Wasser ist erstaunlich klar. Ein paar Seerosen treiben am Rand.' },
+      { text: 'Am sonnigen Uferstreifen schimmern wilde Honigbeeren im Gras, weiter draußen stehen alte Schilfrohre.' },
+    ],
   },
   {
     id: 'old-well',
-    lines: [{ text: 'Ein alter Brunnen, halb von Moos bedeckt. Tief unten glitzert Wasser.' }],
+    lines: [{ text: 'Ein alter Brunnen, halb von Moos bedeckt. Tief unten glitzert Wasser — einen Augenblick noch, dann lässt sich wieder Tau schöpfen.' }],
+  },
+  {
+    id: 'old-well-draw',
+    lines: [{ text: 'Du lässt den moosigen Eimer in den alten Brunnen hinab und schöpfst klaren, kühlen Tau herauf.' }],
   },
   {
     id: 'workbench',
@@ -36,6 +43,14 @@ export const DIALOGUES: DialogueDef[] = [
   {
     id: 'workshop-shelf',
     lines: [{ text: 'Regale mit beschrifteten Samentüten. Die meisten sind leer.' }],
+  },
+  {
+    id: 'workshop-shelf-trowel',
+    lines: [
+      { text: 'Hinter den leeren Samentüten liegt eine abgewetzte Pflanzkelle — ihr Holzgriff ist vom jahrelangen Graben ganz glattgeschliffen.' },
+      { text: 'Darunter klebt ein kleiner Zettel in M.s Handschrift: „Meine allererste Kelle. Wenn sie noch hier liegt, warten die Beete wieder auf helfende Hände.“' },
+      { text: 'Am Regalrand steckt noch eine Küchennotiz: „Honigbeeren am Teich und Goldrüben im Südwestwinkel — wer sie erntet, weiß an der Werkbank sofort, was daraus zu kochen ist.“' },
+    ],
   },
 
   // ── The crow ─────────────────────────────────────────────────────────────
@@ -507,6 +522,12 @@ export const DIALOGUES: DialogueDef[] = [
     ],
   },
   {
+    id: 'fountain-basin-draw',
+    lines: [
+      { text: 'Du hältst deine Phiole unter den sanften Wasserstrahl des Steinbeckens und fängst frischen Tau auf.' },
+    ],
+  },
+  {
     id: 'seed-archive',
     lines: [
       { text: 'Hunderte kleine Glasfläschchen, sauber beschriftet nach Straßen und Gärten von Erlenbrück: „Lindenweg 4 · Stockrose“, „Alte Mühle · Nachtviole“.' },
@@ -699,6 +720,13 @@ export const DIALOGUES: DialogueDef[] = [
     id: 'orchard-cider-press',
     lines: [
       { text: 'Eine alte hölzerne Spindelpresse unter einem Wetterdach. Daneben stehen sorgfältig gestapelte Weidenkörbe für die nächste Ernte.' },
+      { text: 'Mit 2× Honigbeere und 1× Tau lässt sich hier auch ohne Sonnenlicht sogleich frisches Beerenmus pressen.' },
+    ],
+  },
+  {
+    id: 'orchard-cider-press-use',
+    lines: [
+      { text: 'Du drehst die hölzerne Spindel mit gleichmäßigen Zügen. Goldroter Saft tropft in die Schale — warmes, süßes Beerenmus!' },
     ],
   },
   {
@@ -719,6 +747,7 @@ export const DIALOGUES: DialogueDef[] = [
     id: 'cottage-stove',
     lines: [
       { text: 'Ein grüner Kachelofen mit einer Messingkanne darauf. Es riecht nach Apfelholz, Kamille und trockenem Moos.' },
+      { text: 'Sobald du Honigbeeren oder Goldrüben erntest — oder in einer Mühle Blütenmehl mahlst — kannst du hier am Herd warme Speisen zubereiten.' },
     ],
   },
   {
@@ -1000,7 +1029,19 @@ export const DIALOGUES: DialogueDef[] = [
   {
     id: 'mill-interior-stone',
     lines: [
-      { text: 'Ein mächtiger grauer Mahlstein aus Basalt, fein gerillt wie vor hundert Jahren. Über die Welle spürt man jetzt wieder das sanfte Beben des Flusses.' },
+      { text: 'Ein mächtiger grauer Mahlstein aus Basalt, fein gerillt wie vor hundert Jahren. Noch ruht er still — draußen am Fluss klemmt das alte Wasserrad.' },
+    ],
+  },
+  {
+    id: 'mill-interior-stone-running',
+    lines: [
+      { text: 'Über die Welle bebt der große Basaltstein ruhig im Takt des Flusses. Wenn du 2× beliebige Ernte bei dir hast, kannst du hier Blütenmehl mahlen.' },
+    ],
+  },
+  {
+    id: 'mill-interior-stone-grind',
+    lines: [
+      { text: 'Du schüttest zwei Hände reife Ernte in den hölzernen Trichter. Unter dem schweren Mahlstein rieselt feines, helles Blütenmehl in das Leinentuch.' },
     ],
   },
   {
@@ -1030,6 +1071,12 @@ export const DIALOGUES: DialogueDef[] = [
     id: 'farms-well',
     lines: [
       { text: 'Ein runder Dorfbrunnen zwischen den drei Höfen. Auf seinem Rand stehen noch zwei Tontöpfe, in denen längst vertrockneter Rosmarin steckt — doch unten spiegelt sich frisches Flusswasser.' },
+    ],
+  },
+  {
+    id: 'farms-well-draw',
+    lines: [
+      { text: 'Mit einem leichten Knarren holst du am Dorfbrunnen der drei Höfe einen Becher kühlen Tau herauf.' },
     ],
   },
   {

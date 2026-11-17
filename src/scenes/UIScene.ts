@@ -309,9 +309,9 @@ export class UIScene extends Phaser.Scene {
       inputState.modal = this.dialogue.isOpen;
       if (inputState.modal) this.releaseJoystick();
     });
-    bus.onScene(this, 'crafting-open', () => {
+    bus.onScene(this, 'crafting-open', (options) => {
       this.dialogue.close();
-      this.crafting.setOpen(true);
+      this.crafting.setOpen(true, options);
     });
     bus.onScene(this, 'dialogue-advance', () => {
       if (this.questLog.isOpen) this.questLog.setOpen(false);

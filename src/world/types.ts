@@ -161,6 +161,15 @@ export interface DialogueVariant {
   dialogueId: string;
   requires?: string[];
   forbids?: string[];
+  /** Carried items required for this variant (not spent unless also listed in `takeItems`). */
+  requiresItems?: { itemId: string; count: number }[];
+  /** Items consumed when the variant closes. */
+  takeItems?: { itemId: string; count: number }[];
+  /** Consumes this many carried `produce` items (most plentiful first) when the variant closes. */
+  takeProduce?: number;
+  /** Cooldown namespace stored in `ext.interactables.cooldowns`; prevents triggering again before `cooldownMs`. */
+  cooldownKey?: string;
+  cooldownMs?: number;
   setFlags?: string[];
   giveItems?: { itemId: string; count: number }[];
 }
@@ -205,13 +214,23 @@ export interface RepairInteractableSpec extends InteractableSpecBase {
 }
 
 /**
- * A workbench: opens the crafting menu (systems/crafting.ts). `variants` run first, like on a
- * dialogue spec (e.g. finding the saw); `emptyDialogueId` shows while no recipe is unlocked.
+ * A workbench or stove: opens the crafting menu (systems/crafting.ts). `variants` run first,
+ * like on a dialogue spec; `emptyDialogueId` shows while no matching recipe is unlocked.
  */
 export interface CraftInteractableSpec extends InteractableSpecBase {
   type: 'craft';
   emptyDialogueId: string;
+  /** Optional subset of recipe ids shown at this station (e.g. cooking recipes at a stove). */
+  recipeIds?: string[];
+  /** Optional panel header (default "Werkbank"). */
+  title?: string;
   variants?: DialogueVariant[];
+}
+
+/** Resting spot (benches): skips the clock to morning, triggering the night routine once if due. */
+export interface RestInteractableSpec extends InteractableSpecBase {
+  type: 'rest';
+  message?: string;
 }
 
 export interface BoatInteractableSpec extends InteractableSpecBase {
@@ -230,6 +249,7 @@ export type InteractableSpec =
   | DoorInteractableSpec
   | RepairInteractableSpec
   | CraftInteractableSpec
+  | RestInteractableSpec
   | BoatInteractableSpec;
 
 export interface MapDef {

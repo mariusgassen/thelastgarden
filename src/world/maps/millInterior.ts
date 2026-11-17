@@ -23,7 +23,28 @@ export const MILL_INTERIOR_MAP: MapDef = {
     { texture: 'rug', at: { x: 8.0, y: 8.4 }, ground: true },
   ],
   interactables: [
-    { id: 'mill-interior-stone', type: 'dialogue', at: { x: 4.5, y: 5.5 }, label: 'Ansehen', dialogueId: 'mill-interior-stone' },
+    {
+      id: 'mill-interior-stone',
+      type: 'dialogue',
+      at: { x: 4.5, y: 5.5 },
+      label: 'Mahlstein',
+      dialogueId: 'mill-interior-stone',
+      variants: [
+        {
+          dialogueId: 'mill-interior-stone-grind',
+          requires: ['mill-wheel-repaired'],
+          takeProduce: 2,
+          giveItems: [{ itemId: 'craft-flour', count: 1 }],
+          setFlags: ['collected-flour'],
+          cooldownKey: 'millstone',
+          cooldownMs: 20_000,
+        },
+        {
+          dialogueId: 'mill-interior-stone-running',
+          requires: ['mill-wheel-repaired'],
+        },
+      ],
+    },
     { id: 'mill-interior-ledger', type: 'dialogue', at: { x: 8.5, y: 4.9 }, label: 'Aufschlagen', dialogueId: 'mill-interior-ledger' },
     { id: 'mill-interior-sacks', type: 'dialogue', at: { x: 12.8, y: 5.3 }, label: 'Ansehen', dialogueId: 'mill-interior-sacks' },
     { id: 'mill-workbench', type: 'craft', at: { x: 12.8, y: 2.9 }, label: 'Werkeln', emptyDialogueId: 'mill-workbench' },

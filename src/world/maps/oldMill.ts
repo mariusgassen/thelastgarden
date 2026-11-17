@@ -114,6 +114,13 @@ export const OLD_MILL_MAP: MapDef = {
       dialogueId: 'mill-flour-barrels',
     },
     {
+      id: 'bench-old-mill',
+      type: 'rest',
+      at: { x: 8.5, y: 12.6 },
+      label: 'Ausruhen',
+      message: 'Du ruhst dich auf der Bank vor der Alten Mühle am Fluss aus, bis der Morgen anbricht.',
+    },
+    {
       id: 'mill-rootstock',
       type: 'repair',
       at: { x: 30, y: 14.8 },
@@ -161,6 +168,7 @@ export const OLD_MILL_MAP: MapDef = {
     { id: 'mill-seed-reed', itemId: 'seed-reed', at: { x: 21.5, y: 17.5 }, label: 'Samen einsammeln' },
     { id: 'sun-mill-1', itemId: 'resource-sunlight', at: { x: 9, y: 10 }, label: 'Sonnenlicht sammeln', respawnMs: 45_000 },
     { id: 'sun-mill-2', itemId: 'resource-sunlight', at: { x: 38, y: 16 }, label: 'Sonnenlicht sammeln', respawnMs: 45_000 },
+    { id: 'sun-mill-cove', itemId: 'resource-sunlight', at: { x: 13, y: 3.2 }, label: 'Sonnenlicht sammeln', respawnMs: 45_000 },
     { id: 'dew-mill-1', itemId: 'resource-dew', at: { x: 17.5, y: 19 }, label: 'Tau sammeln', respawnMs: 45_000 },
     { id: 'dew-mill-2', itemId: 'resource-dew', at: { x: 25, y: 19 }, label: 'Tau sammeln', respawnMs: 45_000 },
     { id: 'dew-mill-cove', itemId: 'resource-dew', at: { x: 15.5, y: 4.2 }, label: 'Tau sammeln', respawnMs: 45_000 },

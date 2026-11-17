@@ -631,4 +631,83 @@ test.describe('Phone touch controls', () => {
     expect((afterEat.ext.meal as { effect: string } | undefined)?.effect).toBe('swift');
     expect(errors).toEqual([]);
   });
+
+  test('opens Almanach from Menü and browses a ??? hint entry via touch on phone', async ({ page }) => {
+    const errors = trackErrors(page);
+
+    await page.goto('/');
+    await waitForGameBoot(page);
+
+    const before = (await flushAndReadSave(page))!;
+
+    // Tap top-left Menü button (28, 40) -> tap "Almanach  (H)" at (195, 441)
+    await page.touchscreen.tap(28, 40);
+    await page.waitForTimeout(250);
+    await page.touchscreen.tap(195, 441);
+    await page.waitForTimeout(300);
+
+    // Check viewport stays within bounds while WikiPanel is open
+    const fit = await page.evaluate(() => ({
+      scrollWidth: document.documentElement.scrollWidth,
+      innerWidth: window.innerWidth,
+      scrollHeight: document.documentElement.scrollHeight,
+      innerHeight: window.innerHeight,
+    }));
+    expect(fit.scrollWidth).toBeLessThanOrEqual(fit.innerWidth);
+    expect(fit.scrollHeight).toBeLessThanOrEqual(fit.innerHeight);
+
+    // Tap an unknown "??? · Hinweis" row in the list (topics:building / blight area ~y=290), then "‹ Zurück", then close "×"
+    await page.touchscreen.tap(195, 290);
+    await page.waitForTimeout(250);
+    await page.touchscreen.tap(60, 82);
+    await page.waitForTimeout(200);
+    await page.touchscreen.tap(350, 42);
+    await page.waitForTimeout(200);
+
+    // Player did not accidentally move while tapping HUD & Almanach
+    const after = (await flushAndReadSave(page))!;
+    expect(after.player.x).toBe(before.player.x);
+    expect(after.player.y).toBe(before.player.y);
+    expect(errors).toEqual([]);
+  });
+
+  test('rests on a garden bench via phone context button and advances night cycle', async ({ page }) => {
+    const errors = trackErrors(page);
+
+    await page.addInitScript((key) => {
+      if (localStorage.getItem(key)) return;
+      localStorage.setItem(
+        key,
+        JSON.stringify({
+          version: 1,
+          savedAt: Date.now(),
+          player: { mapId: 'garden', x: 21 * 32, y: 33.1 * 32, facing: 'up' },
+          world: { unblockedPaths: [], visitedZones: ['garden'], flags: { 'episode-1-complete': true } },
+          inventory: { items: {} },
+          quests: { active: [], completed: ['q-meet-crow'], progress: {} },
+          ext: {},
+        }),
+      );
+    }, SAVE_KEY);
+
+    await page.goto('/');
+    await waitForGameBoot(page);
+
+    // Tap context button ("Ausruhen" at 326, 768) -> restUntilMorning() triggers nightly blight spread
+    await expect
+      .poll(
+        async () => {
+          const tiles = ((await flushAndReadSave(page))?.ext.blight as { tiles?: { garden?: string[] } } | undefined)?.tiles?.garden;
+          if ((tiles?.length ?? 0) > 0) return tiles!.length;
+          await page.touchscreen.tap(326, 768);
+          await page.waitForTimeout(350);
+          const next = ((await flushAndReadSave(page))?.ext.blight as { tiles?: { garden?: string[] } } | undefined)?.tiles?.garden;
+          return next?.length ?? 0;
+        },
+        { timeout: 15_000, intervals: [200] },
+      )
+      .toBeGreaterThan(0);
+
+    expect(errors).toEqual([]);
+  });
 });

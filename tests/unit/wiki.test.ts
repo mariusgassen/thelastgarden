@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { content } from '../../src/content';
 import { bus } from '../../src/systems/events';
 import { gameState } from '../../src/systems/state';
+import '../../src/systems/village';
 import { getWikiEntries, getWikiSections, refreshWiki, registerWikiSource, startWiki } from '../../src/systems/wiki';
 
 function knownKeys(): string[] {
@@ -55,7 +56,7 @@ describe('wiki', () => {
     const toasts: string[] = [];
     bus.on('toast', (t) => toasts.push(t.text));
     registerWikiSource(() => [
-      { key: 'test:thing', section: 'machines', title: 'Testding', lines: ['x'], known: () => gameState.hasFlag('test-thing') },
+      { key: 'test:thing', section: 'machines', title: 'Testding', hint: 'Ein Testhinweis für das Testding.', lines: ['x'], known: () => gameState.hasFlag('test-thing') },
     ]);
     expect(getWikiSections().find((s) => s.id === 'machines')?.title).toBe('Maschinen');
     gameState.setFlag('test-thing');
@@ -85,5 +86,24 @@ describe('wiki', () => {
     expect(knownKeys()).not.toContain('topics:animals');
     gameState.setFlag('built:beehive');
     expect(knownKeys()).toContain('topics:animals');
+    const crafting = getWikiEntries().find((e) => e.key === 'topics:crafting')!;
+    expect(crafting.lines.join(' ')).toContain('Honigbeeren');
+  });
+
+  it('provides a German hint for every unlockable entry when still unknown', () => {
+    const entries = getWikiEntries();
+    for (const entry of entries) {
+      if (!entry.known()) {
+        expect(entry.hint?.trim().length ?? 0, `missing hint for ${entry.key}`).toBeGreaterThan(8);
+      }
+    }
+    expect(entries.find((e) => e.key === 'recipes:berry-mash')?.hint).toContain('Teich');
+    expect(entries.find((e) => e.key === 'items:trowel')?.hint).toContain('Werkzeugregal');
+    expect(entries.find((e) => e.key === 'persons:hanne')?.hint).toContain('Dorfplatz');
+    expect(entries.find((e) => e.key === 'persons:crow')?.hint).toContain('Gartenhütte');
+    expect(entries.find((e) => e.key === 'places:old-mill')?.hint).toContain('Obstwiesen');
+    expect(entries.find((e) => e.key === 'story:q-water-tower')?.hint).toContain('Linie 3');
+    expect(entries.find((e) => e.key === 'village:plaza')?.hint).toContain('Episode 4');
+    expect(entries.find((e) => e.key === 'topics:meals')?.hint).toContain('Honigbeeren');
   });
 });

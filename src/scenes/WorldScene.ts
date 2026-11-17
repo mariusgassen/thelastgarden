@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { content, type DialogueLine } from '../content';
-import { isBlightedPx } from '../systems/blight';
+import { isBlightedPx, restUntilMorning } from '../systems/blight';
 import { isHorseRested, RESTED_SPEED_FACTOR } from '../systems/animals';
 import { AnimalLayer } from '../systems/animalLayer';
 import { getMealSpeedFactor, isBlightproof } from '../systems/meals';
@@ -317,6 +317,12 @@ export class WorldScene extends Phaser.Scene implements WorldApi {
 
   toast(text: string): void {
     bus.emit('toast', { text });
+  }
+
+  rest(message: string): void {
+    restUntilMorning();
+    if (!prefersReducedMotion()) this.cameras.main.fadeIn(900, 16, 25, 54);
+    this.toast(message);
   }
 
   // ── internals ─────────────────────────────────────────────

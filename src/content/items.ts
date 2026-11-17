@@ -494,4 +494,22 @@ export const ITEMS: ItemDef[] = [
     stackable: true,
     color: 0xe8dcc0,
   },
+  {
+    id: 'meal-honey-cake',
+    name: 'Honigkuchen',
+    description: 'Goldenes Gebäck aus Blütenmehl, Honig und frischem Ei. Gibt lange Schwung für weite Wege.',
+    category: 'meal',
+    stackable: true,
+    color: 0xe6a842,
+    meal: { effect: 'swift', minutes: 5 },
+  },
+  {
+    id: 'meal-turnip-bread',
+    name: 'Rübenbrot',
+    description: 'Kräftiges Brot mit Goldrüben und einem Schuss Tau. Hält die Welke eine gute Weile von den Sohlen fern.',
+    category: 'meal',
+    stackable: true,
+    color: 0xc98a4a,
+    meal: { effect: 'blightproof', minutes: 6 },
+  },
 ];

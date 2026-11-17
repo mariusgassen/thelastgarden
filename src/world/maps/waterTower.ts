@@ -103,6 +103,13 @@ export const WATER_TOWER_MAP: MapDef = {
       dialogueId: 'tower-vista',
       radius: 60,
     },
+    {
+      id: 'bench-water-tower',
+      type: 'rest',
+      at: { x: 25.5, y: 12.0 },
+      label: 'Ausruhen',
+      message: 'Du ruhst dich auf der Bank am Wasserturm über Erlenbrück aus, bis der Morgen anbricht.',
+    },
   ],
   npcs: [
     { npcId: 'crow', at: { x: 8.5, y: 14 }, radius: 70, wander: 2, showWhenFlag: 'episode-1-complete', hideWhenFlag: 'greenhouse-inner-unlocked' },
