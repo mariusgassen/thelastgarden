@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { baseTileAt, isKeepClearTile } from '../../src/systems/building';
-import { collectNode, getResourceNodes, ROAM_TILES, setSpawnSeed } from '../../src/systems/resources';
+import { baseTileAt, isKeepClearTile, placePiece, whyNotPlace } from '../../src/systems/building';
+import { collectNode, getNodeSpot, getResourceNodes, ROAM_TILES, setSpawnSeed } from '../../src/systems/resources';
 import { parseSave } from '../../src/systems/save';
 import { gameState } from '../../src/systems/state';
 import { findResourceNode } from '../../src/world';
@@ -71,5 +71,20 @@ describe('random pickup spawns', () => {
     const old = parseSave(JSON.stringify({ version: 1, ext: { resources: { collected: [], lastCollectedAt: {} } } }))!;
     expect(old.ext.resources).toEqual({ collected: [], lastCollectedAt: {} });
     expect(spot).not.toBe('');
+  });
+
+  it('blocks building on visible pickups, allows building on collected/pending spots, and relocates pending respawns', () => {
+    gameState.addItem('mat-wood', 5);
+    const home = findResourceNode('sun-2')!.at;
+    expect(whyNotPlace('garden', 'fence', Math.floor(home.x), Math.floor(home.y))).toBe('Hier liegt etwas.');
+
+    expect(collectNode('sun-2')).toBe(true);
+    const pending = getNodeSpot('sun-2')!;
+    const px = Math.floor(pending.x);
+    const py = Math.floor(pending.y);
+    expect(placePiece('garden', 'fence', px, py)).toBeNull();
+
+    const moved = getNodeSpot('sun-2')!;
+    expect([Math.floor(moved.x), Math.floor(moved.y)]).not.toEqual([px, py]);
   });
 });

@@ -12,6 +12,7 @@ import {
   STAGE_DURATION_MS,
 } from '../../src/systems/plants';
 import { parseSave, SAVE_KEY } from '../../src/systems/save';
+import { setSpawnSeed } from '../../src/systems/resources';
 import { gameState } from '../../src/systems/state';
 import {
   AUTO_TOOL,
@@ -53,6 +54,7 @@ describe('tools', () => {
   beforeEach(() => {
     localStorage.clear();
     gameState.reset();
+    setSpawnSeed(1234);
     setToolMode(false);
     setBuildMode(false);
   });
