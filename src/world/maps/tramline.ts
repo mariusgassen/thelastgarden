@@ -61,7 +61,14 @@ export const TRAMLINE_MAP: MapDef = {
       target: { mapId: 'garden', spawn: 'tramline' },
     },
     { id: 'tram-stop-sign', type: 'dialogue', at: { x: 15, y: 8.9 }, label: 'Lesen', dialogueId: 'tram-stop-sign' },
-    { id: 'signal-box-door', type: 'dialogue', at: { x: 23.5, y: 6.8 }, label: 'Ansehen', dialogueId: 'signal-box-door' },
+    {
+      id: 'signal-box-door',
+      type: 'door',
+      at: { x: 23.5, y: 6.8 },
+      label: 'Eintreten',
+      target: { mapId: 'signal-box-interior', spawn: 'entrance' },
+      radius: 64,
+    },
     {
       id: 'bench-tramline',
       type: 'rest',
@@ -109,5 +116,6 @@ export const TRAMLINE_MAP: MapDef = {
     default: { x: 3, y: 10.5 },
     west: { x: 3, y: 10.5 },
     east: { x: 48.2, y: 11 },
+    'signal-box': { x: 23.5, y: 7.4 },
   },
 };

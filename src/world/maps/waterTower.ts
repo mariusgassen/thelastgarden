@@ -73,10 +73,10 @@ export const WATER_TOWER_MAP: MapDef = {
     },
     {
       id: 'water-tower-door',
-      type: 'dialogue',
+      type: 'door',
       at: { x: 16, y: 9.9 },
-      label: 'Ansehen',
-      dialogueId: 'water-tower-door',
+      label: 'Eintreten',
+      target: { mapId: 'water-tower-interior', spawn: 'entrance' },
       radius: 64,
     },
     {
@@ -113,7 +113,7 @@ export const WATER_TOWER_MAP: MapDef = {
   ],
   npcs: [
     { npcId: 'crow', at: { x: 8.5, y: 14 }, radius: 70, wander: 2, showWhenFlag: 'episode-1-complete', hideWhenFlag: 'greenhouse-inner-unlocked' },
-    { npcId: 'owl', at: { x: 16, y: 10.5 }, radius: 72, wander: 2, nocturnal: true },
+    { npcId: 'owl', at: { x: 18.2, y: 10.6 }, radius: 72, wander: 2, nocturnal: true },
   ],
   journalPages: [
     {
@@ -135,5 +135,6 @@ export const WATER_TOWER_MAP: MapDef = {
     default: { x: 3, y: 14 },
     west: { x: 3, y: 14 },
     north: { x: 21.5, y: 2.8 },
+    'tower-door': { x: 16, y: 10.8 },
   },
 };

@@ -60,13 +60,16 @@ const MAP_HINTS: Record<string, string> = {
   'greenhouse-vestibule': 'Das gläserne Gewächshaus im Norden des Gartens (öffnet mit dem Schlüssel der Krähe am Ende von Episode 1).',
   'greenhouse-heart': 'Der innere Raum hinter dem Vorraum des Gewächshauses (öffnet mit Quellwasser vom Wasserturm in Episode 2).',
   tramline: 'Östlich der alten Bushaltestelle am Südrand des Gartens (ab Episode 2 zugänglich).',
+  'signal-box-interior': 'Das überwucherte alte Stellwerk nördlich der Gleise von Linie 3.',
   'water-tower': 'Am östlichen Ende der alten Trasse (Linie 3), hinter dem Dornengestrüpp (Episode 2).',
+  'water-tower-interior': 'Der kühle Pumpenraum im Erdgeschoss des Wasserturms am Stadtrand (Episode 2).',
   'hill-path': 'Nördlich des Wasserturms geht ein Pfad den nebligen Hügel hinauf (ab Episode 3).',
   orchard: 'Jenseits des Nebelkamms am nördlichen Ende des Hügelpfads (Episode 3).',
   'orchard-cottage': 'Das kleine Gartenhaus auf der Nordwestseite der alten Obstwiesen (Episode 3).',
   'old-mill': 'Östlich der Obstwiesen entlang des alten Talwegs (ab Episode 4 zugänglich).',
   'mill-interior': 'Die Mahlstube im Inneren der Alten Mühle am Fluss (Episode 4).',
   'river-farms': 'Folge dem südlichen Flussweg (oder nimm den Kahn am Steg) von der Alten Mühle flussabwärts (Episode 4).',
+  'farms-house-interior': 'Die Bauernstube des ersten Flusshofes bei den drei Höfen am Fluss (Episode 4).',
 };
 
 const MAP_LOCATIONS: Record<string, string> = {
@@ -75,13 +78,16 @@ const MAP_LOCATIONS: Record<string, string> = {
   'greenhouse-vestibule': 'im Vorraum des Gewächshauses',
   'greenhouse-heart': 'im Herzraum des Gewächshauses',
   tramline: 'auf der alten Trasse (Linie 3)',
+  'signal-box-interior': 'im alten Stellwerk an Linie 3',
   'water-tower': 'am Wasserturm',
+  'water-tower-interior': 'im Pumpenraum des Wasserturms',
   'hill-path': 'am Hügelpfad',
   orchard: 'auf den alten Obstwiesen',
   'orchard-cottage': 'im Gartenhaus der Obstwiesen',
   'old-mill': 'bei der Alten Mühle am Fluss',
   'mill-interior': 'in der Mahlstube der Alten Mühle',
   'river-farms': 'bei den drei Höfen am Fluss',
+  'farms-house-interior': 'in der Bauernstube am Fluss',
 };
 
 const SEED_HINTS: Record<string, string> = {

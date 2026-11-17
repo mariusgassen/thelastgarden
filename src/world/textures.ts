@@ -1617,6 +1617,114 @@ export function generateTextures(scene: Phaser.Scene): void {
     g.fillStyle(0xc9a47a, 1); // oars
     g.fillRect(16, 18, 48, 2.5);
   });
+  make('signal-levers', 104, 56, (g) => {
+    g.fillStyle(0x000000, 0.22);
+    g.fillRect(6, 48, 92, 6);
+    g.fillStyle(0x3a4044, 1); // cast-iron lever bank frame
+    g.fillRoundedRect(8, 28, 88, 22, 4);
+    g.fillStyle(0x525a60, 1);
+    g.fillRect(12, 30, 80, 6);
+    // 4 railway switch levers
+    const xPositions = [22, 42, 62, 82];
+    const leverColors = [0xb5533c, 0xd8b04a, 0x3b4852, 0xb5533c];
+    for (let i = 0; i < xPositions.length; i++) {
+      const lx = xPositions[i];
+      const tilt = i % 2 === 0 ? -6 : 5;
+      g.lineStyle(3.5, 0x76818a, 1);
+      g.lineBetween(lx, 32, lx + tilt, 9);
+      g.fillStyle(leverColors[i], 1);
+      g.fillCircle(lx + tilt, 8, 4.5);
+    }
+    // Fern fronds curling up between the lever slots
+    g.fillStyle(0x4f8a42, 1);
+    g.fillEllipse(32, 26, 10, 14);
+    g.fillEllipse(72, 27, 12, 12);
+    g.fillStyle(0x6fb35b, 1);
+    g.fillEllipse(52, 25, 9, 13);
+  });
+  make('signal-lamp', 44, 44, (g) => {
+    g.fillStyle(0x000000, 0.2);
+    g.fillEllipse(22, 39, 28, 6);
+    g.fillStyle(0x5e3d29, 1); // small wooden stand
+    g.fillRoundedRect(8, 24, 28, 16, 3);
+    g.fillStyle(0xb58d34, 1); // brass lantern base & cap
+    g.fillRect(15, 22, 14, 4);
+    g.fillRect(16, 9, 12, 3);
+    g.fillStyle(0xf6d365, 1); // warm amber glass
+    g.fillRoundedRect(17, 12, 10, 10, 2);
+    g.fillStyle(0xfff4bd, 0.85);
+    g.fillCircle(22, 17, 3);
+    g.lineStyle(1.5, 0x8f6b24, 1);
+    g.strokeCircle(22, 7, 3);
+  });
+  make('signal-desk', 84, 48, (g) => {
+    g.fillStyle(0x000000, 0.2);
+    g.fillRect(6, 40, 72, 7);
+    g.fillStyle(0x5e3d29, 1);
+    g.fillRect(10, 24, 8, 20);
+    g.fillRect(66, 24, 8, 20);
+    g.fillStyle(0x8a5a3b, 1); // desktop
+    g.fillRoundedRect(4, 10, 76, 18, 3);
+    g.fillStyle(0xf1e6c8, 1); // timetable sheet
+    g.fillRect(16, 13, 30, 12);
+    g.lineStyle(1, 0x5c4734, 0.8);
+    g.lineBetween(19, 17, 43, 17);
+    g.lineBetween(19, 21, 38, 21);
+    g.fillStyle(0xd8b04a, 1); // brass station bell
+    g.fillCircle(58, 18, 5);
+  });
+  make('tower-pump', 96, 64, (g) => {
+    g.fillStyle(0x000000, 0.24);
+    g.fillEllipse(48, 56, 86, 12);
+    g.fillStyle(0x46555c, 1); // stone & iron manifold plinth
+    g.fillRoundedRect(16, 28, 64, 28, 5);
+    g.fillStyle(0x8c5c3e, 1); // copper vertical riser pipes
+    g.fillRect(24, 8, 10, 24);
+    g.fillRect(62, 10, 10, 22);
+    g.fillStyle(0x5d6e75, 1); // central pump chamber
+    g.fillRoundedRect(36, 16, 24, 28, 4);
+    g.lineStyle(3, 0xb5533c, 1); // crimson handwheel
+    g.strokeCircle(48, 28, 9);
+    g.lineBetween(40, 28, 56, 28);
+    g.lineBetween(48, 20, 48, 36);
+    g.fillStyle(0xe6c34a, 1); // brass center hub
+    g.fillCircle(48, 28, 3);
+  });
+  make('pressure-gauge', 80, 52, (g) => {
+    g.fillStyle(0x000000, 0.2);
+    g.fillRect(6, 44, 68, 6);
+    g.fillStyle(0x4b3526, 1); // mounted oak gauge board
+    g.fillRoundedRect(8, 6, 64, 38, 4);
+    g.fillStyle(0x8c5c3e, 1); // copper supply pipes
+    g.fillRect(22, 34, 6, 14);
+    g.fillRect(52, 34, 6, 14);
+    // Two round brass pressure dials
+    for (const dx of [26, 54]) {
+      g.fillStyle(0xd8b04a, 1);
+      g.fillCircle(dx, 22, 10);
+      g.fillStyle(0xf4efe0, 1);
+      g.fillCircle(dx, 22, 7.5);
+      g.lineStyle(1.6, 0x3a2a1e, 1);
+      g.lineBetween(dx, 22, dx + 4, 17);
+    }
+  });
+  make('farm-bed', 68, 44, (g) => {
+    g.fillStyle(0x000000, 0.2);
+    g.fillRect(4, 37, 60, 6);
+    g.fillStyle(0x5e3d29, 1); // walnut frame & headboard
+    g.fillRoundedRect(4, 6, 60, 32, 4);
+    g.fillStyle(0x8a5a3b, 1);
+    g.fillRect(6, 8, 56, 8);
+    g.fillStyle(0xf1e6c8, 1); // pillow
+    g.fillRoundedRect(10, 14, 18, 10, 3);
+    g.fillStyle(0x6a8e58, 1); // sage & terracotta patchwork quilt
+    g.fillRoundedRect(26, 14, 34, 21, 3);
+    g.fillStyle(0xc66b49, 1);
+    g.fillRect(32, 17, 10, 7);
+    g.fillRect(44, 25, 11, 7);
+    g.fillStyle(0xe8cf7a, 1);
+    g.fillRect(45, 17, 9, 6);
+  });
 
   g.destroy();
 }
