@@ -442,8 +442,9 @@ push back a grey wilt that creeps in at night. No money, no chores, no fail stat
   bridges switch the ground tile's collision off, a cursor (ghost + green/red/orange outline) on
   desktop, and a shelter's *Rasten* interactable. While build mode is on, E and taps place or
   remove instead of interacting.
-- **HUD.** Hammer `HudButton` (**B**) above the horse and map buttons, outdoors once unlocked.
-  `ui/BuildBar.ts` is the piece picker at the bottom (tap a slot or 1–9; Esc/B closes).
+- **HUD.** Hammer `HudButton` (**B**) in the right HUD column (above tools, below horse) once
+  unlocked. `ui/BuildBar.ts` opens along the bottom left of the right HUD column without moving any
+  HUD buttons (tap a slot or 1–9; Esc/B closes).
 - **The blight.** `systems/blight.ts` (logic) and `systems/blightLayer.ts` (patches, spores,
   hearts). It wakes with `episode-1-complete`. `MapDef.blightHearts` (`{ id, at, reach }`, whole
   tiles; garden ×3, tramline, orchard, old mill) each take `GROWTH_PER_NIGHT` (6) tiles per

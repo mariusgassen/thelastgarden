@@ -76,13 +76,22 @@ export class BuildBar {
     return TEXT_H + this.rows * SLOT + (this.rows - 1) * GAP + PAD * 1.5;
   }
 
-  layout(viewW: number, viewH: number, safe: SafeArea): void {
-    const room = viewW - safe.left - safe.right - 12;
-    this.container.setScale(Math.min(1, room / this.width));
-    this.container.setPosition(
-      safe.left + (viewW - safe.left - safe.right) / 2,
-      viewH - safe.bottom - 10 - this.height * this.container.scaleY,
-    );
+  /** Rendered height in CSS px at the current layout scale. */
+  get scaledHeight(): number {
+    return this.height * this.container.scaleY;
+  }
+
+  layout(viewW: number, viewH: number, safe: SafeArea, maxRight?: number, topLimit = safe.top + 8): void {
+    const minLeft = safe.left + 8;
+    const maxRightEdge = maxRight ?? viewW - safe.right - 8;
+    const room = Math.max(120, maxRightEdge - minLeft);
+    const maxH = Math.max(120, viewH - safe.bottom - 10 - topLimit);
+    const scale = Math.min(1, room / this.width, maxH / this.height);
+    this.container.setScale(scale);
+    const halfW = (this.width * scale) / 2;
+    const centerX = safe.left + (viewW - safe.left - safe.right) / 2;
+    const x = Math.max(minLeft + halfW, Math.min(centerX, maxRightEdge - halfW));
+    this.container.setPosition(x, viewH - safe.bottom - 10 - this.height * scale);
   }
 
   setVisible(visible: boolean): void {
