@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.1](https://github.com/mariusgassen/thelastgarden/compare/the-last-garden-v0.4.0...the-last-garden-v0.4.1) (2026-11-21)
+
+
+### Bug Fixes
+
+* **animals:** resize ducks and let them swim and walk around the pond ([#57](https://github.com/mariusgassen/thelastgarden/issues/57)) ([54347bb](https://github.com/mariusgassen/thelastgarden/commit/54347bb24ccbe63c789d364a90777db0496ce28d))
+
 ## [0.4.0](https://github.com/mariusgassen/thelastgarden/compare/the-last-garden-v0.3.0...the-last-garden-v0.4.0) (2026-11-17)
 
 
