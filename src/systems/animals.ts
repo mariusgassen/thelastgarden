@@ -27,10 +27,11 @@
  *   startAnimals()                    call once at boot
  */
 import { content } from '../content';
-import { allPlantingBeds } from '../world';
+import { allPlantingBeds, MAPS } from '../world';
 import { TILE_SIZE } from '../world/tiles';
+import type { TileRect } from '../world/types';
 import { clearBlightTiles, getBlightTiles, onNightfall } from './blight';
-import { getPieces, type PlacedPiece } from './building';
+import { baseTileAt, getPieceAt, getPieces, isTileWalkable, type PlacedPiece } from './building';
 import { bus } from './events';
 import { hasHorse } from './horse';
 import { getBedState, isBedPlanted, speedUpBeds } from './plants';
@@ -44,6 +45,7 @@ export const BEE_RADIUS_TILES = 6;
 export const BEE_GROWTH_BONUS = 0.5;
 export const HEN_RADIUS_TILES = 9;
 export const DUCK_RADIUS_TILES = 9;
+export const DUCK_WANDER_TILES = 4.2;
 export const GOAT_RADIUS_TILES = 10;
 /** Blight tiles one goat grazes per night (a heart grows six). */
 export const GOAT_BITES_PER_NIGHT = 6;
@@ -206,6 +208,86 @@ export function isCoveredByDucks(mapId: string, px: number, py: number): boolean
   return getHomes('ducks').some(
     (h) => h.mapId === mapId && Math.hypot((h.x + 0.5) * TILE_SIZE - px, (h.y + 0.5) * TILE_SIZE - py) <= DUCK_RADIUS_TILES * TILE_SIZE,
   );
+}
+
+const inTileRect = (r: TileRect, tx: number, ty: number): boolean =>
+  tx >= Math.floor(r.x) && tx < Math.ceil(r.x + r.w) && ty >= Math.floor(r.y) && ty < Math.ceil(r.y + r.h);
+
+/** Whether a duck may swim or waddle onto tile `(tx, ty)`. */
+export function isDuckTraversable(mapId: string, tx: number, ty: number): boolean {
+  const map = MAPS[mapId];
+  if (!map || tx < 0 || ty < 0 || tx >= map.width || ty >= map.height) return false;
+  const piece = getPieceAt(mapId, tx, ty);
+  if (piece) {
+    const def = content.buildables.find(piece.id);
+    return def !== undefined && def.solid === undefined && def.planter === undefined;
+  }
+  if (baseTileAt(mapId, tx, ty) === 'water') return true;
+  if (!isTileWalkable(mapId, tx, ty)) return false;
+  if ((map.plantingBeds ?? []).some((b) => inTileRect(b.rect, tx, ty))) return false;
+  if (
+    map.props.some(
+      (p) =>
+        p.solid &&
+        (!p.showWhenFlag || gameState.hasFlag(p.showWhenFlag)) &&
+        (!p.hideWhenFlag || !gameState.hasFlag(p.hideWhenFlag)) &&
+        inTileRect(p.solid, tx, ty),
+    )
+  ) {
+    return false;
+  }
+  if (map.obstacles.some((o) => isBlocked(o.id) && inTileRect(o.rect, tx, ty))) return false;
+  return true;
+}
+
+/** True when a pixel position sits on open water (not a bridge or floating bed). */
+export function isDuckWaterSurface(mapId: string, px: number, py: number): boolean {
+  const tx = Math.floor(px / TILE_SIZE);
+  const ty = Math.floor((py - 2) / TILE_SIZE);
+  return baseTileAt(mapId, tx, ty) === 'water' && !getPieceAt(mapId, tx, ty);
+}
+
+export interface DuckSpot {
+  x: number;
+  y: number;
+  water: boolean;
+}
+
+/** All reachable water and shore tiles within `maxRadius` tiles of a duckhouse (excluding the duckhouse tile itself). */
+export function reachableDuckTiles(home: Pick<Home, 'mapId' | 'x' | 'y'>, maxRadius = DUCK_WANDER_TILES): DuckSpot[] {
+  const seen = new Set<string>([`${home.x},${home.y}`]);
+  const queue: { x: number; y: number }[] = [{ x: home.x, y: home.y }];
+  const spots: DuckSpot[] = [];
+  for (let head = 0; head < queue.length; head++) {
+    const cur = queue[head];
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) {
+      const nx = cur.x + dx;
+      const ny = cur.y + dy;
+      const k = `${nx},${ny}`;
+      if (seen.has(k)) continue;
+      if (Math.hypot(nx - home.x, ny - home.y) > maxRadius) continue;
+      if (!isDuckTraversable(home.mapId, nx, ny)) continue;
+      seen.add(k);
+      queue.push({ x: nx, y: ny });
+      spots.push({ x: nx, y: ny, water: baseTileAt(home.mapId, nx, ny) === 'water' && !getPieceAt(home.mapId, nx, ny) });
+    }
+  }
+  return spots;
+}
+
+/** True when every tile along the straight segment between two pixel positions is traversable by a duck. */
+export function hasClearDuckPath(mapId: string, fromX: number, fromY: number, toX: number, toY: number): boolean {
+  const dist = Math.hypot(toX - fromX, toY - fromY);
+  const steps = Math.max(1, Math.ceil(dist / 8));
+  for (let i = 1; i <= steps; i++) {
+    const t = i / steps;
+    const px = fromX + (toX - fromX) * t;
+    const py = fromY + (toY - fromY) * t;
+    const tx = Math.floor(px / TILE_SIZE);
+    const ty = Math.floor((py - 2) / TILE_SIZE);
+    if (!isDuckTraversable(mapId, tx, ty)) return false;
+  }
+  return true;
 }
 
 // ── Goat ─────────────────────────────────────────────────────
