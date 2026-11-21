@@ -8,11 +8,15 @@ import {
   feedHorse,
   getHomes,
   GOAT_BITES_PER_NIGHT,
+  hasClearDuckPath,
   HONEY_INTERVAL_MS,
   isCoveredByDucks,
   isCoveredByHens,
+  isDuckTraversable,
+  isDuckWaterSurface,
   isHorseRested,
   isPollinated,
+  reachableDuckTiles,
   readyProduce,
   startAnimals,
   tickBees,
@@ -127,6 +131,26 @@ describe('helper animals', () => {
     expect(outcome?.protectedBy).toBe('ducks');
     expect(outcome?.affectedBedIds).toEqual([]);
     expect(getBedState(planterBedId('garden', 36, 36))).toBeDefined();
+  });
+
+  it('lets ducks roam both pond water and shore while respecting fences and bridges', () => {
+    // South pond edge (41, 39): older code centered search south on land and got stuck.
+    expect(placePiece('garden', 'duckhouse', 41, 39)).toBeNull();
+    const [ducks] = getHomes('ducks');
+    const spots = reachableDuckTiles(ducks);
+    expect(spots.some((s) => s.water)).toBe(true);
+    expect(spots.some((s) => !s.water)).toBe(true);
+    expect(spots.some((s) => s.x === 41 && s.y === 39)).toBe(false);
+
+    // Bridges are traversable on foot (not open water surface), while fences block ducks.
+    expect(placePiece('garden', 'bridge', 40, 39)).toBeNull();
+    expect(isDuckTraversable('garden', 40, 39)).toBe(true);
+    expect(isDuckWaterSurface('garden', 40.5 * TILE_SIZE, 39.5 * TILE_SIZE)).toBe(false);
+    expect(isDuckWaterSurface('garden', 42.5 * TILE_SIZE, 36.5 * TILE_SIZE)).toBe(true);
+
+    expect(placePiece('garden', 'fence', 39, 39)).toBeNull();
+    expect(isDuckTraversable('garden', 39, 39)).toBe(false);
+    expect(hasClearDuckPath('garden', 40.5 * TILE_SIZE, 39.5 * TILE_SIZE, 38.5 * TILE_SIZE, 39.5 * TILE_SIZE)).toBe(false);
   });
 
   it('makes bees speed up growth and fill the hive only while something blooms nearby', () => {

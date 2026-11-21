@@ -7,13 +7,17 @@ import {
   collectProduce,
   feedHorse,
   getHomes,
+  hasClearDuckPath,
   homeKey,
+  isDuckTraversable,
+  isDuckWaterSurface,
   isHorseRested,
   plantedBedsNear,
+  reachableDuckTiles,
   readyProduce,
   type Home,
 } from './animals';
-import { baseTileAt, getPieceAt, isTileWalkable } from './building';
+import { getPieceAt, isTileWalkable } from './building';
 import { bus } from './events';
 import { hasHorse } from './horse';
 import type { InteractionSystem } from './interaction';
@@ -21,7 +25,7 @@ import { gameState } from './state';
 
 const WANDER_RADIUS_TILES = 1.6;
 const HEN_SPEED = 16;
-const DUCK_SPEED = 14;
+const DUCK_SPEED = 22;
 const GOAT_SPEED = 20;
 const BADGE_REFRESH_MS = 600;
 
@@ -38,6 +42,7 @@ interface Resident {
   speed: number;
   target: { x: number; y: number } | null;
   wait: number;
+  phase: number;
 }
 
 interface LiveHome {
@@ -50,8 +55,8 @@ interface LiveHome {
 
 /**
  * Scene-bound residents of the current map's animal homes: hens and a goat that wander about
- * their house, bees circling a hive, a badge when eggs or honey are waiting, and the
- * interaction to take them. All rules live in systems/animals.ts.
+ * their house, ducks that swim on the pond and waddle along the shore, bees circling a hive,
+ * a badge when produce is waiting, and the interaction to take them. All rules live in systems/animals.ts.
  */
 export class AnimalLayer {
   private readonly live = new Map<string, LiveHome>();
@@ -101,18 +106,35 @@ export class AnimalLayer {
     const base = (home.y + 1) * TILE_SIZE;
     const entry: LiveHome = { home, residents: [], bees: [] };
     const count = home.animal === 'hens' || home.animal === 'ducks' ? 2 : home.animal === 'goat' ? 1 : 0;
-    const texture = home.animal === 'hens' ? 'hen' : home.animal === 'ducks' ? 'duck' : 'goat';
     const speed = home.animal === 'hens' ? HEN_SPEED : home.animal === 'ducks' ? DUCK_SPEED : GOAT_SPEED;
+    const duckSpots = home.animal === 'ducks' ? reachableDuckTiles(home) : [];
+    const duckWaterSpots = duckSpots.filter((s) => s.water);
+    const duckStartPool = duckWaterSpots.length > 0 ? duckWaterSpots : duckSpots;
     for (let i = 0; i < count; i++) {
-      const start =
-        home.animal === 'ducks'
-          ? (this.pickTarget(home) ?? { x: cx + (i - 0.5) * 18, y: base - 2 })
-          : { x: cx + (i - 0.5) * 22, y: base + 8 };
+      let start: { x: number; y: number };
+      if (home.animal === 'ducks' && duckStartPool.length > 0) {
+        const spot = duckStartPool[Math.floor((i * duckStartPool.length) / count + Math.random() * (duckStartPool.length / count)) % duckStartPool.length];
+        start = { x: (spot.x + 0.3 + Math.random() * 0.4) * TILE_SIZE, y: (spot.y + 0.4 + Math.random() * 0.35) * TILE_SIZE };
+      } else {
+        start =
+          home.animal === 'ducks'
+            ? { x: cx + (i - 0.5) * 14, y: (home.y + 0.65) * TILE_SIZE }
+            : { x: cx + (i - 0.5) * 22, y: base + 8 };
+      }
+      const texture =
+        home.animal === 'hens'
+          ? 'hen'
+          : home.animal === 'ducks'
+            ? isDuckWaterSurface(this.mapId, start.x, start.y)
+              ? 'duck'
+              : 'duck-walk'
+            : 'goat';
       const sprite = this.scene.add
         .image(start.x, start.y, texture)
         .setOrigin(0.5, 1)
         .setFlipX(i % 2 === 1);
-      entry.residents.push({ sprite, speed, target: null, wait: 800 + i * 1400 });
+      const wait = home.animal === 'ducks' ? 200 + i * 700 : 800 + i * 1400;
+      entry.residents.push({ sprite, speed, target: null, wait, phase: i * 1.7 });
       sprite.setDepth(sprite.y);
     }
     if (home.animal === 'bees') {
@@ -160,8 +182,8 @@ export class AnimalLayer {
       return;
     }
     if (!r.target) {
-      r.target = this.pickTarget(home);
-      if (!r.target) r.wait = 2500;
+      r.target = home.animal === 'ducks' ? this.pickDuckTarget(home, r.sprite.x, r.sprite.y) : this.pickTarget(home);
+      if (!r.target) r.wait = 1500;
       return;
     }
     const dx = r.target.x - r.sprite.x;
@@ -171,18 +193,65 @@ export class AnimalLayer {
     if (dist <= step) {
       r.sprite.setPosition(r.target.x, r.target.y);
       r.target = null;
-      r.wait = 1200 + Math.random() * 3200;
+      r.sprite.setRotation(0);
+      r.wait = home.animal === 'ducks' ? 700 + Math.random() * 1800 : 1200 + Math.random() * 3200;
     } else {
-      r.sprite.setPosition(r.sprite.x + (dx / dist) * step, r.sprite.y + (dy / dist) * step);
+      const nx = r.sprite.x + (dx / dist) * step;
+      const ny = r.sprite.y + (dy / dist) * step;
+      if (home.animal === 'ducks') {
+        const tx = Math.floor(nx / TILE_SIZE);
+        const ty = Math.floor((ny - 2) / TILE_SIZE);
+        if (!isDuckTraversable(this.mapId, tx, ty)) {
+          r.target = null;
+          r.sprite.setRotation(0);
+          return;
+        }
+      }
+      r.sprite.setPosition(nx, ny);
       if (Math.abs(dx) > 1) r.sprite.setFlipX(dx < 0);
+      if (home.animal === 'ducks') {
+        const swimming = isDuckWaterSurface(this.mapId, nx, ny);
+        const nextTex = swimming ? 'duck' : 'duck-walk';
+        if (r.sprite.texture.key !== nextTex) r.sprite.setTexture(nextTex);
+        r.sprite.setRotation(swimming ? 0 : Math.sin(this.time * 0.015 + r.phase) * 0.09);
+      }
     }
     r.sprite.setDepth(r.sprite.y);
   }
 
-  /** A walkable spot near the home (or open water for ducks) that no piece stands on, or null. */
+  /** A walkable/swimmable water or shore spot connected to the duckhouse, with a clear path from current position. */
+  private pickDuckTarget(home: Home, fromX: number, fromY: number): { x: number; y: number } | null {
+    const spots = reachableDuckTiles(home);
+    if (spots.length === 0) return null;
+    const waterSpots = spots.filter((s) => s.water);
+    const shoreSpots = spots.filter((s) => !s.water);
+    const preferShore = shoreSpots.length > 0 && (waterSpots.length === 0 || Math.random() < 0.45);
+    const pool = preferShore ? shoreSpots : waterSpots.length > 0 ? waterSpots : spots;
+    for (let i = 0; i < 16; i++) {
+      const list = i < 10 ? pool : spots;
+      const spot = list[Math.floor(Math.random() * list.length)];
+      const x = (spot.x + 0.2 + Math.random() * 0.6) * TILE_SIZE;
+      const y = (spot.y + 0.3 + Math.random() * 0.55) * TILE_SIZE;
+      if (Math.hypot(x - fromX, y - fromY) < 10) continue;
+      if (hasClearDuckPath(this.mapId, fromX, fromY, x, y)) return { x, y };
+    }
+    // Fallback when boxed in by a corner: step to the nearest reachable tile with a clear path.
+    const sorted = [...spots].sort(
+      (a, b) =>
+        Math.hypot((a.x + 0.5) * TILE_SIZE - fromX, (a.y + 0.6) * TILE_SIZE - fromY) -
+        Math.hypot((b.x + 0.5) * TILE_SIZE - fromX, (b.y + 0.6) * TILE_SIZE - fromY),
+    );
+    for (const spot of sorted) {
+      const x = (spot.x + 0.5) * TILE_SIZE;
+      const y = (spot.y + 0.6) * TILE_SIZE;
+      if (hasClearDuckPath(this.mapId, fromX, fromY, x, y)) return { x, y };
+    }
+    return null;
+  }
+
+  /** A walkable spot near the home that no piece stands on, or null. */
   private pickTarget(home: Home): { x: number; y: number } | null {
-    const tries = home.animal === 'ducks' ? 12 : 6;
-    for (let i = 0; i < tries; i++) {
+    for (let i = 0; i < 6; i++) {
       const angle = Math.random() * Math.PI * 2;
       const dist = (0.7 + Math.random() * (WANDER_RADIUS_TILES - 0.7)) * TILE_SIZE;
       const x = (home.x + 0.5) * TILE_SIZE + Math.cos(angle) * dist;
@@ -190,10 +259,6 @@ export class AnimalLayer {
       const tx = Math.floor(x / TILE_SIZE);
       const ty = Math.floor((y - 4) / TILE_SIZE);
       if ((tx === home.x && ty === home.y) || getPieceAt(this.mapId, tx, ty)) continue;
-      if (home.animal === 'ducks') {
-        if (baseTileAt(this.mapId, tx, ty) !== 'water') continue;
-        return { x, y };
-      }
       if (!isTileWalkable(this.mapId, tx, ty)) continue;
       return { x, y };
     }

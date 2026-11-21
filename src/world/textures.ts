@@ -3196,26 +3196,52 @@ function generateBuildAndBlightTextures(make: MakeFn): void {
     g.fillRect(3, 3.5, 1, 3);
     g.fillRect(5, 3.5, 1, 3);
   });
-  make('duck', 22, 18, (g) => {
-    // Water ripple under a mallard-style swimming duck
-    g.lineStyle(1.2, 0xc9ebf7, 0.7);
-    g.strokeEllipse(11, 14.5, 19, 5);
+  make('duck', 14, 12, (g) => {
+    // Water ripple under a small mallard-style swimming duck
+    g.lineStyle(1, 0xc9ebf7, 0.7);
+    g.strokeEllipse(7, 9.6, 12.5, 3.4);
     // Body & folded wing
     g.fillStyle(0x9a8468, 1);
-    g.fillEllipse(9.5, 11.5, 14, 8);
+    g.fillEllipse(6, 7.6, 8.8, 4.8);
     g.fillStyle(0x7a654b, 1);
-    g.fillEllipse(8.5, 11, 8.5, 4.5);
-    g.fillTriangle(1.5, 9, 4.5, 11.5, 2, 13.5);
-    // Neck & green head
+    g.fillEllipse(5.5, 7.3, 5.2, 2.8);
+    g.fillTriangle(1, 6, 3, 7.6, 1.4, 8.8);
+    // Neck ring & green head
     g.fillStyle(0xe8dfd1, 1);
-    g.fillRect(14, 8.2, 3, 2);
+    g.fillRect(8.8, 5.4, 2, 1.3);
     g.fillStyle(0x3f7a52, 1);
-    g.fillCircle(16, 5.5, 3.8);
+    g.fillCircle(10.2, 3.7, 2.4);
     // Orange bill & eye
     g.fillStyle(0xe99d34, 1);
-    g.fillEllipse(19.8, 6.2, 4.2, 2.2);
+    g.fillEllipse(12.6, 4.2, 2.8, 1.4);
     g.fillStyle(0x231a13, 1);
-    g.fillCircle(16.8, 4.8, 0.8);
+    g.fillCircle(10.7, 3.2, 0.6);
+  });
+  make('duck-walk', 14, 13, (g) => {
+    // Ground shadow & little orange legs for ducks waddling on shore/bridges
+    g.fillStyle(0x000000, 0.16);
+    g.fillEllipse(7, 11.7, 10, 2.6);
+    g.fillStyle(0xe99d34, 1);
+    g.fillRect(4.8, 8.8, 1.2, 2.6);
+    g.fillRect(7.4, 8.8, 1.2, 2.6);
+    g.fillRect(4.6, 11, 2.2, 1);
+    g.fillRect(7.2, 11, 2.2, 1);
+    // Body & folded wing
+    g.fillStyle(0x9a8468, 1);
+    g.fillEllipse(6, 7.1, 8.8, 4.8);
+    g.fillStyle(0x7a654b, 1);
+    g.fillEllipse(5.5, 6.8, 5.2, 2.8);
+    g.fillTriangle(1, 5.5, 3, 7.1, 1.4, 8.3);
+    // Neck ring & green head
+    g.fillStyle(0xe8dfd1, 1);
+    g.fillRect(8.8, 4.9, 2, 1.3);
+    g.fillStyle(0x3f7a52, 1);
+    g.fillCircle(10.2, 3.2, 2.4);
+    // Orange bill & eye
+    g.fillStyle(0xe99d34, 1);
+    g.fillEllipse(12.6, 3.7, 2.8, 1.4);
+    g.fillStyle(0x231a13, 1);
+    g.fillCircle(10.7, 2.7, 0.6);
   });
   make('build-duckhouse', 38, 40, (g) => {
     // Floating wooden raft base + cozy reed-roofed duck coop
